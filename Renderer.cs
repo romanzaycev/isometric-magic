@@ -6,10 +6,13 @@ namespace IsometricMagic
     public class Renderer
     {
         private static readonly Renderer Instance = new Renderer();
-        
+
+        private static readonly int INIT_WND_WIDTH = 1366;
+        private static readonly int INIT_WND_HEIGHT = 768;
         private bool _isInitialized;
         private IntPtr _window = IntPtr.Zero;
-        private bool _repaint;
+        private IntPtr _renderer = IntPtr.Zero;
+        private bool _repaintFlag;
 
         public static Renderer GetInstance()
         {
@@ -22,20 +25,82 @@ namespace IsometricMagic
             {
                 return;
             }
+
+            InitSdl();
+            InitWindow();
+            InitRenderer();
+
+            _repaintFlag = true;
+            _isInitialized = true;
+
+            PaintWindow();
+        }
+
+        private void InitRenderer()
+        {
+            _renderer = SDL.SDL_CreateRenderer(_window, -1,
+                SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
+
+            if (_renderer == IntPtr.Zero)
+            {
+                Stop();
+                throw new InvalidOperationException($"SDL_CreateRenderer error: {SDL.SDL_GetError()}");
+            }
+        }
+
+        public void Stop()
+        {
+            if (!_isInitialized) return;
             
+            if (_renderer != IntPtr.Zero)
+            {
+                SDL.SDL_DestroyRenderer(_renderer);
+            }
+
+            if (_window != IntPtr.Zero)
+            {
+                SDL.SDL_DestroyWindow(_window);
+            }
+        }
+
+        public void Paint()
+        {
+            SDL.SDL_SetRenderDrawColor(_renderer,0x00, 0x00, 0x00, 0x00);
+            SDL.SDL_RenderClear(_renderer);
+            
+            // Draw all scripts
+            
+            SDL.SDL_RenderPresent(_renderer);
+            PaintWindow();
+            SDL.SDL_Delay(10);
+        }
+
+        public void HandleWindowEvent(SDL.SDL_Event sdlEvent)
+        {
+            if (sdlEvent.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED)
+            {
+                _repaintFlag = true;
+            }
+        }
+
+        private static void InitSdl()
+        {
             var sdlInitResult = SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
 
             if (sdlInitResult < 0)
             {
                 throw new InvalidOperationException($"SDL_Init error: {SDL.SDL_GetError()}");
             }
-            
+        }
+
+        private void InitWindow()
+        {
             _window = SDL.SDL_CreateWindow(
                 "Isometric Magic",
                 SDL.SDL_WINDOWPOS_CENTERED,
                 SDL.SDL_WINDOWPOS_CENTERED,
-                1366,
-                768,
+                INIT_WND_WIDTH,
+                INIT_WND_HEIGHT,
                 SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE
             );
 
@@ -44,59 +109,28 @@ namespace IsometricMagic
                 Stop();
                 throw new Exception($"SDL_CreateWindow error: {SDL.SDL_GetError()}");
             }
-
-            _repaint = true;
-            _isInitialized = true;
-            
-            PaintWindow();
-        }
-
-        public void Stop()
-        {
-            if (_isInitialized)
-            {
-                if (_window != IntPtr.Zero)
-                {
-                    SDL.SDL_DestroyWindow(_window);
-                }
-            }
-            
-            SDL.SDL_Quit();
-        }
-
-        public void Paint()
-        {
-            PaintWindow();
         }
 
         private void PaintWindow()
         {
-            if (!_repaint)
+            if (!_repaintFlag)
             {
                 return;
             }
 
-            _repaint = false;
+            _repaintFlag = false;
 
             IntPtr windowSurface = SDL.SDL_GetWindowSurface(_window);
             SDL.SDL_GetWindowSize(_window, out var w, out var h);
-            
+
             SDL.SDL_Rect windowRect;
             windowRect.x = 0;
             windowRect.y = 0;
             windowRect.w = w;
             windowRect.h = h;
-            
+
             SDL.SDL_FillRect(windowSurface, ref windowRect, 0xff000000);
             SDL.SDL_UpdateWindowSurface(_window);
-        }
-
-        public void HandleWindowEvent(SDL.SDL_Event sdlEvent)
-        {
-            if (sdlEvent.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED)
-            {
-                _repaint = true;
-            }
         }
     }
 }
