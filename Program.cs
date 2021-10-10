@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace isometric_magic
+namespace IsometricMagic
 {
     class Program
     {
