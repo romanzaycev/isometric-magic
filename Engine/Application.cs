@@ -1,31 +1,31 @@
 using System;
 using SDL2;
 
-namespace IsometricMagic
+namespace IsometricMagic.Engine
 {
-    public class Renderer
+    public class Application
     {
-        private static readonly Renderer Instance = new Renderer();
-
-        private static readonly int INIT_WND_WIDTH = 1366;
-        private static readonly int INIT_WND_HEIGHT = 768;
+        private static readonly Application Instance = new Application();
+        private AppConfig _config;
         private bool _isInitialized;
         private IntPtr _window = IntPtr.Zero;
         private IntPtr _renderer = IntPtr.Zero;
         private bool _repaintFlag;
 
-        public static Renderer GetInstance()
+        public static Application GetInstance()
         {
             return Instance;
         }
 
-        public void Init()
+        public void Init(AppConfig config)
         {
             if (_isInitialized)
             {
                 return;
             }
 
+            _config = config;
+            
             InitSdl();
             InitWindow();
             InitRenderer();
@@ -34,18 +34,6 @@ namespace IsometricMagic
             _isInitialized = true;
 
             PaintWindow();
-        }
-
-        private void InitRenderer()
-        {
-            _renderer = SDL.SDL_CreateRenderer(_window, -1,
-                SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
-
-            if (_renderer == IntPtr.Zero)
-            {
-                Stop();
-                throw new InvalidOperationException($"SDL_CreateRenderer error: {SDL.SDL_GetError()}");
-            }
         }
 
         public void Stop()
@@ -92,6 +80,18 @@ namespace IsometricMagic
                 throw new InvalidOperationException($"SDL_Init error: {SDL.SDL_GetError()}");
             }
         }
+        
+        private void InitRenderer()
+        {
+            _renderer = SDL.SDL_CreateRenderer(_window, -1,
+                SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
+
+            if (_renderer == IntPtr.Zero)
+            {
+                Stop();
+                throw new InvalidOperationException($"SDL_CreateRenderer error: {SDL.SDL_GetError()}");
+            }
+        }
 
         private void InitWindow()
         {
@@ -99,8 +99,8 @@ namespace IsometricMagic
                 "Isometric Magic",
                 SDL.SDL_WINDOWPOS_CENTERED,
                 SDL.SDL_WINDOWPOS_CENTERED,
-                INIT_WND_WIDTH,
-                INIT_WND_HEIGHT,
+                _config.WindowWidth,
+                _config.WindowHeight,
                 SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE
             );
 

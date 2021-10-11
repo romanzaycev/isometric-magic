@@ -1,16 +1,18 @@
 ﻿using System;
 using SDL2;
+using IsometricMagic.Engine;
 
 namespace IsometricMagic
 {
-    class Program
+    internal static class Program
     {
         static void Main(string[] args)
         {
             try
             {
-                Renderer renderer = Renderer.GetInstance();
-                renderer.Init();
+                AppConfig appConfig = new AppConfig("config.ini");
+                Application app = Application.GetInstance();
+                app.Init(appConfig);
 
                 SDL.SDL_Event sdlEvent;
                 bool isRunning = true;
@@ -22,7 +24,7 @@ namespace IsometricMagic
                         switch (sdlEvent.type)
                         {
                             case SDL.SDL_EventType.SDL_WINDOWEVENT:
-                                renderer.HandleWindowEvent(sdlEvent);
+                                app.HandleWindowEvent(sdlEvent);
                                 break;
 
                             case SDL.SDL_EventType.SDL_QUIT:
@@ -41,10 +43,10 @@ namespace IsometricMagic
                         }
                     }
 
-                    renderer.Paint();
+                    app.Paint();
                 }
 
-                renderer.Stop();
+                app.Stop();
                 SDL.SDL_Quit();
             }
             catch (Exception e)
