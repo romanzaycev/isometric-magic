@@ -19,11 +19,29 @@ namespace IsometricMagic
 
                 var tex = new Texture(900, 900);
                 tex.LoadImage(new AssetItem("./resources/data/textures/thonk.jpeg"));
-                var sprite = new Sprite();
-                sprite.Texture = tex;
                 
+                var sprite1 = new Sprite
+                {
+                    Texture = tex,
+                    Name = "Sprite1",
+                };
+
+                var sprite2 = new Sprite
+                {
+                    Texture = tex,
+                    Name = "Sprite2",
+                };
+
+                sprite2.Position.X = 200;
+                sprite2.Position.Y = 200;
+
+                sprite1.Sorting = 1;
+                sprite2.Sorting = 2;
+
                 while (isRunning)
                 {
+                    app.StartTick();
+                    
                     while (SDL.SDL_PollEvent(out sdlEvent) != 0)
                     {
                         switch (sdlEvent.type)
@@ -42,6 +60,10 @@ namespace IsometricMagic
                                     case SDL.SDL_Keycode.SDLK_ESCAPE:
                                         isRunning = false;
                                         break;
+                                    
+                                    case SDL.SDL_Keycode.SDLK_SPACE:
+                                        (sprite1.Sorting, sprite2.Sorting) = (sprite2.Sorting, sprite1.Sorting);
+                                        break;
                                 }
 
                                 break;
@@ -49,6 +71,7 @@ namespace IsometricMagic
                     }
 
                     app.Paint();
+                    app.EndTick();
                 }
 
                 app.Stop();

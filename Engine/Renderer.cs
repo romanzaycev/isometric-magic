@@ -32,10 +32,14 @@ namespace IsometricMagic.Engine
         
         private void DrawSprites()
         {
-            foreach (var sprite in SpriteHolder.GetSprites())
+            var sprites = SpriteHolder.GetSprites();
+            
+            Array.Sort(sprites, (spriteA, spriteB) => spriteA.Sorting.CompareTo(spriteB.Sorting));
+            
+            foreach (var sprite in sprites)
             {
                 if (sprite.Texture == null) continue;
-                
+
                 var tex = sprite.Texture;
                     
                 SDL.SDL_Rect sourceRect;

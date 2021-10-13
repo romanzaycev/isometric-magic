@@ -21,11 +21,6 @@ namespace IsometricMagic.Engine
 
         public void Destroy()
         {
-            if (Texture != null)
-            {
-                TextureHolder.Remove(Texture);
-            }
-            
             SpriteHolder.Remove(this);
         }
     }

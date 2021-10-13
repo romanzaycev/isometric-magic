@@ -12,6 +12,8 @@ namespace IsometricMagic.Engine
         private IntPtr _sdlRenderer = IntPtr.Zero;
         private Renderer _renderer;
         private bool _repaintFlag;
+        private ulong _desiredDelta;
+        private ulong _startTick;
 
         public static Application GetInstance()
         {
@@ -26,13 +28,18 @@ namespace IsometricMagic.Engine
             }
 
             _config = config;
-            
+
             InitSdl();
             InitWindow();
             InitRenderer();
 
             _repaintFlag = true;
             _isInitialized = true;
+            
+            if (_config.TargetFps > 0)
+            {
+                _desiredDelta = 1000 / (ulong) _config.TargetFps;
+            }
 
             PaintWindow();
         }
@@ -43,7 +50,7 @@ namespace IsometricMagic.Engine
 
             // SpriteHolder.GetInstance().DestroyAll();
             TextureHolder.GetInstance().DestroyAll();
-            
+
             if (_sdlRenderer != IntPtr.Zero)
             {
                 SDL.SDL_DestroyRenderer(_sdlRenderer);
@@ -59,7 +66,6 @@ namespace IsometricMagic.Engine
         {
             _renderer.DrawAll();
             PaintWindow();
-            SDL.SDL_Delay(10);
         }
 
         public void HandleWindowEvent(SDL.SDL_Event sdlEvent)
@@ -67,6 +73,34 @@ namespace IsometricMagic.Engine
             if (sdlEvent.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED)
             {
                 _repaintFlag = true;
+            }
+        }
+
+        public Renderer GetRenderer()
+        {
+            return _renderer;
+        }
+
+        public void StartTick()
+        {
+            _startTick = SDL.SDL_GetPerformanceCounter();
+        }
+
+        public void EndTick()
+        {
+            var end = SDL.SDL_GetPerformanceCounter();
+            var freq = SDL.SDL_GetPerformanceFrequency();
+
+            if (freq > 0)
+            {
+                var delta = end - _startTick;
+
+                if (_desiredDelta > 0)
+                {
+                    var elapsedMs = delta / freq * 1000;
+                    
+                    SDL.SDL_Delay((uint) Math.Floor((float) (_desiredDelta - elapsedMs)));
+                }
             }
         }
 
@@ -79,18 +113,28 @@ namespace IsometricMagic.Engine
                 throw new InvalidOperationException($"SDL_Init error: {SDL.SDL_GetError()}");
             }
 
-            var sdlImageInitResult = SDL_image.IMG_Init(SDL_image.IMG_InitFlags.IMG_INIT_JPG | SDL_image.IMG_InitFlags.IMG_INIT_PNG | SDL_image.IMG_InitFlags.IMG_INIT_WEBP | SDL_image.IMG_InitFlags.IMG_INIT_TIF);
+            var sdlImageInitResult = SDL_image.IMG_Init(SDL_image.IMG_InitFlags.IMG_INIT_JPG |
+                                                        SDL_image.IMG_InitFlags.IMG_INIT_PNG |
+                                                        SDL_image.IMG_InitFlags.IMG_INIT_WEBP |
+                                                        SDL_image.IMG_InitFlags.IMG_INIT_TIF);
 
             if (sdlImageInitResult < 0)
             {
                 throw new InvalidOperationException($"IMG_Init error: {SDL_image.IMG_GetError()}");
             }
         }
-        
+
         private void InitRenderer()
         {
-            _sdlRenderer = SDL.SDL_CreateRenderer(_sdlWindow, -1,
-                SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
+            var flags = SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED;
+
+            if (_config.VSync) flags |= SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC;
+
+            _sdlRenderer = SDL.SDL_CreateRenderer(
+                _sdlWindow,
+                -1,
+                flags
+            );
 
             if (_sdlRenderer == IntPtr.Zero)
             {
@@ -113,7 +157,7 @@ namespace IsometricMagic.Engine
             );
 
             if (_sdlWindow != IntPtr.Zero) return;
-            
+
             Stop();
             throw new Exception($"SDL_CreateWindow error: {SDL.SDL_GetError()}");
         }
@@ -138,11 +182,6 @@ namespace IsometricMagic.Engine
 
             SDL.SDL_FillRect(windowSurface, ref windowRect, 0xff000000);
             SDL.SDL_UpdateWindowSurface(_sdlWindow);
-        }
-
-        public Renderer GetRenderer()
-        {
-            return _renderer;
         }
     }
 }
