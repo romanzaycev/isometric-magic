@@ -4,9 +4,9 @@ using IniParser.Model;
 
 namespace IsometricMagic.Engine
 {
-    public class AppConfig
+    class AppConfig
     {
-        private IniData data;
+        private readonly IniData _data;
 
         private int _windowWidth = 0;
         
@@ -14,7 +14,7 @@ namespace IsometricMagic.Engine
             get {
                 if (_windowWidth == 0)
                 {
-                    _windowWidth = GetInt(data["Window"]["Width"], 800);
+                    _windowWidth = GetInt(_data["Window"]["Width"], 800);
                 }
 
                 return _windowWidth;
@@ -29,7 +29,7 @@ namespace IsometricMagic.Engine
             {
                 if (_windowHeight == 0)
                 {
-                    _windowHeight = GetInt(data["Window"]["Height"], 600);
+                    _windowHeight = GetInt(_data["Window"]["Height"], 600);
                 }
 
                 return _windowHeight;
@@ -39,7 +39,7 @@ namespace IsometricMagic.Engine
         public AppConfig(string iniFile)
         {
             var parser = new FileIniDataParser();
-            data = parser.ReadFile(iniFile);
+            _data = parser.ReadFile(iniFile);
         }
 
         private static int GetInt(string value, int defaultValue)

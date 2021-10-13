@@ -10,13 +10,18 @@ namespace IsometricMagic
         {
             try
             {
-                AppConfig appConfig = new AppConfig("config.ini");
-                Application app = Application.GetInstance();
+                var appConfig = new AppConfig("config.ini");
+                var app = Application.GetInstance();
                 app.Init(appConfig);
 
                 SDL.SDL_Event sdlEvent;
-                bool isRunning = true;
+                var isRunning = true;
 
+                var tex = new Texture(900, 900);
+                tex.LoadImage(new AssetItem("./resources/data/textures/thonk.jpeg"));
+                var sprite = new Sprite();
+                sprite.Texture = tex;
+                
                 while (isRunning)
                 {
                     while (SDL.SDL_PollEvent(out sdlEvent) != 0)
