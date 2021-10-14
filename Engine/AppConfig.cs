@@ -67,6 +67,23 @@ namespace IsometricMagic.Engine
             }
         }
 
+        private bool _isFullscreenFetched = false;
+        private bool _isFullscreen = false;
+
+        public bool IsFullscreen
+        {
+            get
+            {
+                if (!_isFullscreenFetched)
+                {
+                    _isFullscreen = GetBool(_data["Window"]["Fullscreen"], false);
+                    _isFullscreenFetched = true;
+                }
+
+                return _isFullscreen;
+            }
+        }
+
         public AppConfig(string iniFile)
         {
             var parser = new FileIniDataParser();
@@ -80,17 +97,12 @@ namespace IsometricMagic.Engine
         
         private static bool GetBool(string value, bool defaultValue)
         {
-            if (value is "true" or "1" or "On" or "on")
+            return value.ToLower() switch
             {
-                return true;
-            }
-            
-            if (value is "false" or "0" or "Off" or "off")
-            {
-                return false;
-            }
-
-            return defaultValue;
+                "true" or "1" or "on" => true,
+                "false" or "0" or "off" => false,
+                _ => defaultValue
+            };
         }
     }
 }

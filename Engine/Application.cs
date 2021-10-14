@@ -156,10 +156,16 @@ namespace IsometricMagic.Engine
                 SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE
             );
 
-            if (_sdlWindow != IntPtr.Zero) return;
+            if (_sdlWindow == IntPtr.Zero)
+            {
+                Stop();
+                throw new Exception($"SDL_CreateWindow error: {SDL.SDL_GetError()}");
+            }
 
-            Stop();
-            throw new Exception($"SDL_CreateWindow error: {SDL.SDL_GetError()}");
+            if (_config.IsFullscreen)
+            {
+                SDL.SDL_SetWindowFullscreen(_sdlWindow, (uint)SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN);
+            }
         }
 
         private void PaintWindow()
