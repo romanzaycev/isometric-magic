@@ -10,7 +10,6 @@ namespace IsometricMagic.Engine
         // private static int SDL_TEXTUREACCESS_STREAMING = 1;
         private static int SDL_TEXTUREACCESS_TARGET = 2;
 
-        private static readonly Renderer Renderer = Application.GetInstance().GetRenderer();
         private static readonly TextureHolder Instance = new TextureHolder();
         private readonly List<Texture> _list = new List<Texture>();
         private readonly Dictionary<Texture, IntPtr> _sdlTextures = new Dictionary<Texture, IntPtr>();
@@ -28,7 +27,7 @@ namespace IsometricMagic.Engine
                 if (tex.TextureTarget)
                 {
                     var sdlTexture = SDL.SDL_CreateTexture(
-                        Renderer.GetSdl(),
+                        Application.GetInstance().GetRenderer().GetSdl(),
                         SDL.SDL_PIXELFORMAT_RGBA8888,
                         (tex.TextureTarget) ? SDL_TEXTUREACCESS_TARGET : SDL_TEXTUREACCESS_STATIC,
                         tex.Width,
@@ -71,7 +70,16 @@ namespace IsometricMagic.Engine
             }
 
             var sdlSurface = SDL_image.IMG_Load(image.Path);
-            var sdlTexture = SDL.SDL_CreateTextureFromSurface(Renderer.GetSdl(), sdlSurface);
+
+            if (sdlSurface == IntPtr.Zero)
+            {
+                throw new Exception($"IMG_Load error: {SDL_image.IMG_GetError()}");
+            }
+
+            var sdlTexture = SDL.SDL_CreateTextureFromSurface(
+                Application.GetInstance().GetRenderer().GetSdl(),
+                sdlSurface
+            );
 
             _sdlTextures.Add(tex, sdlTexture);
             _sdlSurfaces.Add(tex, sdlSurface);

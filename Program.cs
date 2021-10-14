@@ -64,6 +64,22 @@ namespace IsometricMagic
                                     case SDL.SDL_Keycode.SDLK_SPACE:
                                         (sprite1.Sorting, sprite2.Sorting) = (sprite2.Sorting, sprite1.Sorting);
                                         break;
+                                    
+                                    case SDL.SDL_Keycode.SDLK_LEFT:
+                                        app.GetRenderer().GetCamera().X += 10;
+                                        break;
+                                    
+                                    case SDL.SDL_Keycode.SDLK_RIGHT:
+                                        app.GetRenderer().GetCamera().X -= 10;
+                                        break;
+                                    
+                                    case SDL.SDL_Keycode.SDLK_UP:
+                                        app.GetRenderer().GetCamera().Y += 10;
+                                        break;
+                                    
+                                    case SDL.SDL_Keycode.SDLK_DOWN:
+                                        app.GetRenderer().GetCamera().Y -= 10;
+                                        break;
                                 }
 
                                 break;

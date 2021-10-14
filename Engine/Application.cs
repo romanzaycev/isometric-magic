@@ -35,7 +35,7 @@ namespace IsometricMagic.Engine
 
             _repaintFlag = true;
             _isInitialized = true;
-            
+
             if (_config.TargetFps > 0)
             {
                 _desiredDelta = 1000 / (ulong) _config.TargetFps;
@@ -91,17 +91,21 @@ namespace IsometricMagic.Engine
             var end = SDL.SDL_GetPerformanceCounter();
             var freq = SDL.SDL_GetPerformanceFrequency();
 
-            if (freq > 0)
+            if (_desiredDelta > 0 && freq > 0)
             {
                 var delta = end - _startTick;
+                var elapsedMs = delta / freq * 1000;
 
-                if (_desiredDelta > 0)
+                if (_desiredDelta > elapsedMs)
                 {
-                    var elapsedMs = delta / freq * 1000;
-                    
                     SDL.SDL_Delay((uint) Math.Floor((float) (_desiredDelta - elapsedMs)));
                 }
             }
+        }
+
+        public AppConfig GetConfig()
+        {
+            return _config;
         }
 
         private static void InitSdl()
@@ -164,7 +168,7 @@ namespace IsometricMagic.Engine
 
             if (_config.IsFullscreen)
             {
-                SDL.SDL_SetWindowFullscreen(_sdlWindow, (uint)SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN);
+                SDL.SDL_SetWindowFullscreen(_sdlWindow, (uint) SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN);
             }
         }
 

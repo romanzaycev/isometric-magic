@@ -5,14 +5,20 @@ namespace IsometricMagic.Engine
 {
     class Renderer
     {
+        private static readonly Application Application = Application.GetInstance();
         private static readonly SpriteHolder SpriteHolder = SpriteHolder.GetInstance();
         private static readonly TextureHolder TextureHolder = TextureHolder.GetInstance();
         
         private readonly IntPtr _sdlRenderer;
+        private readonly Camera _camera;
 
         public Renderer(IntPtr sdlRenderer)
         {
             _sdlRenderer = sdlRenderer;
+            _camera = new Camera(
+                Application.GetConfig().WindowWidth,
+                Application.GetConfig().WindowHeight
+            );
         }
 
         public void DrawAll()
@@ -28,6 +34,11 @@ namespace IsometricMagic.Engine
         public IntPtr GetSdl()
         {
             return _sdlRenderer;
+        }
+
+        public Camera GetCamera()
+        {
+            return _camera;
         }
         
         private void DrawSprites()
@@ -47,12 +58,15 @@ namespace IsometricMagic.Engine
                 sourceRect.h = tex.Height;
                 sourceRect.x = 0;
                 sourceRect.y = 0;
+
+                int offsetX = _camera.X;
+                int offsetY = _camera.Y;
                 
                 SDL.SDL_Rect targetRect; // @TODO Apply scale transformation
                 targetRect.w = tex.Width;
                 targetRect.h = tex.Height;
-                targetRect.x = (int)sprite.Position.X;
-                targetRect.y = (int)sprite.Position.Y;
+                targetRect.x = (int)sprite.Position.X + offsetX;
+                targetRect.y = (int)sprite.Position.Y + offsetY;
                 
                 SDL.SDL_RenderCopy(
                     _sdlRenderer,
