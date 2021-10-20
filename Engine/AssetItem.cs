@@ -1,6 +1,6 @@
 namespace IsometricMagic.Engine
 {
-    class AssetItem
+    public class AssetItem
     {
         public string Path { get; }
 

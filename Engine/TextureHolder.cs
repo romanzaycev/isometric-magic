@@ -10,10 +10,10 @@ namespace IsometricMagic.Engine
         // private static int SDL_TEXTUREACCESS_STREAMING = 1;
         private static int SDL_TEXTUREACCESS_TARGET = 2;
 
-        private static readonly TextureHolder Instance = new TextureHolder();
-        private readonly List<Texture> _list = new List<Texture>();
-        private readonly Dictionary<Texture, IntPtr> _sdlTextures = new Dictionary<Texture, IntPtr>();
-        private readonly Dictionary<Texture, IntPtr> _sdlSurfaces = new Dictionary<Texture, IntPtr>();
+        private static readonly TextureHolder Instance = new();
+        private readonly List<Texture> _list = new();
+        private readonly Dictionary<Texture, IntPtr> _sdlTextures = new();
+        private readonly Dictionary<Texture, IntPtr> _sdlSurfaces = new();
 
         public static TextureHolder GetInstance()
         {

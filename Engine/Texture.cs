@@ -1,6 +1,6 @@
 namespace IsometricMagic.Engine
 {
-    class Texture
+    public class Texture
     {
         private static readonly TextureHolder TextureHolder = TextureHolder.GetInstance();
         

@@ -4,19 +4,38 @@ namespace IsometricMagic.Engine
 {
     class SpriteHolder
     {
-        private static readonly SpriteHolder Instance = new SpriteHolder();
-        private readonly List<Sprite> _list = new List<Sprite>();
+        private static readonly SpriteHolder Instance = new();
+        private readonly List<Sprite> _list = new();
+        private readonly Dictionary<string, List<Sprite>> _tags = new();
 
         public static SpriteHolder GetInstance()
         {
             return Instance;
         }
 
-        public void PushSprite(Sprite sprite)
+        public void Add(Sprite sprite)
         {
             if (!_list.Contains(sprite))
             {
                 _list.Add(sprite);
+            }
+        }
+
+        public void Add(Sprite sprite, string tag0)
+        {
+            if (!_list.Contains(sprite))
+            {
+                _list.Add(sprite);
+            }
+
+            if (!_tags.ContainsKey(tag0))
+            {
+                _tags[tag0] = new();
+            }
+
+            if (_tags[tag0].Contains(sprite))
+            {
+                _tags[tag0].Add(sprite);
             }
         }
 
@@ -28,13 +47,10 @@ namespace IsometricMagic.Engine
         public void Remove(Sprite sprite)
         {
             _list.Remove(sprite);
-        }
 
-        public void RemoveAll()
-        {
-            foreach (var sprite in _list)
+            foreach (var tag in _tags)
             {
-                sprite.Destroy();
+                tag.Value.Remove(sprite);
             }
         }
     }

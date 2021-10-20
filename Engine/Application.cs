@@ -5,7 +5,8 @@ namespace IsometricMagic.Engine
 {
     class Application
     {
-        private static readonly Application Instance = new Application();
+        private static readonly Application Instance = new();
+        private static readonly SceneManager SceneManager = SceneManager.GetInstance();
         private AppConfig _config;
         private bool _isInitialized;
         private IntPtr _sdlWindow = IntPtr.Zero;
@@ -48,7 +49,7 @@ namespace IsometricMagic.Engine
         {
             if (!_isInitialized) return;
 
-            // SpriteHolder.GetInstance().DestroyAll();
+            SceneManager.GetCurrent().Unload();
             TextureHolder.GetInstance().DestroyAll();
 
             if (_sdlRenderer != IntPtr.Zero)
@@ -62,8 +63,9 @@ namespace IsometricMagic.Engine
             }
         }
 
-        public void Paint()
+        public void Update()
         {
+            SceneManager.GetCurrent().Update();
             _renderer.DrawAll();
             PaintWindow();
         }
@@ -192,6 +194,8 @@ namespace IsometricMagic.Engine
 
             SDL.SDL_FillRect(windowSurface, ref windowRect, 0xff000000);
             SDL.SDL_UpdateWindowSurface(_sdlWindow);
+            
+            _renderer.HandleWindowResized(w, h);
         }
     }
 }

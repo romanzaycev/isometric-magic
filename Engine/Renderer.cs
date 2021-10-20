@@ -6,7 +6,6 @@ namespace IsometricMagic.Engine
     class Renderer
     {
         private static readonly Application Application = Application.GetInstance();
-        private static readonly SpriteHolder SpriteHolder = SpriteHolder.GetInstance();
         private static readonly TextureHolder TextureHolder = TextureHolder.GetInstance();
         
         private readonly IntPtr _sdlRenderer;
@@ -40,16 +39,33 @@ namespace IsometricMagic.Engine
         {
             return _camera;
         }
-        
+
+        public void HandleWindowResized(int w, int h)
+        {
+            _camera.W = w;
+            _camera.H = h;
+        }
+
         private void DrawSprites()
         {
-            var sprites = SpriteHolder.GetSprites();
+            var scene = SceneManager.GetInstance().GetCurrent();
             
-            Array.Sort(sprites, (spriteA, spriteB) => spriteA.Sorting.CompareTo(spriteB.Sorting));
+            DrawLayer(scene.MainLayer, true);
+            DrawLayer(scene.UiLayer, false);
+        }
+
+        private void DrawLayer(SceneLayer layer, bool isCameraLayer)
+        {
+            var sprites = layer.Sprites;
+            
+            Array.Sort(
+                sprites,
+                (spriteA, spriteB) => spriteA.Sorting.CompareTo(spriteB.Sorting)
+            );
             
             foreach (var sprite in sprites)
             {
-                if (sprite.Texture == null) continue;
+                if (sprite.Texture == null || !sprite.Visible) continue;
 
                 var tex = sprite.Texture;
                     
@@ -59,8 +75,8 @@ namespace IsometricMagic.Engine
                 sourceRect.x = 0;
                 sourceRect.y = 0;
 
-                int offsetX = _camera.X;
-                int offsetY = _camera.Y;
+                int offsetX = (isCameraLayer) ? _camera.X : 0;
+                int offsetY = (isCameraLayer) ? _camera.Y : 0;
                 
                 SDL.SDL_Rect targetRect; // @TODO Apply scale transformation
                 targetRect.w = tex.Width;
