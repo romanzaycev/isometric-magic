@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Linq;
 using SDL2;
 
 namespace IsometricMagic.Engine
@@ -62,14 +63,7 @@ namespace IsometricMagic.Engine
 
         private void DrawLayer(SceneLayer layer, bool isCameraLayer)
         {
-            var sprites = layer.Sprites;
-            
-            Array.Sort(
-                sprites,
-                (spriteA, spriteB) => spriteA.Sorting.CompareTo(spriteB.Sorting)
-            );
-            
-            foreach (var sprite in sprites)
+            foreach (var sprite in layer.Sprites)
             {
                 if (sprite.Texture == null || !sprite.Visible) continue;
 

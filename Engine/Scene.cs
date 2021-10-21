@@ -2,8 +2,8 @@ namespace IsometricMagic.Engine
 {
     public class Scene
     {
-        public static readonly string MAIN = "main";
-        public static readonly string UI = "ui";
+        public const string MAIN = "main";
+        public const string UI = "ui";
 
         protected static readonly SceneManager SceneManager = SceneManager.GetInstance();
         protected static readonly Camera Camera = Application.GetInstance().GetRenderer().GetCamera();
@@ -11,15 +11,17 @@ namespace IsometricMagic.Engine
         private readonly string _name;
         public string Name => _name;
 
-        private readonly SceneLayer _mainLayer = new("main");
+        private readonly SceneLayer _mainLayer;
         public SceneLayer MainLayer => _mainLayer;
 
-        private readonly SceneLayer _uiLayer = new("ui");
+        private readonly SceneLayer _uiLayer;
         public SceneLayer UiLayer => _uiLayer;
 
         public Scene(string name)
         {
             _name = name;
+            _mainLayer = new SceneLayer(this, MAIN);
+            _uiLayer = new SceneLayer(this, UI);
         }
 
         public void Load()
@@ -29,23 +31,25 @@ namespace IsometricMagic.Engine
 
         public void Unload()
         {
-            foreach (var sprite in _mainLayer.Sprites)
-            {
-                _mainLayer.Remove(sprite);
+            DeInitialize();
 
-                if (sprite.Texture != null)
-                {
-                    TextureHolder.GetInstance().Remove(sprite.Texture);
-                }
-            }
-            
-            foreach (var sprite in _uiLayer.Sprites)
+            for (int i = 0; i < _mainLayer.Sprites.Count; i++)
             {
-                _uiLayer.Remove(sprite);
-                
-                if (sprite.Texture != null) {
-                    TextureHolder.GetInstance().Remove(sprite.Texture);
+                if (_mainLayer.Sprites[i].Texture != null)
+                {
+                    TextureHolder.GetInstance().Remove(_mainLayer.Sprites[i].Texture);
                 }
+                
+                _mainLayer.Remove(_mainLayer.Sprites[i]);
+            }
+
+            for (int i = 0; i < _uiLayer.Sprites.Count; i++)
+            {
+                if (_uiLayer.Sprites[i].Texture != null) {
+                    TextureHolder.GetInstance().Remove(_uiLayer.Sprites[i].Texture);
+                }
+                
+                _uiLayer.Remove(_uiLayer.Sprites[i]);
             }
         }
 
@@ -55,6 +59,11 @@ namespace IsometricMagic.Engine
         }
         
         public virtual void Update()
+        {
+            
+        }
+
+        protected virtual void DeInitialize()
         {
             
         }

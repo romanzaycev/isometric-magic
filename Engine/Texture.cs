@@ -8,6 +8,7 @@ namespace IsometricMagic.Engine
         public int Height { get; }
 
         private AssetItem _image;
+
         private AssetItem Image => _image;
         public bool TextureTarget { get; }
 
@@ -16,12 +17,17 @@ namespace IsometricMagic.Engine
             Width = width;
             Height = height;
             TextureTarget = textureTarget;
-            TextureHolder.PushTexture(this);
+
+            if (textureTarget)
+            {
+                TextureHolder.PushTexture(this);
+            }
         }
 
         public void LoadImage(AssetItem image)
         {
             _image = image;
+            TextureHolder.PushTexture(this);
             TextureHolder.LoadImage(this, image);
         }
 

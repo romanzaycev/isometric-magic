@@ -16,6 +16,10 @@ namespace IsometricMagic.Engine
         private ulong _desiredDelta;
         private ulong _startTick;
 
+        private static ulong DT_LAST;
+        private static float _deltaTime;
+        public static float DeltaTime => _deltaTime;
+        
         public static Application GetInstance()
         {
             return Instance;
@@ -37,10 +41,12 @@ namespace IsometricMagic.Engine
             _repaintFlag = true;
             _isInitialized = true;
 
-            if (_config.TargetFps > 0)
+            if (_config.TargetFps > 0 && !_config.VSync)
             {
                 _desiredDelta = 1000 / (ulong) _config.TargetFps;
             }
+
+            DT_LAST = 0;
 
             PaintWindow();
         }
@@ -65,6 +71,14 @@ namespace IsometricMagic.Engine
 
         public void Update()
         {
+            var now = SDL.SDL_GetTicks();
+
+            if (now > DT_LAST)
+            {
+                _deltaTime =  (float)(now - DT_LAST) / 1000;
+                DT_LAST = now;
+            }
+            
             SceneManager.GetCurrent().Update();
             _renderer.DrawAll();
             PaintWindow();

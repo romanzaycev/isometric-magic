@@ -10,7 +10,6 @@ namespace IsometricMagic.Game.Scenes
         private bool _isDrag;
         private int _startMouseX;
         private int _startMouseY;
-        private float _camSpeed = 1.2f;
 
         public Second() : base("second")
         {
@@ -50,8 +49,8 @@ namespace IsometricMagic.Game.Scenes
 
             if (_isDrag)
             {
-                Camera.Rect.X += (int)((_startMouseX - Input.MouseX) * _camSpeed);
-                Camera.Rect.Y += (int)((_startMouseY - Input.MouseY) * _camSpeed);
+                Camera.Rect.X -= _startMouseX - Input.MouseX;
+                Camera.Rect.Y -= _startMouseY - Input.MouseY;
             }
             
             _startMouseX = Input.MouseX;

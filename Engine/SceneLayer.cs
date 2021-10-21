@@ -5,27 +5,27 @@ namespace IsometricMagic.Engine
     public class SceneLayer
     {
         private static readonly SpriteHolder SpriteHolder = SpriteHolder.GetInstance();
-        
+
+        private readonly Scene _scene;
         private readonly string _name;
         public string Name => _name;
 
-        private readonly List<Sprite> _sprites = new();
-        public Sprite[] Sprites => _sprites.ToArray();
+        public IReadOnlyList<Sprite> Sprites => SpriteHolder.GetSprites($"scene_{_scene.Name}_{_name}");
 
-        public SceneLayer(string name)
+        public SceneLayer(Scene scene, string name)
         {
+            _scene = scene;
             _name = name;
         }
 
         public void Add(Sprite sprite)
         {
-            _sprites.Add(sprite);
-            SpriteHolder.Add(sprite, $"scene_{_name}");
+            SpriteHolder.Add(sprite, $"scene_{_scene.Name}_{_name}");
         }
 
         public void Remove(Sprite sprite)
         {
-            _sprites.Remove(sprite);
+            SpriteHolder.Remove(sprite);
         }
     }
 }

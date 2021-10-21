@@ -20,6 +20,7 @@ namespace IsometricMagic
 
                 SceneManager.GetInstance().Add(new Main());
                 SceneManager.GetInstance().Add(new Second());
+                SceneManager.GetInstance().Add(new Bench());
 
                 while (isRunning)
                 {

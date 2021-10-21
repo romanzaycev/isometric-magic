@@ -79,9 +79,15 @@ namespace IsometricMagic.Game.Scenes
                 Camera.Rect.Y -= 10;
             }
 
+            // Switch scenes
             if (Input.IsPressed(SDL.SDL_Keycode.SDLK_0))
             {
                 SceneManager.LoadByName("second");
+            }
+            
+            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_9))
+            {
+                SceneManager.LoadByName("bench");
             }
         }
 
