@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using SDL2;
 
 namespace IsometricMagic.Engine
@@ -42,8 +43,13 @@ namespace IsometricMagic.Engine
 
         public void HandleWindowResized(int w, int h)
         {
-            _camera.W = w;
-            _camera.H = h;
+            _camera.Rect = new Rectangle()
+            {
+                Width = w,
+                Height = h,
+                X = _camera.Rect.X,
+                Y = _camera.Rect.Y
+            };
         }
 
         private void DrawSprites()
@@ -75,8 +81,8 @@ namespace IsometricMagic.Engine
                 sourceRect.x = 0;
                 sourceRect.y = 0;
 
-                int offsetX = (isCameraLayer) ? _camera.X : 0;
-                int offsetY = (isCameraLayer) ? _camera.Y : 0;
+                var offsetX = (isCameraLayer) ? _camera.Rect.X : 0;
+                var offsetY = (isCameraLayer) ? _camera.Rect.Y : 0;
                 
                 SDL.SDL_Rect targetRect; // @TODO Apply scale transformation
                 targetRect.w = tex.Width;

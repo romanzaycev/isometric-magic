@@ -8,7 +8,10 @@ namespace IsometricMagic.Game.Scenes
     public class Second : Scene
     {
         private bool _isDrag;
-        
+        private int _startMouseX;
+        private int _startMouseY;
+        private float _camSpeed = 1.2f;
+
         public Second() : base("second")
         {
         }
@@ -33,19 +36,26 @@ namespace IsometricMagic.Game.Scenes
         {
             if (Input.IsMousePressed(SDL.SDL_BUTTON_LEFT) && !_isDrag)
             {
+                _startMouseX = Input.MouseX;
+                _startMouseY = Input.MouseY;
                 _isDrag = true;
             }
 
             if (Input.IsMouseReleased(SDL.SDL_BUTTON_LEFT) && _isDrag)
             {
+                _startMouseX = 0;
+                _startMouseY = 0;
                 _isDrag = false;
             }
 
             if (_isDrag)
             {
-                Camera.X = Input.MouseX - Camera.ViewportWidth / 2;
-                Camera.Y = Input.MouseY - Camera.ViewportHeight / 2;
+                Camera.Rect.X += (int)((_startMouseX - Input.MouseX) * _camSpeed);
+                Camera.Rect.Y += (int)((_startMouseY - Input.MouseY) * _camSpeed);
             }
+            
+            _startMouseX = Input.MouseX;
+            _startMouseY = Input.MouseY;
         }
     }
 }

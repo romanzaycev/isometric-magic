@@ -61,22 +61,22 @@ namespace IsometricMagic.Game.Scenes
             
             if (Input.IsPressed(SDL.SDL_Keycode.SDLK_LEFT))
             {
-                Camera.X += 10;
+                Camera.Rect.X += 10;
             }
             
             if (Input.IsPressed(SDL.SDL_Keycode.SDLK_RIGHT))
             {
-                Camera.X -= 10;
+                Camera.Rect.X -= 10;
             }
             
             if (Input.IsPressed(SDL.SDL_Keycode.SDLK_UP))
             {
-                Camera.Y += 10;
+                Camera.Rect.Y += 10;
             }
 
             if (Input.IsPressed(SDL.SDL_Keycode.SDLK_DOWN))
             {
-                Camera.Y -= 10;
+                Camera.Rect.Y -= 10;
             }
 
             if (Input.IsPressed(SDL.SDL_Keycode.SDLK_0))
