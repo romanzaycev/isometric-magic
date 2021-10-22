@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using SDL2;
 
 namespace IsometricMagic.Engine
@@ -22,6 +23,7 @@ namespace IsometricMagic.Engine
 
         private int _viewportWidth;
         private int _viewportHeight;
+        private static IEnumerator _loadingEnumerator;
 
         public int ViewportWidth => _viewportWidth;
         public int ViewportHeight => _viewportHeight;
@@ -110,6 +112,17 @@ namespace IsometricMagic.Engine
 
         public void EndTick()
         {
+            if (_loadingEnumerator != null)
+            {
+                var isLoaded = _loadingEnumerator.MoveNext();
+                
+                if (!isLoaded)
+                {
+                    SceneManager.FinishAsync();
+                    _loadingEnumerator = null;
+                }
+            }
+            
             var end = SDL.SDL_GetPerformanceCounter();
             var freq = SDL.SDL_GetPerformanceFrequency();
 
@@ -220,6 +233,11 @@ namespace IsometricMagic.Engine
             _viewportWidth = w;
             _viewportHeight = h;
             _renderer.HandleWindowResized(w, h);
+        }
+
+        public void LoadingCoroutinePush(IEnumerator enumerator)
+        {
+            _loadingEnumerator = enumerator;
         }
     }
 }

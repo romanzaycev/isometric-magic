@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
 using IsometricMagic.Engine;
@@ -23,11 +24,11 @@ namespace IsometricMagic.Game.Scenes
         private int _startMouseX;
         private int _startMouseY;
 
-        public Bench() : base("bench")
+        public Bench() : base("bench", true)
         {
         }
 
-        protected override void Initialize()
+        protected override IEnumerator InitializeAsync()
         {
             var tex = new Texture(64, 64);
             tex.LoadImage(new AssetItem("./resources/data/textures/bear.jpeg"));
@@ -44,6 +45,11 @@ namespace IsometricMagic.Game.Scenes
                 _sprites.Add(sprite);
                 _startPos.Add(sprite, sprite.Position);
                 _currAngle.Add(sprite, 0);
+
+                if (i % 250 == 0)
+                {
+                    yield return true;
+                }
             }
         }
 
@@ -118,9 +124,6 @@ namespace IsometricMagic.Game.Scenes
             
             _startMouseX = Input.MouseX;
             _startMouseY = Input.MouseY;
-            
-            // Perf?
-            Console.WriteLine($"Delta time: {Application.DeltaTime}");
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,6 +12,7 @@ namespace IsometricMagic.Engine
         private readonly Scene _defaultScene = new("default");
         private Scene _loadingScene;
         private Scene _currentScene;
+        private Scene _isWaitingScene;
 
         public static SceneManager GetInstance()
         {
@@ -40,6 +42,15 @@ namespace IsometricMagic.Engine
             return _currentScene;
         }
 
+        public void FinishAsync()
+        {
+            if (_currentScene != null && _isWaitingScene != null)
+            {
+                _currentScene.Unload();
+                _currentScene = _isWaitingScene;
+            }
+        }
+
         public void LoadByName(string name)
         {
             if (!_scenes.ContainsKey(name))
@@ -51,8 +62,19 @@ namespace IsometricMagic.Engine
 
             var scene = _scenes[name];
 
-            scene.Load();
-            _currentScene = scene;
+            if (scene.IsAsyncInitializer)
+            {
+                _loadingScene.Load();
+                _currentScene = _loadingScene;
+                _isWaitingScene = scene;
+
+                Application.GetInstance().LoadingCoroutinePush(scene.LoadAsync());
+            }
+            else
+            {
+                scene.Load();
+                _currentScene = scene;
+            }
         }
 
         private void Load()

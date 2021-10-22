@@ -20,9 +20,7 @@ namespace IsometricMagic
                 var isRunning = true;
                 var sceneManager = SceneManager.GetInstance();
                 
-                //sceneManager.SetLoadingScene(new Loading());
-                
-                sceneManager.Add(new Loading());
+                sceneManager.SetLoadingScene(new Loading());
                 
                 sceneManager.Add(new Main());
                 sceneManager.Add(new Second());
