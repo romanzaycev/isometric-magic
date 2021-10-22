@@ -3,7 +3,7 @@ using IniParser.Model;
 
 namespace IsometricMagic.Engine
 {
-    class AppConfig
+    public class AppConfig
     {
         private readonly IniData _data;
 

@@ -3,7 +3,7 @@ using SDL2;
 
 namespace IsometricMagic.Engine
 {
-    class Application
+    public class Application
     {
         private static readonly Application Instance = new();
         private static readonly SceneManager SceneManager = SceneManager.GetInstance();
@@ -16,9 +16,15 @@ namespace IsometricMagic.Engine
         private ulong _desiredDelta;
         private ulong _startTick;
 
-        private static ulong DT_LAST;
+        private static ulong _dtLast;
         private static float _deltaTime;
         public static float DeltaTime => _deltaTime;
+
+        private int _viewportWidth;
+        private int _viewportHeight;
+
+        public int ViewportWidth => _viewportWidth;
+        public int ViewportHeight => _viewportHeight;
         
         public static Application GetInstance()
         {
@@ -46,7 +52,7 @@ namespace IsometricMagic.Engine
                 _desiredDelta = 1000 / (ulong) _config.TargetFps;
             }
 
-            DT_LAST = 0;
+            _dtLast = 0;
 
             PaintWindow();
         }
@@ -73,10 +79,10 @@ namespace IsometricMagic.Engine
         {
             var now = SDL.SDL_GetTicks();
 
-            if (now > DT_LAST)
+            if (now > _dtLast)
             {
-                _deltaTime =  (float)(now - DT_LAST) / 1000;
-                DT_LAST = now;
+                _deltaTime =  (float)(now - _dtLast) / 1000;
+                _dtLast = now;
             }
             
             SceneManager.GetCurrent().Update();
@@ -142,6 +148,8 @@ namespace IsometricMagic.Engine
             {
                 throw new InvalidOperationException($"IMG_Init error: {SDL_image.IMG_GetError()}");
             }
+
+            SDL.SDL_SetHint(SDL.SDL_HINT_RENDER_SCALE_QUALITY, "best");
         }
 
         private void InitRenderer()
@@ -208,7 +216,9 @@ namespace IsometricMagic.Engine
 
             SDL.SDL_FillRect(windowSurface, ref windowRect, 0xff000000);
             SDL.SDL_UpdateWindowSurface(_sdlWindow);
-            
+
+            _viewportWidth = w;
+            _viewportHeight = h;
             _renderer.HandleWindowResized(w, h);
         }
     }

@@ -9,11 +9,17 @@ namespace IsometricMagic.Engine
         private static readonly SceneManager Instance = new();
         private readonly Dictionary<string, Scene> _scenes = new();
         private readonly Scene _defaultScene = new("default");
+        private Scene _loadingScene;
         private Scene _currentScene;
 
         public static SceneManager GetInstance()
         {
             return Instance;
+        }
+
+        public void SetLoadingScene(Scene scene)
+        {
+            _loadingScene = scene;
         }
 
         public void Add(Scene scene)
@@ -55,19 +61,19 @@ namespace IsometricMagic.Engine
             {
                 _currentScene.Unload();
             }
-            
+
             if (_scenes.Count == 0)
             {
                 _currentScene = _defaultScene;
                 _defaultScene.Load();
-                
+
                 return;
             }
 
             // @TODO: Load with scenes sorting order
-            
+
             var scene = _scenes[_scenes.First().Key];
-            
+
             scene.Load();
             _currentScene = scene;
         }

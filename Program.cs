@@ -16,11 +16,17 @@ namespace IsometricMagic
                 app.Init(appConfig);
 
                 SDL.SDL_Event sdlEvent;
+                
                 var isRunning = true;
-
-                SceneManager.GetInstance().Add(new Main());
-                SceneManager.GetInstance().Add(new Second());
-                SceneManager.GetInstance().Add(new Bench());
+                var sceneManager = SceneManager.GetInstance();
+                
+                //sceneManager.SetLoadingScene(new Loading());
+                
+                sceneManager.Add(new Loading());
+                
+                sceneManager.Add(new Main());
+                sceneManager.Add(new Second());
+                sceneManager.Add(new Bench());
 
                 while (isRunning)
                 {

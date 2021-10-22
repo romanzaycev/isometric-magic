@@ -7,6 +7,7 @@ namespace IsometricMagic.Engine
 
         protected static readonly SceneManager SceneManager = SceneManager.GetInstance();
         protected static readonly Camera Camera = Application.GetInstance().GetRenderer().GetCamera();
+        protected static readonly Application Application = Application.GetInstance();
         
         private readonly string _name;
         public string Name => _name;

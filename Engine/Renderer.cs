@@ -1,11 +1,12 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Linq;
 using SDL2;
 
 namespace IsometricMagic.Engine
 {
-    class Renderer
+    public class Renderer
     {
         private static readonly Application Application = Application.GetInstance();
         private static readonly TextureHolder TextureHolder = TextureHolder.GetInstance();
@@ -61,6 +62,7 @@ namespace IsometricMagic.Engine
             DrawLayer(scene.UiLayer, false);
         }
 
+        [SuppressMessage("ReSharper", "PossibleLossOfFraction")]
         private void DrawLayer(SceneLayer layer, bool isCameraLayer)
         {
             foreach (var sprite in layer.Sprites)
@@ -81,15 +83,100 @@ namespace IsometricMagic.Engine
                 SDL.SDL_Rect targetRect; // @TODO Apply scale transformation
                 targetRect.w = tex.Width;
                 targetRect.h = tex.Height;
-                targetRect.x = (int)sprite.Position.X + offsetX;
-                targetRect.y = (int)sprite.Position.Y + offsetY;
+
+                int spritePosX;
+                int spritePosY;
+
+                switch (sprite.OriginPoint)
+                {
+                    case OriginPoint.LeftTop:
+                        spritePosX = (int)sprite.Position.X;
+                        spritePosY = (int)sprite.Position.Y;
+                        break;
+                    
+                    case OriginPoint.LeftCenter:
+                        spritePosX = (int)sprite.Position.X;
+                        spritePosY = (int)(sprite.Position.Y - sprite.Height / 2);
+                        break;
+                    
+                    case OriginPoint.LeftBottom:
+                        spritePosX = (int)sprite.Position.X;
+                        spritePosY = (int)sprite.Position.Y - sprite.Height;
+                        break;
+                    
+                    case OriginPoint.Centered:
+                        spritePosX = (int)(sprite.Position.X - sprite.Width / 2);
+                        spritePosY = (int)(sprite.Position.Y - sprite.Height / 2);
+                        break;
+                    
+                    case OriginPoint.RightTop:
+                        spritePosX = (int)sprite.Position.X - sprite.Width;
+                        spritePosY = (int)sprite.Position.Y;
+                        break;
+                    
+                    case OriginPoint.RightCenter:
+                        spritePosX = (int)sprite.Position.X - sprite.Width;
+                        spritePosY = (int)(sprite.Position.Y - sprite.Height / 2);
+                        break;
+                    
+                    case OriginPoint.RightBottom:
+                        spritePosX = (int)(sprite.Position.X - sprite.Width);
+                        spritePosY = (int)(sprite.Position.Y - sprite.Height);
+                        break;
+
+                    case OriginPoint.TopCenter:
+                        spritePosX = (int)(sprite.Position.X - sprite.Width / 2);
+                        spritePosY = (int)sprite.Position.Y;
+                        break;
+                    
+                    case OriginPoint.BottomCenter:
+                        spritePosX = (int)(sprite.Position.X - sprite.Width / 2);
+                        spritePosY = (int)(sprite.Position.Y - sprite.Height);
+                        break;
+                    
+                    default:
+                        throw new ArgumentException($"Unknown OriginPoint: {sprite.OriginPoint.ToString()}");
+                }
                 
-                SDL.SDL_RenderCopy(
-                    _sdlRenderer,
-                    TextureHolder.GetSdlTexture(tex),
-                    ref sourceRect, 
-                    ref targetRect
-                );
+                targetRect.x = spritePosX + offsetX;
+                targetRect.y = spritePosY + offsetY;
+
+                if (sprite.Transformation.Rotation.Angle == 0f)
+                {
+                    SDL.SDL_RenderCopy(
+                        _sdlRenderer,
+                        TextureHolder.GetSdlTexture(tex),
+                        ref sourceRect,
+                        ref targetRect
+                    );
+                }
+                else
+                {
+                    var rotation = sprite.Transformation.Rotation;
+                    
+                    SDL.SDL_Point pivotPoint;
+
+                    switch (sprite.PivotMode)
+                    {
+                        case PivotMode.Centered:
+                            pivotPoint.x = targetRect.w / 2;
+                            pivotPoint.y = targetRect.h / 2;
+                            break;
+                        
+                        default:
+                            throw new ArgumentException($"Pivot mode {sprite.PivotMode.ToString()} not supported");
+                    }
+                    
+                    SDL.SDL_RenderCopyEx(
+                        _sdlRenderer,
+                        TextureHolder.GetSdlTexture(tex),
+                        ref sourceRect,
+                        ref targetRect,
+                        MathHelper.NorRotationToDegree((rotation.Clockwise) ? rotation.Angle : -rotation.Angle),
+                        ref pivotPoint,
+                        SDL.SDL_RendererFlip.SDL_FLIP_NONE
+                    );
+                }
             }
         }
     }
