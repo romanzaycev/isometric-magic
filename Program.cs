@@ -25,6 +25,7 @@ namespace IsometricMagic
                 sceneManager.Add(new Main());
                 sceneManager.Add(new Second());
                 sceneManager.Add(new Bench());
+                sceneManager.Add(new IsoTest());
 
                 while (isRunning)
                 {

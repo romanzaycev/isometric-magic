@@ -89,6 +89,11 @@ namespace IsometricMagic.Game.Scenes
             {
                 SceneManager.LoadByName("bench");
             }
+            
+            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_8))
+            {
+                SceneManager.LoadByName("iso_test");
+            }
         }
 
         private void UpdateActiveSprite()
