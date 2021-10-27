@@ -88,6 +88,7 @@ namespace IsometricMagic.Engine
             }
             
             SceneManager.GetCurrent().Update();
+            _renderer.GetCamera().Controller?.UpdateCamera(_renderer.GetCamera());
             _renderer.DrawAll();
             PaintWindow();
         }

@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
 using IsometricMagic.Engine;
-using SDL2;
+using IsometricMagic.Game.Controllers.Camera;
 
 namespace IsometricMagic.Game.Scenes
 {
@@ -20,9 +20,6 @@ namespace IsometricMagic.Game.Scenes
         private float _spriteRotation = 100f;
         private Dictionary<Sprite, Vector2> _startPos = new();
         private Dictionary<Sprite, float> _currAngle = new();
-        private bool _isDrag;
-        private int _startMouseX;
-        private int _startMouseY;
 
         public Bench() : base("bench", true)
         {
@@ -30,6 +27,10 @@ namespace IsometricMagic.Game.Scenes
 
         protected override IEnumerator InitializeAsync()
         {
+            // Camera setup
+            Camera.SetController(new MouseController());
+            
+            // Scene setup
             var tex = new Texture(64, 64);
             tex.LoadImage(new AssetItem("./resources/data/textures/bear.jpeg"));
             
@@ -56,6 +57,7 @@ namespace IsometricMagic.Game.Scenes
         protected override void DeInitialize()
         {
             _sprites.Clear();
+            Camera.SetController(null);
         }
 
         public override void Update()
@@ -99,31 +101,6 @@ namespace IsometricMagic.Game.Scenes
                 sprite.Position = _startPos[sprite] + offset;
                 _currAngle[sprite] = currentAngle;
             }
-            
-            // Mouse camera controller copy-paste
-            
-            if (Input.IsMousePressed(SDL.SDL_BUTTON_LEFT) && !_isDrag)
-            {
-                _startMouseX = Input.MouseX;
-                _startMouseY = Input.MouseY;
-                _isDrag = true;
-            }
-
-            if (Input.IsMouseReleased(SDL.SDL_BUTTON_LEFT) && _isDrag)
-            {
-                _startMouseX = 0;
-                _startMouseY = 0;
-                _isDrag = false;
-            }
-
-            if (_isDrag)
-            {
-                Camera.Rect.X -= _startMouseX - Input.MouseX;
-                Camera.Rect.Y -= _startMouseY - Input.MouseY;
-            }
-            
-            _startMouseX = Input.MouseX;
-            _startMouseY = Input.MouseY;
         }
     }
 }

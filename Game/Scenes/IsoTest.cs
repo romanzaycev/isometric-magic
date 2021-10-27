@@ -1,21 +1,16 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Numerics;
 using IsometricMagic.Engine;
-using Newtonsoft.Json;
-using SDL2;
-using TiledCS;
+using IsometricMagic.Game.Controllers.Camera;
 
 namespace IsometricMagic.Game.Scenes
 {
     public class IsoTest : Scene
     {
         private readonly Dictionary<string, Texture> _tileTextures = new();
-        private bool _isDrag;
-        private int _startMouseX;
-        private int _startMouseY;
 
         public IsoTest() : base("iso_test", true)
         {
@@ -23,107 +18,79 @@ namespace IsometricMagic.Game.Scenes
 
         protected override IEnumerator InitializeAsync()
         {
-            var jsonMapData = File.ReadAllText("./resources/data/maps/map0.json");
-            yield return true;
+            // Camera setup
+            Camera.SetController(new MouseController());
             
-            var map = JsonConvert.DeserializeObject<TiledMap>(jsonMapData);
+            // Map setup
+            var map = Maps.Loader.Load("map0");
             yield return true;
 
-            var tileset = new TiledTileset("./resources/data/sets/grass.tsx");
+            var tileSet = Tiles.Loader.Load("grass");
             yield return true;
-            
+
             if (map != null)
             {
-                var mainLayer = map.Layers.First(l => l.name == "main");
+                var mainLayer = map.Layers.First(l => l.Name == "main");
 
-                var mapWidth = mainLayer.width;
-                var mapHeight = mainLayer.height;
+                var mapWidth = map.Width;
+                var mapHeight = map.Height;
 
                 var tileWidth = map.TileWidth;
                 var tileHeight = map.TileHeight;
 
-                var canvasWidth = tileWidth * mapWidth;
-                var canvasHeight = tileHeight * mapHeight;
-                var isoC = canvasWidth / 2;
-                
+                var i = 0;
+
                 for (var y = 0; y < mapHeight; y++)
                 {
-                    var Yo = (tileHeight / 2) * y;
-                    var Xc = isoC - (tileWidth / 2 * y);
-                    
-                    for (var x = 0; x < mapWidth; x++)
+                    for (var x = mapWidth - 1; x >= 0; x--)
                     {
-                        var tileId = mainLayer.data[x * y];
+                        var tileId = mainLayer.Data[i];
 
                         if (tileId > 0)
                         {
-                            var tile = tileset.Tiles[tileId];
+                            var tile = tileSet.Tiles[tileId];
                             Texture tex;
 
-                            if (!_tileTextures.ContainsKey(tile.image.source))
+                            if (!_tileTextures.ContainsKey(tile.Image.Source))
                             {
-                                tex = new Texture(tile.image.width, tile.image.height);
-                                tex.LoadImage(new AssetItem($"./resources/data/textures/{tile.image.source}"));
+                                tex = new Texture(tile.Image.Width, tile.Image.Height);
+                                tex.LoadImage(new AssetItem($"./resources/data/textures/{tile.Image.Source}"));
 
-                                _tileTextures.Add(tile.image.source, tex);
+                                _tileTextures.Add(tile.Image.Source, tex);
                             }
                             else
                             {
-                                tex = _tileTextures[tile.image.source];
+                                tex = _tileTextures[tile.Image.Source];
                             }
 
-                            var Xo = Xc + (x * (tileWidth / 2));
-                            Yo += tileHeight / 2;
-                            
                             var sprite = new Sprite()
                             {
-                                Width = tile.image.width,
-                                Height = tile.image.height,
+                                Width = tile.Image.Width,
+                                Height = tile.Image.Height,
                                 Position = new Vector2(
-                                    Xo - tileWidth / 2,
-                                    Yo - tileHeight / 2
+                                    (x * tileWidth / 2) + (y * tileWidth / 2),
+                                    (y * tileHeight / 2) - (x * tileHeight / 2)
                                 ),
-                                Texture = tex
+                                Texture = tex,
+                                Sorting = i,
                             };
                             
                             MainLayer.Add(sprite);
                         }
 
-                        if (y % 3 == 0)
-                        {
-                            yield return true;
-                        }
+                        i++;
                     }
+
+                    yield return true;
                 }
+                
+                Console.WriteLine($"Total: {i}, Expected: {mapWidth * mapHeight}");
             }
         }
 
-        public override void Update()
+        protected override void DeInitialize()
         {
-            // Mouse camera controller copy-paste
-            
-            if (Input.IsMousePressed(SDL.SDL_BUTTON_LEFT) && !_isDrag)
-            {
-                _startMouseX = Input.MouseX;
-                _startMouseY = Input.MouseY;
-                _isDrag = true;
-            }
-
-            if (Input.IsMouseReleased(SDL.SDL_BUTTON_LEFT) && _isDrag)
-            {
-                _startMouseX = 0;
-                _startMouseY = 0;
-                _isDrag = false;
-            }
-
-            if (_isDrag)
-            {
-                Camera.Rect.X -= _startMouseX - Input.MouseX;
-                Camera.Rect.Y -= _startMouseY - Input.MouseY;
-            }
-            
-            _startMouseX = Input.MouseX;
-            _startMouseY = Input.MouseY;
+            Camera.SetController(null);
         }
     }
 }

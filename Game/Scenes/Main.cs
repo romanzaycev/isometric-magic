@@ -2,13 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using IsometricMagic.Engine;
+using IsometricMagic.Game.Controllers.Camera;
 using SDL2;
 
 namespace IsometricMagic.Game.Scenes
 {
     public class Main : Scene
     {
-        private List<Sprite> _sprites = new();
+        private readonly List<Sprite> _sprites = new();
         private int _activeSpriteIndex;
         private bool _isSwitchPressed;
 
@@ -18,6 +19,10 @@ namespace IsometricMagic.Game.Scenes
 
         protected override void Initialize()
         {
+            // Camera setup
+            Camera.SetController(new KeyboardArrowsController());
+            
+            // Scene setup
             var tex = new Texture(900, 900);
             tex.LoadImage(new AssetItem("./resources/data/textures/thonk.jpeg"));
 
@@ -58,26 +63,6 @@ namespace IsometricMagic.Game.Scenes
             }
 
             UpdateActiveSprite();
-            
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_LEFT))
-            {
-                Camera.Rect.X += 10;
-            }
-            
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_RIGHT))
-            {
-                Camera.Rect.X -= 10;
-            }
-            
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_UP))
-            {
-                Camera.Rect.Y += 10;
-            }
-
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_DOWN))
-            {
-                Camera.Rect.Y -= 10;
-            }
 
             // Switch scenes
             if (Input.IsPressed(SDL.SDL_Keycode.SDLK_0))
@@ -94,6 +79,11 @@ namespace IsometricMagic.Game.Scenes
             {
                 SceneManager.LoadByName("iso_test");
             }
+        }
+
+        protected override void DeInitialize()
+        {
+            Camera.SetController(null);
         }
 
         private void UpdateActiveSprite()

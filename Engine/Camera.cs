@@ -5,6 +5,7 @@ namespace IsometricMagic.Engine
     public class Camera
     {
         public Rectangle Rect;
+        public ICameraController Controller { get; private set; }
 
         public Camera(int viewportWidth, int viewportHeight)
         {
@@ -15,6 +16,11 @@ namespace IsometricMagic.Engine
                 X = 0,
                 Y = 0
             };
+        }
+
+        public void SetController(ICameraController controller)
+        {
+            Controller = controller;
         }
     }
 }

@@ -17,6 +17,9 @@ namespace IsometricMagic.Game.Scenes
 
         protected override void Initialize()
         {
+            Camera.Rect.X = 0;
+            Camera.Rect.Y = 0;
+            
             var textTex = new Texture(288, 49);
             textTex.LoadImage(new AssetItem("./resources/data/textures/loading_text.png"));
 

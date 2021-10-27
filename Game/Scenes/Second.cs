@@ -1,22 +1,21 @@
 using System;
 using System.Numerics;
 using IsometricMagic.Engine;
+using IsometricMagic.Game.Controllers.Camera;
 using SDL2;
 
 namespace IsometricMagic.Game.Scenes
 {
     public class Second : Scene
     {
-        private bool _isDrag;
-        private int _startMouseX;
-        private int _startMouseY;
-
         public Second() : base("second")
         {
         }
 
         protected override void Initialize()
         {
+            Camera.SetController(new MouseController());
+
             var tex = new Texture(900, 900);
             tex.LoadImage(new AssetItem("./resources/data/textures/thonk.jpeg"));
 
@@ -31,30 +30,9 @@ namespace IsometricMagic.Game.Scenes
             Console.WriteLine($"Scene {Name} initialized");
         }
 
-        public override void Update()
+        protected override void DeInitialize()
         {
-            if (Input.IsMousePressed(SDL.SDL_BUTTON_LEFT) && !_isDrag)
-            {
-                _startMouseX = Input.MouseX;
-                _startMouseY = Input.MouseY;
-                _isDrag = true;
-            }
-
-            if (Input.IsMouseReleased(SDL.SDL_BUTTON_LEFT) && _isDrag)
-            {
-                _startMouseX = 0;
-                _startMouseY = 0;
-                _isDrag = false;
-            }
-
-            if (_isDrag)
-            {
-                Camera.Rect.X -= _startMouseX - Input.MouseX;
-                Camera.Rect.Y -= _startMouseY - Input.MouseY;
-            }
-            
-            _startMouseX = Input.MouseX;
-            _startMouseY = Input.MouseY;
+            Camera.SetController(null);
         }
     }
 }
