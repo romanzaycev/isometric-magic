@@ -21,11 +21,12 @@ namespace IsometricMagic
                 var sceneManager = SceneManager.GetInstance();
                 
                 sceneManager.SetLoadingScene(new Loading());
-                
+
+                sceneManager.Add(new Animation());
+                sceneManager.Add(new IsoTest());
                 sceneManager.Add(new Main());
                 sceneManager.Add(new Second());
                 sceneManager.Add(new Bench());
-                sceneManager.Add(new IsoTest());
 
                 while (isRunning)
                 {

@@ -22,10 +22,10 @@ namespace IsometricMagic.Game.Scenes
             Camera.SetController(new MouseController());
             
             // Map setup
-            var map = Maps.Loader.Load("map0");
+            var map = Maps.Loader.Load("map1");
             yield return true;
 
-            var tileSet = Tiles.Loader.Load("grass");
+            var tileSet = Tiles.Loader.Load(map.TileSet);
             yield return true;
 
             if (map != null)

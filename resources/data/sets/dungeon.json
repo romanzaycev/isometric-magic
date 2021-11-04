@@ -1,0 +1,389 @@
+{
+  "name": "dungeon",
+  "tiles": [
+    {
+      "id": 1,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/dirt_W.png"
+      }
+    },
+    {
+      "id": 2,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/dirt_E.png"
+      }
+    },
+    {
+      "id": 3,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/dirt_N.png"
+      }
+    },
+    {
+      "id": 4,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/dirt_S.png"
+      }
+    },
+    {
+      "id": 5,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stone_E.png"
+      }
+    },
+    {
+      "id": 6,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stone_N.png"
+      }
+    },
+    {
+      "id": 7,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stone_S.png"
+      }
+    },
+    {
+      "id": 8,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stone_W.png"
+      }
+    },
+    {
+      "id": 9,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneCorner_E.png"
+      }
+    },
+    {
+      "id": 10,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneCorner_N.png"
+      }
+    },
+    {
+      "id": 11,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneCorner_S.png"
+      }
+    },
+    {
+      "id": 12,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneCorner_W.png"
+      }
+    },
+    {
+      "id": 13,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneLeft_E.png"
+      }
+    },
+    {
+      "id": 14,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneLeft_N.png"
+      }
+    },
+    {
+      "id": 15,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneLeft_S.png"
+      }
+    },
+    {
+      "id": 16,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneLeft_W.png"
+      }
+    },
+    {
+      "id": 17,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneMissingTiles_E.png"
+      }
+    },
+    {
+      "id": 18,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneMissingTiles_N.png"
+      }
+    },
+    {
+      "id": 19,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneMissingTiles_S.png"
+      }
+    },
+    {
+      "id": 20,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneMissingTiles_W.png"
+      }
+    },
+    {
+      "id": 21,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneRight_E.png"
+      }
+    },
+    {
+      "id": 22,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneRight_N.png"
+      }
+    },
+    {
+      "id": 23,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneRight_S.png"
+      }
+    },
+    {
+      "id": 24,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneRight_W.png"
+      }
+    },
+    {
+      "id": 25,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneSide_E.png"
+      }
+    },
+    {
+      "id": 26,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneSide_N.png"
+      }
+    },
+    {
+      "id": 27,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneSide_S.png"
+      }
+    },
+    {
+      "id": 28,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneSide_W.png"
+      }
+    },
+    {
+      "id": 29,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneSideUneven_E.png"
+      }
+    },
+    {
+      "id": 30,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneSideUneven_N.png"
+      }
+    },
+    {
+      "id": 31,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneSideUneven_S.png"
+      }
+    },
+    {
+      "id": 32,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneSideUneven_W.png"
+      }
+    },
+    {
+      "id": 33,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneStep_E.png"
+      }
+    },
+    {
+      "id": 34,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneStep_N.png"
+      }
+    },
+    {
+      "id": 35,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneStep_S.png"
+      }
+    },
+    {
+      "id": 36,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneStep_W.png"
+      }
+    },
+    {
+      "id": 37,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneSteps_E.png"
+      }
+    },
+    {
+      "id": 38,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneSteps_N.png"
+      }
+    },
+    {
+      "id": 39,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneSteps_S.png"
+      }
+    },
+    {
+      "id": 40,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneSteps_W.png"
+      }
+    },
+    {
+      "id": 41,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneTile_E.png"
+      }
+    },
+    {
+      "id": 42,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneTile_N.png"
+      }
+    },
+    {
+      "id": 43,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneTile_S.png"
+      }
+    },
+    {
+      "id": 44,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneTile_W.png"
+      }
+    },
+    {
+      "id": 45,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneUneven_E.png"
+      }
+    },
+    {
+      "id": 46,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneUneven_N.png"
+      }
+    },
+    {
+      "id": 47,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneUneven_S.png"
+      }
+    },
+    {
+      "id": 48,
+      "image": {
+        "width": 256,
+        "height": 512,
+        "source": "ts1/stoneUneven_W.png"
+      }
+    }
+  ]
+}
