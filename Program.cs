@@ -22,8 +22,8 @@ namespace IsometricMagic
                 
                 sceneManager.SetLoadingScene(new Loading());
 
-                sceneManager.Add(new Animation());
                 sceneManager.Add(new IsoTest());
+                sceneManager.Add(new Animation());
                 sceneManager.Add(new Main());
                 sceneManager.Add(new Second());
                 sceneManager.Add(new Bench());

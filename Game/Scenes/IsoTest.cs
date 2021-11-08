@@ -2,15 +2,20 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using IsometricMagic.Engine;
+using IsometricMagic.Game.Character;
 using IsometricMagic.Game.Controllers.Camera;
+using IsometricMagic.Game.Model;
+using SDL2;
 
 namespace IsometricMagic.Game.Scenes
 {
     public class IsoTest : Scene
     {
         private readonly Dictionary<string, Texture> _tileTextures = new();
+        private IsoWorldPositionConverter _positionConverter;
+        private Human _human;
+        private LookAtController _camController = new();
 
         public IsoTest() : base("iso_test", true)
         {
@@ -19,7 +24,7 @@ namespace IsometricMagic.Game.Scenes
         protected override IEnumerator InitializeAsync()
         {
             // Camera setup
-            Camera.SetController(new MouseController());
+            Camera.SetController(_camController);
             
             // Map setup
             var map = Maps.Loader.Load("map1");
@@ -38,6 +43,13 @@ namespace IsometricMagic.Game.Scenes
                 var tileWidth = map.TileWidth;
                 var tileHeight = map.TileHeight;
 
+                _positionConverter = new IsoWorldPositionConverter(
+                    tileWidth,
+                    tileHeight,
+                    mapWidth,
+                    mapHeight
+                );
+                
                 var i = 0;
 
                 for (var y = 0; y < mapHeight; y++)
@@ -67,12 +79,10 @@ namespace IsometricMagic.Game.Scenes
                             {
                                 Width = tile.Image.Width,
                                 Height = tile.Image.Height,
-                                Position = new Vector2(
-                                    (x * tileWidth / 2) + (y * tileWidth / 2),
-                                    (y * tileHeight / 2) - (x * tileHeight / 2)
-                                ),
+                                Position = _positionConverter.GetCanvasPosition(x * tileWidth / 2, y * tileWidth / 2),
                                 Texture = tex,
                                 Sorting = i,
+                                OriginPoint = OriginPoint.LeftBottom,
                             };
                             
                             MainLayer.Add(sprite);
@@ -85,6 +95,44 @@ namespace IsometricMagic.Game.Scenes
                 }
                 
                 Console.WriteLine($"Total: {i}, Expected: {mapWidth * mapHeight}");
+
+                _human = new Human(MainLayer, _positionConverter);
+            }
+        }
+
+        public override void Update()
+        {
+            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_UP))
+            {
+                _human.WorldPosY += 5;
+            }
+
+            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_DOWN))
+            {
+                _human.WorldPosY -= 5;
+            }
+            
+            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_LEFT))
+            {
+                _human.WorldPosX -= 5;
+            }
+            
+            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_RIGHT))
+            {
+                _human.WorldPosX += 5;
+            }
+
+            _human.CurrentSequence?.Update(Application.DeltaTime);
+            
+            if (_human.CurrentSequence?.CurrentSprite != null)
+            {
+                var pos = _positionConverter.GetCanvasPosition(_human);
+                
+                _human.CurrentSequence.CurrentSprite.Position = pos;
+                
+                Console.WriteLine(pos);
+                
+                _camController.SetPos(pos);
             }
         }
 
