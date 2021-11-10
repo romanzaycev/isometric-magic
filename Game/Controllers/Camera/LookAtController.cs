@@ -27,7 +27,7 @@ namespace IsometricMagic.Game.Controllers.Camera
 
                 if (nextY >= -200)
                 {
-                    camera.Rect.Y = nextY;
+                    camera.Rect.Y = nextY - 100;
                 }
             }
         }
