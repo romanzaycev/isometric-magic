@@ -23,7 +23,7 @@ namespace IsometricMagic.Game.Scenes
             var textTex = new Texture(288, 49);
             textTex.LoadImage(new AssetItem("./resources/data/textures/loading_text.png"));
 
-            _loadingText = new Sprite()
+            _loadingText = new Sprite
             {
                 Texture = textTex,
                 Name = "Loading text",
@@ -35,7 +35,7 @@ namespace IsometricMagic.Game.Scenes
             var circleTex = new Texture(128, 128);
             circleTex.LoadImage(new AssetItem("./resources/data/textures/loading_circle.png"));
 
-            _loadingCircle = new Sprite()
+            _loadingCircle = new Sprite
             {
                 Texture = circleTex,
                 Name = "Loading circle",
@@ -52,13 +52,13 @@ namespace IsometricMagic.Game.Scenes
             _loadingText.Position = new Vector2
             {
                 X = Camera.Rect.Width / 2,
-                Y = Camera.Rect.Height / 2,
+                Y = Camera.Rect.Height / 2
             };
             
             _loadingCircle.Position = new Vector2
             {
                 X = Application.ViewportWidth - 40,
-                Y = Application.ViewportHeight - 40,
+                Y = Application.ViewportHeight - 40
             };
             _currLoadingCircleAngle += _loadingCircleSpeed * Application.DeltaTime;
             _loadingCircle.Transformation.Rotation.Angle += _currLoadingCircleAngle;

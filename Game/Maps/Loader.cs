@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace IsometricMagic.Game.Maps
 {
-    public class Loader
+    public static class Loader
     {
         public static Map Load(string name)
         {

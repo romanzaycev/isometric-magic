@@ -9,9 +9,9 @@ namespace IsometricMagic.Game.Tiles
         public string Name { get; private set; }
 
         [Newtonsoft.Json.JsonProperty("tiles")]
-        private List<Tile> _jsonTiles = null;
+        private List<Tile> _jsonTiles = new();
 
-        private bool _isTilesInitialized = false;
+        private bool _isTilesInitialized;
 
         private Dictionary<int, Tile> _tiles = new();
 

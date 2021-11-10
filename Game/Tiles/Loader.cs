@@ -1,10 +1,9 @@
 using System.IO;
-using IsometricMagic.Game.Maps;
 using Newtonsoft.Json;
 
 namespace IsometricMagic.Game.Tiles
 {
-    public class Loader
+    public static class Loader
     {
         public static TileSet Load(string name)
         {

@@ -9,6 +9,6 @@ namespace IsometricMagic.Game.Model
         S = 180,
         SW = 225,
         W = 270,
-        NW = 315,
+        NW = 315
     }
 }

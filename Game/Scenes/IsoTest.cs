@@ -1,12 +1,11 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using IsometricMagic.Engine;
 using IsometricMagic.Game.Character;
 using IsometricMagic.Game.Controllers.Camera;
+using IsometricMagic.Game.Controllers.Character;
 using IsometricMagic.Game.Model;
-using SDL2;
 
 namespace IsometricMagic.Game.Scenes
 {
@@ -15,7 +14,8 @@ namespace IsometricMagic.Game.Scenes
         private readonly Dictionary<string, Texture> _tileTextures = new();
         private IsoWorldPositionConverter _positionConverter;
         private Human _human;
-        private LookAtController _camController = new();
+        private readonly LookAtController _camController = new();
+        private readonly CharacterMovementController _movementController = new KeyboardMovementController();
 
         public IsoTest() : base("iso_test", true)
         {
@@ -75,14 +75,14 @@ namespace IsometricMagic.Game.Scenes
                                 tex = _tileTextures[tile.Image.Source];
                             }
 
-                            var sprite = new Sprite()
+                            var sprite = new Sprite
                             {
                                 Width = tile.Image.Width,
                                 Height = tile.Image.Height,
                                 Position = _positionConverter.GetCanvasPosition(x * tileWidth / 2, y * tileWidth / 2),
                                 Texture = tex,
                                 Sorting = i,
-                                OriginPoint = OriginPoint.LeftBottom,
+                                OriginPoint = OriginPoint.LeftBottom
                             };
                             
                             MainLayer.Add(sprite);
@@ -104,77 +104,7 @@ namespace IsometricMagic.Game.Scenes
 
         public override void Update()
         {
-            var moveX = 0;
-            var moveY = 0;
-            const int maxAbsMove = 5;
-            
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_UP))
-            {
-                moveY = -5;
-            }
-
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_DOWN))
-            {
-                moveY = 5;
-            }
-            
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_LEFT))
-            {
-                moveX = -5;
-            }
-            
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_RIGHT))
-            {
-                moveX = 5;
-            }
-
-            var absMoveX = Math.Abs(moveX);
-            var absMoveY = Math.Abs(moveY);
-            
-            if (Math.Abs(moveX) > 0)
-            {
-                moveX = (moveX < 0) ? -Math.Min(absMoveX, maxAbsMove) : Math.Min(absMoveX, maxAbsMove);
-            }
-            
-            if (Math.Abs(moveY) > 0)
-            {
-                moveY = (moveY < 0) ? -Math.Min(absMoveY, maxAbsMove) : Math.Min(absMoveY, maxAbsMove);
-            }
-
-            const int worldBorderThreshold = 30;
-            var nextXPos = _human.WorldPosX + moveX;
-            var nextYPos = _human.WorldPosY + moveY;
-            var isMoving = false;
-
-            if (nextXPos >= worldBorderThreshold && nextXPos <= _positionConverter.WorldWidth - worldBorderThreshold)
-            {
-                if (_human.WorldPosX != nextXPos)
-                {
-                    _human.WorldPosX = nextXPos;
-                    isMoving = true;
-                    _human.Direction = GetDirection(moveX, moveY);
-                }
-            }
-            
-            if (nextYPos >= worldBorderThreshold && nextYPos <= _positionConverter.WorldHeight - worldBorderThreshold)
-            {
-                if (_human.WorldPosY != nextYPos)
-                {
-                    _human.WorldPosY = nextYPos;
-                    isMoving = true;
-                    _human.Direction = GetDirection(moveX, moveY);
-                }
-            }
-
-            if (isMoving)
-            {
-                _human.State = HumanState.RUNNING;
-            }
-            else
-            {
-                _human.State = HumanState.IDLE;
-            }
-
+            _movementController.HandleMovement(_human, _positionConverter);
             _human.CurrentSequence?.Update(Application.DeltaTime);
             
             if (_human.CurrentSequence?.CurrentSprite != null)
@@ -190,53 +120,6 @@ namespace IsometricMagic.Game.Scenes
         protected override void DeInitialize()
         {
             Camera.SetController(null);
-        }
-
-        private WorldDirection GetDirection(int moveX, int moveY)
-        {
-            if (moveX == 0 && moveY == 0)
-            {
-                return _human.Direction;
-            }
-
-            if (moveY < 0 && moveX == 0)
-            {
-                return WorldDirection.SW;
-            }
-
-            if (moveY > 0 && moveX == 0)
-            {
-                return WorldDirection.NE;
-            }
-            
-            if (moveY == 0 && moveX < 0)
-            {
-                return WorldDirection.NW;
-            }
-
-            if (moveY == 0 && moveX > 0)
-            {
-                return WorldDirection.SE;
-            }
-
-            // --
-            
-            if (moveY > 0 && moveX > 0)
-            {
-                return WorldDirection.E;
-            }
-            
-            if (moveY > 0 && moveX < 0)
-            {
-                return WorldDirection.N;
-            }
-            
-            if (moveY < 0 && moveX > 0)
-            {
-                return WorldDirection.S;
-            }
-            
-            return WorldDirection.W;
         }
     }
 }

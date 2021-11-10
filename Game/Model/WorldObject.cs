@@ -1,5 +1,3 @@
-using System.Numerics;
-
 namespace IsometricMagic.Game.Model
 {
     public abstract class WorldObject

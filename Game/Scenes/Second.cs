@@ -2,7 +2,6 @@ using System;
 using System.Numerics;
 using IsometricMagic.Engine;
 using IsometricMagic.Game.Controllers.Camera;
-using SDL2;
 
 namespace IsometricMagic.Game.Scenes
 {

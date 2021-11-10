@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using IsometricMagic.Engine;
 
@@ -12,8 +11,8 @@ namespace IsometricMagic.Game.Animation
         private readonly IReadOnlyList<Sprite> _sprites;
         public IReadOnlyList<Sprite> Sprites => _sprites;
         private bool _isPlaying;
-        private float _lastChangeTime = 0;
-        private float _time = 0;
+        private float _lastChangeTime;
+        private float _time;
         
         public float FrameDelay = 0.1f;
         
