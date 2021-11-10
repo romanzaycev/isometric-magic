@@ -64,8 +64,9 @@ namespace IsometricMagic.Engine
         [SuppressMessage("ReSharper", "PossibleLossOfFraction")]
         private void DrawLayer(SceneLayer layer, bool isCameraLayer)
         {
-            var cameraOffsetX = _camera.Rect.X;
-            var cameraOffsetY = _camera.Rect.Y;
+            var cameraRect = _camera.Rect;
+            var cameraOffsetX = cameraRect.X;
+            var cameraOffsetY = cameraRect.Y;
             
             foreach (var sprite in layer.Sprites)
             {
@@ -79,15 +80,10 @@ namespace IsometricMagic.Engine
                 sourceRect.x = 0;
                 sourceRect.y = 0;
 
-                var offsetX = (isCameraLayer) ? cameraOffsetX : 0;
-                var offsetY = (isCameraLayer) ? cameraOffsetY : 0;
-
-                offsetX += (int)sprite.Transformation.Translate.X;
-                offsetY += (int)sprite.Transformation.Translate.Y;
+                var spriteTransformation = sprite.Transformation;
                 
-                SDL.SDL_Rect targetRect; // @TODO Apply scale transformation
-                targetRect.w = tex.Width;
-                targetRect.h = tex.Height;
+                var offsetX = (int) spriteTransformation.Translate.X;
+                var offsetY = (int) spriteTransformation.Translate.Y;
 
                 int spritePosX;
                 int spritePosY;
@@ -142,9 +138,26 @@ namespace IsometricMagic.Engine
                     default:
                         throw new ArgumentException($"Unknown OriginPoint: {sprite.OriginPoint.ToString()}");
                 }
+
+                spritePosX += offsetX;
+                spritePosY += offsetY;
                 
-                targetRect.x = spritePosX - offsetX;
-                targetRect.y = spritePosY - offsetY;
+                if (isCameraLayer)
+                {
+                    if (IsCulled(sprite.Width, sprite.Height, spritePosX, spritePosY, cameraRect))
+                    {
+                        continue;
+                    }
+
+                    spritePosX -= cameraOffsetX;
+                    spritePosY -= cameraOffsetY;
+                }
+                
+                SDL.SDL_Rect targetRect; // @TODO Apply scale transformation
+                targetRect.w = tex.Width;
+                targetRect.h = tex.Height;
+                targetRect.x = spritePosX;
+                targetRect.y = spritePosY;
 
                 if (sprite.Transformation.Rotation.Angle == 0f)
                 {
@@ -157,7 +170,7 @@ namespace IsometricMagic.Engine
                 }
                 else
                 {
-                    var rotation = sprite.Transformation.Rotation;
+                    var rotation = spriteTransformation.Rotation;
                     
                     SDL.SDL_Point pivotPoint;
 
@@ -183,6 +196,11 @@ namespace IsometricMagic.Engine
                     );
                 }
             }
+        }
+
+        private static bool IsCulled(int width, int height, int x, int y, Rectangle cameraRect)
+        {
+            return y > cameraRect.Bottom || x > cameraRect.Right || y + height < cameraRect.Top || x + width < cameraRect.Left;
         }
     }
 }

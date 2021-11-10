@@ -53,7 +53,7 @@ namespace IsometricMagic.Game.Character
                             OriginPoint = OriginPoint.BottomCenter,
                             Sorting = 1000,
                             Transformation = {
-                                Translate = new Vector2(0, -8),
+                                Translate = new Vector2(0, 8),
                             }
                         };
                         tex.LoadImage(new AssetItem($"{framesPath}/{frameName}{i}{extension}"));
