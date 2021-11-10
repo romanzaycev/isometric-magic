@@ -93,33 +93,86 @@ namespace IsometricMagic.Game.Scenes
 
                     yield return true;
                 }
-                
-                Console.WriteLine($"Total: {i}, Expected: {mapWidth * mapHeight}");
 
-                _human = new Human(MainLayer, _positionConverter);
+                _human = new Human(MainLayer)
+                {
+                    WorldPosY = 400,
+                    WorldPosX = 400
+                };
             }
         }
 
         public override void Update()
         {
+            var moveX = 0;
+            var moveY = 0;
+            const int maxAbsMove = 5;
+            
             if (Input.IsPressed(SDL.SDL_Keycode.SDLK_UP))
             {
-                _human.WorldPosY += 5;
+                moveY = -5;
             }
 
             if (Input.IsPressed(SDL.SDL_Keycode.SDLK_DOWN))
             {
-                _human.WorldPosY -= 5;
+                moveY = 5;
             }
             
             if (Input.IsPressed(SDL.SDL_Keycode.SDLK_LEFT))
             {
-                _human.WorldPosX -= 5;
+                moveX = -5;
             }
             
             if (Input.IsPressed(SDL.SDL_Keycode.SDLK_RIGHT))
             {
-                _human.WorldPosX += 5;
+                moveX = 5;
+            }
+
+            var absMoveX = Math.Abs(moveX);
+            var absMoveY = Math.Abs(moveY);
+            
+            if (Math.Abs(moveX) > 0)
+            {
+                moveX = (moveX < 0) ? -Math.Min(absMoveX, maxAbsMove) : Math.Min(absMoveX, maxAbsMove);
+            }
+            
+            if (Math.Abs(moveY) > 0)
+            {
+                moveY = (moveY < 0) ? -Math.Min(absMoveY, maxAbsMove) : Math.Min(absMoveY, maxAbsMove);
+            }
+
+            const int worldBorderThreshold = 30;
+            var nextXPos = _human.WorldPosX + moveX;
+            var nextYPos = _human.WorldPosY + moveY;
+            var isMoving = false;
+
+            if (nextXPos >= worldBorderThreshold && nextXPos <= _positionConverter.WorldWidth - worldBorderThreshold)
+            {
+                if (_human.WorldPosX != nextXPos)
+                {
+                    _human.WorldPosX = nextXPos;
+                    isMoving = true;
+                    _human.Direction = GetDirection(moveX, moveY);
+                }
+            }
+            
+            if (nextYPos >= worldBorderThreshold && nextYPos <= _positionConverter.WorldHeight - worldBorderThreshold)
+            {
+                if (_human.WorldPosY != nextYPos)
+                {
+                    _human.WorldPosY = nextYPos;
+                    isMoving = true;
+                    _human.Direction = GetDirection(moveX, moveY);
+                }
+            }
+
+            if (isMoving)
+            {
+                _human.State = HumanState.RUNNING;
+            }
+            else
+            {
+                _human.State = HumanState.IDLE;
             }
 
             _human.CurrentSequence?.Update(Application.DeltaTime);
@@ -130,8 +183,6 @@ namespace IsometricMagic.Game.Scenes
                 
                 _human.CurrentSequence.CurrentSprite.Position = pos;
                 
-                Console.WriteLine(pos);
-                
                 _camController.SetPos(pos);
             }
         }
@@ -139,6 +190,53 @@ namespace IsometricMagic.Game.Scenes
         protected override void DeInitialize()
         {
             Camera.SetController(null);
+        }
+
+        private WorldDirection GetDirection(int moveX, int moveY)
+        {
+            if (moveX == 0 && moveY == 0)
+            {
+                return _human.Direction;
+            }
+
+            if (moveY < 0 && moveX == 0)
+            {
+                return WorldDirection.SW;
+            }
+
+            if (moveY > 0 && moveX == 0)
+            {
+                return WorldDirection.NE;
+            }
+            
+            if (moveY == 0 && moveX < 0)
+            {
+                return WorldDirection.NW;
+            }
+
+            if (moveY == 0 && moveX > 0)
+            {
+                return WorldDirection.SE;
+            }
+
+            // --
+            
+            if (moveY > 0 && moveX > 0)
+            {
+                return WorldDirection.E;
+            }
+            
+            if (moveY > 0 && moveX < 0)
+            {
+                return WorldDirection.N;
+            }
+            
+            if (moveY < 0 && moveX > 0)
+            {
+                return WorldDirection.S;
+            }
+            
+            return WorldDirection.W;
         }
     }
 }

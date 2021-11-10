@@ -64,6 +64,9 @@ namespace IsometricMagic.Engine
         [SuppressMessage("ReSharper", "PossibleLossOfFraction")]
         private void DrawLayer(SceneLayer layer, bool isCameraLayer)
         {
+            var cameraOffsetX = _camera.Rect.X;
+            var cameraOffsetY = _camera.Rect.Y;
+            
             foreach (var sprite in layer.Sprites)
             {
                 if (sprite.Texture == null || !sprite.Visible) continue;
@@ -76,8 +79,11 @@ namespace IsometricMagic.Engine
                 sourceRect.x = 0;
                 sourceRect.y = 0;
 
-                var offsetX = (isCameraLayer) ? _camera.Rect.X : 0;
-                var offsetY = (isCameraLayer) ? _camera.Rect.Y : 0;
+                var offsetX = (isCameraLayer) ? cameraOffsetX : 0;
+                var offsetY = (isCameraLayer) ? cameraOffsetY : 0;
+
+                offsetX += (int)sprite.Transformation.Translate.X;
+                offsetY += (int)sprite.Transformation.Translate.Y;
                 
                 SDL.SDL_Rect targetRect; // @TODO Apply scale transformation
                 targetRect.w = tex.Width;
@@ -137,8 +143,8 @@ namespace IsometricMagic.Engine
                         throw new ArgumentException($"Unknown OriginPoint: {sprite.OriginPoint.ToString()}");
                 }
                 
-                targetRect.x = spritePosX + offsetX;
-                targetRect.y = spritePosY + offsetY;
+                targetRect.x = spritePosX - offsetX;
+                targetRect.y = spritePosY - offsetY;
 
                 if (sprite.Transformation.Rotation.Angle == 0f)
                 {

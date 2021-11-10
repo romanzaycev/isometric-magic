@@ -15,27 +15,51 @@ namespace IsometricMagic.Game.Character
     
     public class Human : WorldObject
     {
-        private readonly IsoWorldPositionConverter _converter;
         private readonly Dictionary<string, Sequence> _animations = new();
-        public Sequence CurrentSequence
+        public Sequence CurrentSequence => _animations[_currentAnimation];
+
+        private WorldDirection _direction = WorldDirection.N;
+        public WorldDirection Direction
         {
-            get
-            {
-                if (_animations.ContainsKey(_currentAnimation))
+            get => _direction;
+            
+            set {
+                if (value != _direction)
                 {
-                    return _animations[_currentAnimation]; 
+                    _state = State;
+                    _direction = value;
+                }
+            }
+        }
+        private string _currentAnimation = "idle_0";
+        private HumanState _state = HumanState.IDLE; 
+        public HumanState State
+        {
+            get => _state;
+
+            set
+            {
+                var nextAnimation = value switch
+                {
+                    HumanState.IDLE => "idle_" + (int) _direction,
+                    HumanState.RUNNING => "running_" + (int) _direction,
+                    HumanState.DYING => "dying_" + (int) _direction,
+                    _ => _currentAnimation
+                };
+
+                if (nextAnimation != _currentAnimation)
+                {
+                    CurrentSequence.Stop();
+                    _currentAnimation = nextAnimation;
+                    CurrentSequence.Play();
                 }
 
-                return null;
+                _state = value;
             }
         }
 
-        private string _currentAnimation = "idle_0";
-        private HumanState _state = HumanState.IDLE;
-
-        public Human(SceneLayer layer, IsoWorldPositionConverter converter)
+        public Human(SceneLayer layer)
         {
-            _converter = converter;
             string[] availableAnimations =
             {
                 "idle",
@@ -79,6 +103,9 @@ namespace IsometricMagic.Game.Character
                             Texture = tex,
                             OriginPoint = OriginPoint.BottomCenter,
                             Sorting = 1000,
+                            Transformation = {
+                                Translate = new Vector2(0, -8),
+                            }
                         };
                         tex.LoadImage(new AssetItem($"{framesPath}/{frameName}{i}{extension}"));
                         
@@ -96,11 +123,6 @@ namespace IsometricMagic.Game.Character
             }
             
             CurrentSequence.Play();
-        }
-
-        public override Vector2 GetScreenPosition()
-        {
-            return _converter.GetCanvasPosition(this);
         }
     }
 }

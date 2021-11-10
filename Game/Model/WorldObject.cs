@@ -6,7 +6,5 @@ namespace IsometricMagic.Game.Model
     {
         public int WorldPosX;
         public int WorldPosY;
-
-        public abstract Vector2 GetScreenPosition();
     }
 }

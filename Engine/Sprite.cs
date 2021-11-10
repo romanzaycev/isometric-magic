@@ -40,6 +40,7 @@ namespace IsometricMagic.Engine
     public class Transformation
     {
         public Rotation Rotation { get; } = new();
+        public Vector2 Translate = Vector2.Zero;
     }
 
     public class Sprite

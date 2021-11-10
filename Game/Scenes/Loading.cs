@@ -30,7 +30,7 @@ namespace IsometricMagic.Game.Scenes
                 OriginPoint = OriginPoint.Centered
             };
             
-            MainLayer.Add(_loadingText);
+            UiLayer.Add(_loadingText);
 
             var circleTex = new Texture(128, 128);
             circleTex.LoadImage(new AssetItem("./resources/data/textures/loading_circle.png"));
@@ -42,7 +42,7 @@ namespace IsometricMagic.Game.Scenes
                 OriginPoint = OriginPoint.RightBottom,
             };
             
-            MainLayer.Add(_loadingCircle);
+            UiLayer.Add(_loadingCircle);
             
             Console.WriteLine($"Scene {Name} initialized");
         }
