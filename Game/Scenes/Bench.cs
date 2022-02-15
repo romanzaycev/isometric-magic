@@ -32,7 +32,7 @@ namespace IsometricMagic.Game.Scenes
             
             // Scene setup
             var tex = new Texture(64, 64);
-            tex.LoadImage(new AssetItem("./resources/data/textures/bear.jpeg"));
+            tex.LoadImage("./resources/data/textures/bear.jpeg");
             
             for (int i = 0; i < SPRITES; i++)
             {

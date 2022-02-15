@@ -15,7 +15,8 @@ namespace IsometricMagic.Game.Scenes
         private IsoWorldPositionConverter _positionConverter;
         private Human _human;
         private readonly LookAtController _camController = new();
-        private readonly CharacterMovementController _movementController = new KeyboardMovementController();
+        private readonly CharacterMovementController _movementController = new Mouse();
+        //private readonly CharacterMovementController _movementController = new Keyboard();
 
         public IsoTest() : base("iso_test", true)
         {
@@ -66,7 +67,7 @@ namespace IsometricMagic.Game.Scenes
                             if (!_tileTextures.ContainsKey(tile.Image.Source))
                             {
                                 tex = new Texture(tile.Image.Width, tile.Image.Height);
-                                tex.LoadImage(new AssetItem($"./resources/data/textures/{tile.Image.Source}"));
+                                tex.LoadImage($"./resources/data/textures/{tile.Image.Source}");
 
                                 _tileTextures.Add(tile.Image.Source, tex);
                             }
@@ -79,7 +80,7 @@ namespace IsometricMagic.Game.Scenes
                             {
                                 Width = tile.Image.Width,
                                 Height = tile.Image.Height,
-                                Position = _positionConverter.GetCanvasPosition(x * tileWidth / 2, y * tileWidth / 2),
+                                Position = _positionConverter.GetTilePosition(x, y),
                                 Texture = tex,
                                 Sorting = i,
                                 OriginPoint = OriginPoint.LeftBottom
@@ -110,9 +111,8 @@ namespace IsometricMagic.Game.Scenes
             if (_human.CurrentSequence?.CurrentSprite != null)
             {
                 var pos = _positionConverter.GetCanvasPosition(_human);
-                
+
                 _human.CurrentSequence.CurrentSprite.Position = pos;
-                
                 _camController.SetPos(pos);
             }
         }

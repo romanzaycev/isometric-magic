@@ -56,7 +56,7 @@ namespace IsometricMagic.Game.Character
                                 Translate = new Vector2(0, 8),
                             }
                         };
-                        tex.LoadImage(new AssetItem($"{framesPath}/{frameName}{i}{extension}"));
+                        tex.LoadImage($"{framesPath}/{frameName}{i}{extension}");
                         
                         sprites.Add(sprite);
                         layer.Add(sprite);

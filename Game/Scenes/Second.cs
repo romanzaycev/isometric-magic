@@ -16,7 +16,7 @@ namespace IsometricMagic.Game.Scenes
             Camera.SetController(new MouseController());
 
             var tex = new Texture(900, 900);
-            tex.LoadImage(new AssetItem("./resources/data/textures/thonk.jpeg"));
+            tex.LoadImage("./resources/data/textures/thonk.jpeg");
 
             var sprite = new Sprite
             {

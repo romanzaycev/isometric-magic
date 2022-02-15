@@ -60,7 +60,7 @@ namespace IsometricMagic.Game.Scenes
                             Height = 256,
                             Texture = tex
                         };
-                        tex.LoadImage(new AssetItem($"{framesPath}/{frameName}{i}{extension}"));
+                        tex.LoadImage($"{framesPath}/{frameName}{i}{extension}");
                         
                         sprites.Add(sprite);
                         MainLayer.Add(sprite);

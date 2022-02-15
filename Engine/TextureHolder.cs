@@ -62,14 +62,14 @@ namespace IsometricMagic.Engine
             }
         }
 
-        public void LoadImage(Texture tex, AssetItem image)
+        public void LoadImage(Texture tex, string imagePath)
         {
             if (!_sdlTextures.ContainsKey(tex))
             {
                 PushTexture(tex);
             }
 
-            var sdlSurface = SDL_image.IMG_Load(image.Path);
+            var sdlSurface = SDL_image.IMG_Load(imagePath);
 
             if (sdlSurface == IntPtr.Zero)
             {

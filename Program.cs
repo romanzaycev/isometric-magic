@@ -15,22 +15,22 @@ namespace IsometricMagic
                 var app = Application.GetInstance();
                 app.Init(appConfig);
 
-                SDL.SDL_Event sdlEvent;
-                
                 var isRunning = true;
                 var sceneManager = SceneManager.GetInstance();
                 
                 sceneManager.SetLoadingScene(new Loading());
 
                 sceneManager.Add(new IsoTest());
-                sceneManager.Add(new Animation());
                 sceneManager.Add(new Main());
+                sceneManager.Add(new Animation());
                 sceneManager.Add(new Second());
                 sceneManager.Add(new Bench());
 
                 while (isRunning)
                 {
                     app.StartTick();
+                    
+                    SDL.SDL_Event sdlEvent;
                     
                     while (SDL.SDL_PollEvent(out sdlEvent) != 0)
                     {

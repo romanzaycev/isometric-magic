@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Numerics;
 
 namespace IsometricMagic.Engine
 {
@@ -21,6 +22,14 @@ namespace IsometricMagic.Engine
         public void SetController(ICameraController controller)
         {
             Controller = controller;
+        }
+
+        public Vector2 GetCanvasPosition(int mouseX, int mouseY)
+        {
+            return new Vector2(
+                mouseX + Rect.Left,
+                mouseY + Rect.Top
+            );
         }
     }
 }

@@ -24,7 +24,7 @@ namespace IsometricMagic.Game.Scenes
             
             // Scene setup
             var tex = new Texture(900, 900);
-            tex.LoadImage(new AssetItem("./resources/data/textures/thonk.jpeg"));
+            tex.LoadImage("./resources/data/textures/thonk.jpeg");
 
             for (var i = 0; i < 3; i++)
             {
