@@ -1,6 +1,7 @@
 ﻿using System;
 using SDL2;
 using IsometricMagic.Engine;
+using IsometricMagic.Engine.Graphics;
 using IsometricMagic.Game.Scenes;
 
 namespace IsometricMagic
@@ -13,15 +14,17 @@ namespace IsometricMagic
             {
                 var appConfig = new AppConfig("config.ini");
                 var app = Application.GetInstance();
-                app.Init(appConfig);
+                var graphics = new SdlGraphics();
+                
+                app.Init(appConfig, graphics);
 
                 var isRunning = true;
                 var sceneManager = SceneManager.GetInstance();
                 
                 sceneManager.SetLoadingScene(new Loading());
 
-                sceneManager.Add(new IsoTest());
                 sceneManager.Add(new Main());
+                sceneManager.Add(new IsoTest());
                 sceneManager.Add(new Animation());
                 sceneManager.Add(new Second());
                 sceneManager.Add(new Bench());

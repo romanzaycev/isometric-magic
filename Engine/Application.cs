@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using IsometricMagic.Engine.Graphics;
 using SDL2;
 
 namespace IsometricMagic.Engine
@@ -10,10 +11,8 @@ namespace IsometricMagic.Engine
         private static readonly SceneManager SceneManager = SceneManager.GetInstance();
         private AppConfig _config;
         private bool _isInitialized;
-        private IntPtr _sdlWindow = IntPtr.Zero;
-        private IntPtr _sdlRenderer = IntPtr.Zero;
         private Renderer _renderer;
-        private bool _repaintFlag;
+        private bool _repaintWindowNeeded;
         private ulong _desiredDelta;
         private ulong _startTick;
 
@@ -24,6 +23,7 @@ namespace IsometricMagic.Engine
         private int _viewportWidth;
         private int _viewportHeight;
         private static IEnumerator _loadingEnumerator;
+        private IGraphics _graphics;
 
         public int ViewportWidth => _viewportWidth;
         public int ViewportHeight => _viewportHeight;
@@ -33,7 +33,7 @@ namespace IsometricMagic.Engine
             return Instance;
         }
 
-        public void Init(AppConfig config)
+        public void Init(AppConfig config, IGraphics graphics)
         {
             if (_isInitialized)
             {
@@ -41,12 +41,16 @@ namespace IsometricMagic.Engine
             }
 
             _config = config;
+            _graphics = graphics;
+            
+            var graphicsParams = new GraphicsParams(_config.WindowWidth, _config.WindowHeight)
+                .SetFullscreen(_config.IsFullscreen)
+                .SetVSync(_config.VSync);
+            _graphics.Initialize(graphicsParams);
+            
+            _renderer = new Renderer(graphics);
 
-            InitSdl();
-            InitWindow();
-            InitRenderer();
-
-            _repaintFlag = true;
+            _repaintWindowNeeded = true;
             _isInitialized = true;
 
             if (_config.TargetFps > 0 && !_config.VSync)
@@ -56,7 +60,7 @@ namespace IsometricMagic.Engine
 
             _dtLast = 0;
 
-            PaintWindow();
+            RepaintWindow();
         }
 
         public void Stop()
@@ -65,16 +69,7 @@ namespace IsometricMagic.Engine
 
             SceneManager.GetCurrent().Unload();
             TextureHolder.GetInstance().DestroyAll();
-
-            if (_sdlRenderer != IntPtr.Zero)
-            {
-                SDL.SDL_DestroyRenderer(_sdlRenderer);
-            }
-
-            if (_sdlWindow != IntPtr.Zero)
-            {
-                SDL.SDL_DestroyWindow(_sdlWindow);
-            }
+            _graphics.Stop();
         }
 
         public void Update()
@@ -90,14 +85,14 @@ namespace IsometricMagic.Engine
             SceneManager.GetCurrent().Update();
             _renderer.GetCamera().Controller?.UpdateCamera(_renderer.GetCamera());
             _renderer.DrawAll();
-            PaintWindow();
+            RepaintWindow();
         }
 
         public void HandleWindowEvent(SDL.SDL_Event sdlEvent)
         {
             if (sdlEvent.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED)
             {
-                _repaintFlag = true;
+                _repaintWindowNeeded = true;
             }
         }
 
@@ -144,93 +139,15 @@ namespace IsometricMagic.Engine
             return _config;
         }
 
-        private static void InitSdl()
+        private void RepaintWindow()
         {
-            var sdlInitResult = SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
-
-            if (sdlInitResult < 0)
-            {
-                throw new InvalidOperationException($"SDL_Init error: {SDL.SDL_GetError()}");
-            }
-
-            var sdlImageInitResult = SDL_image.IMG_Init(SDL_image.IMG_InitFlags.IMG_INIT_JPG |
-                                                        SDL_image.IMG_InitFlags.IMG_INIT_PNG |
-                                                        SDL_image.IMG_InitFlags.IMG_INIT_WEBP |
-                                                        SDL_image.IMG_InitFlags.IMG_INIT_TIF);
-
-            if (sdlImageInitResult < 0)
-            {
-                throw new InvalidOperationException($"IMG_Init error: {SDL_image.IMG_GetError()}");
-            }
-
-            SDL.SDL_SetHint(SDL.SDL_HINT_RENDER_SCALE_QUALITY, "best");
-        }
-
-        private void InitRenderer()
-        {
-            var flags = SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED;
-
-            if (_config.VSync) flags |= SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC;
-
-            _sdlRenderer = SDL.SDL_CreateRenderer(
-                _sdlWindow,
-                -1,
-                flags
-            );
-
-            if (_sdlRenderer == IntPtr.Zero)
-            {
-                Stop();
-                throw new InvalidOperationException($"SDL_CreateRenderer error: {SDL.SDL_GetError()}");
-            }
-
-            _renderer = new Renderer(_sdlRenderer);
-        }
-
-        private void InitWindow()
-        {
-            _sdlWindow = SDL.SDL_CreateWindow(
-                "Isometric Magic",
-                SDL.SDL_WINDOWPOS_CENTERED,
-                SDL.SDL_WINDOWPOS_CENTERED,
-                _config.WindowWidth,
-                _config.WindowHeight,
-                SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE
-            );
-
-            if (_sdlWindow == IntPtr.Zero)
-            {
-                Stop();
-                throw new Exception($"SDL_CreateWindow error: {SDL.SDL_GetError()}");
-            }
-
-            if (_config.IsFullscreen)
-            {
-                SDL.SDL_SetWindowFullscreen(_sdlWindow, (uint) SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN);
-            }
-        }
-
-        private void PaintWindow()
-        {
-            if (!_repaintFlag)
+            if (!_repaintWindowNeeded)
             {
                 return;
             }
 
-            _repaintFlag = false;
-
-            var windowSurface = SDL.SDL_GetWindowSurface(_sdlWindow);
-            SDL.SDL_GetWindowSize(_sdlWindow, out var w, out var h);
-
-            SDL.SDL_Rect windowRect;
-            windowRect.x = 0;
-            windowRect.y = 0;
-            windowRect.w = w;
-            windowRect.h = h;
-
-            SDL.SDL_FillRect(windowSurface, ref windowRect, 0xff000000);
-            SDL.SDL_UpdateWindowSurface(_sdlWindow);
-
+            _repaintWindowNeeded = false;
+            _graphics.RepaintWindow(out var w, out var h);
             _viewportWidth = w;
             _viewportHeight = h;
             _renderer.HandleWindowResized(w, h);
@@ -239,6 +156,11 @@ namespace IsometricMagic.Engine
         public void LoadingCoroutinePush(IEnumerator enumerator)
         {
             _loadingEnumerator = enumerator;
+        }
+
+        public IGraphics GetGraphics()
+        {
+            return _graphics;
         }
     }
 }
