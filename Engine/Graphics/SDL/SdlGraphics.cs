@@ -19,7 +19,6 @@ namespace IsometricMagic.Engine.Graphics.SDL
         public void Initialize(GraphicsParams graphicsParams)
         {
             _graphicsParams = graphicsParams;
-            InitSdl();
             InitWindow();
             InitRenderer();
         }
@@ -117,28 +116,6 @@ namespace IsometricMagic.Engine.Graphics.SDL
             _sdlSurfaces.Add(nativeTexture, sdlSurface);
         }
         
-        private void InitSdl()
-        {
-            var sdlInitResult = SDL2.SDL.SDL_Init(SDL2.SDL.SDL_INIT_VIDEO);
-
-            if (sdlInitResult < 0)
-            {
-                throw new InvalidOperationException($"SDL_Init error: {SDL2.SDL.SDL_GetError()}");
-            }
-
-            var sdlImageInitResult = SDL2.SDL_image.IMG_Init(SDL2.SDL_image.IMG_InitFlags.IMG_INIT_JPG |
-                                                             SDL2.SDL_image.IMG_InitFlags.IMG_INIT_PNG |
-                                                             SDL2.SDL_image.IMG_InitFlags.IMG_INIT_WEBP |
-                                                             SDL2.SDL_image.IMG_InitFlags.IMG_INIT_TIF);
-
-            if (sdlImageInitResult < 0)
-            {
-                throw new InvalidOperationException($"IMG_Init error: {SDL2.SDL_image.IMG_GetError()}");
-            }
-
-            SDL2.SDL.SDL_SetHint(SDL2.SDL.SDL_HINT_RENDER_SCALE_QUALITY, "best");
-        }
-
         private void InitWindow()
         {
             _sdlWindow = SDL2.SDL.SDL_CreateWindow(

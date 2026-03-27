@@ -12,6 +12,8 @@ namespace IsometricMagic
             try
             {
                 var appConfig = new AppConfig("config.ini");
+                var sdlOptions = SdlBootstrapOptions.CreateDefault();
+                SdlBootstrap.Init(sdlOptions);
                 var app = Application.GetInstance();
                 var graphics = new Engine.Graphics.SDL.SdlGraphics();
                 
@@ -71,6 +73,24 @@ namespace IsometricMagic
                             case SDL.SDL_EventType.SDL_MOUSEMOTION:
                                 Input.HandleEvent(sdlEvent);
                                 break;
+                            case SDL.SDL_EventType.SDL_CONTROLLERAXISMOTION:
+                                Input.HandleEvent(sdlEvent);
+                                break;
+                            case SDL.SDL_EventType.SDL_CONTROLLERBUTTONDOWN:
+                                Input.HandleEvent(sdlEvent);
+                                break;
+                            case SDL.SDL_EventType.SDL_CONTROLLERBUTTONUP:
+                                Input.HandleEvent(sdlEvent);
+                                break;
+                            case SDL.SDL_EventType.SDL_CONTROLLERDEVICEADDED:
+                                Input.HandleEvent(sdlEvent);
+                                break;
+                            case SDL.SDL_EventType.SDL_CONTROLLERDEVICEREMOVED:
+                                Input.HandleEvent(sdlEvent);
+                                break;
+                            case SDL.SDL_EventType.SDL_CONTROLLERDEVICEREMAPPED:
+                                Input.HandleEvent(sdlEvent);
+                                break;
                         }
                     }
 
@@ -79,7 +99,7 @@ namespace IsometricMagic
                 }
 
                 app.Stop();
-                SDL.SDL_Quit();
+                SdlBootstrap.Quit();
             }
             catch (Exception e)
             {
