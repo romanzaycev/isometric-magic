@@ -15,8 +15,8 @@ namespace IsometricMagic.Game.Scenes
         private IsoWorldPositionConverter _positionConverter;
         private Human _human;
         private readonly LookAtController _camController = new();
-        private readonly CharacterMovementController _movementController = new Mouse();
-        //private readonly CharacterMovementController _movementController = new Keyboard();
+        //private readonly CharacterMovementController _movementController = new Mouse();
+        private readonly CharacterMovementController _movementController = new KeyboardOrGamepad();
 
         public IsoTest() : base("iso_test", true)
         {
