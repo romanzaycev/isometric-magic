@@ -1,5 +1,4 @@
 using IsometricMagic.Engine;
-using SDL2;
 
 namespace IsometricMagic.Game.Controllers.Camera
 {
@@ -11,14 +10,14 @@ namespace IsometricMagic.Game.Controllers.Camera
 
         public void UpdateCamera(Engine.Camera camera)
         {
-            if (Input.IsMousePressed(SDL.SDL_BUTTON_LEFT) && !_isDrag)
+            if (Input.WasPressed(MouseButton.Left) && !_isDrag)
             {
                 _startMouseX = Input.MouseX;
                 _startMouseY = Input.MouseY;
                 _isDrag = true;
             }
 
-            if (Input.IsMouseReleased(SDL.SDL_BUTTON_LEFT) && _isDrag)
+            if (Input.WasReleased(MouseButton.Left) && _isDrag)
             {
                 _startMouseX = 0;
                 _startMouseY = 0;

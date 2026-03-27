@@ -1,5 +1,4 @@
 using IsometricMagic.Engine;
-using SDL2;
 
 namespace IsometricMagic.Game.Controllers.Camera
 {
@@ -7,22 +6,22 @@ namespace IsometricMagic.Game.Controllers.Camera
     {
         public void UpdateCamera(Engine.Camera camera)
         {
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_LEFT))
+            if (Input.IsDown(Key.Left))
             {
                 camera.Rect.X += 10;
             }
             
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_RIGHT))
+            if (Input.IsDown(Key.Right))
             {
                 camera.Rect.X -= 10;
             }
             
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_UP))
+            if (Input.IsDown(Key.Up))
             {
                 camera.Rect.Y += 10;
             }
 
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_DOWN))
+            if (Input.IsDown(Key.Down))
             {
                 camera.Rect.Y -= 10;
             }

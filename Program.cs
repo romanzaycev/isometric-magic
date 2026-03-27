@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using SDL2;
 using IsometricMagic.Engine;
 using IsometricMagic.Game.Scenes;
@@ -32,6 +32,8 @@ namespace IsometricMagic
                 {
                     app.StartTick();
                     
+                    Input.BeginFrame();
+                    
                     SDL.SDL_Event sdlEvent;
                     
                     while (SDL.SDL_PollEvent(out sdlEvent) != 0)
@@ -47,30 +49,27 @@ namespace IsometricMagic
                                 break;
 
                             case SDL.SDL_EventType.SDL_KEYDOWN:
-                                switch (sdlEvent.key.keysym.sym)
+                                if (sdlEvent.key.keysym.sym == SDL.SDL_Keycode.SDLK_ESCAPE)
                                 {
-                                    case SDL.SDL_Keycode.SDLK_ESCAPE:
-                                        isRunning = false;
-                                        break;
+                                    isRunning = false;
                                 }
-
-                                Input.HandleKeyboardEvent(sdlEvent);
+                                Input.HandleEvent(sdlEvent);
                                 break;
                             
                             case SDL.SDL_EventType.SDL_KEYUP:
-                                Input.HandleKeyboardEvent(sdlEvent);
+                                Input.HandleEvent(sdlEvent);
                                 break;
                             
                             case SDL.SDL_EventType.SDL_MOUSEBUTTONDOWN:
-                                Input.HandleMouseBtnEvent(sdlEvent);
+                                Input.HandleEvent(sdlEvent);
                                 break;
                                 
                             case SDL.SDL_EventType.SDL_MOUSEBUTTONUP:
-                                Input.HandleMouseBtnEvent(sdlEvent);
+                                Input.HandleEvent(sdlEvent);
                                 break;
                             
                             case SDL.SDL_EventType.SDL_MOUSEMOTION:
-                                Input.HandleMousePos(sdlEvent.motion.x, sdlEvent.motion.y);
+                                Input.HandleEvent(sdlEvent);
                                 break;
                         }
                     }

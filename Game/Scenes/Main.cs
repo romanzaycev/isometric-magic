@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Numerics;
 using IsometricMagic.Engine;
 using IsometricMagic.Game.Controllers.Camera;
-using SDL2;
 
 namespace IsometricMagic.Game.Scenes
 {
@@ -11,7 +10,6 @@ namespace IsometricMagic.Game.Scenes
     {
         private readonly List<Sprite> _sprites = new();
         private int _activeSpriteIndex;
-        private bool _isSwitchPressed;
 
         public Main() : base("main")
         {
@@ -44,7 +42,7 @@ namespace IsometricMagic.Game.Scenes
 
         public override void Update()
         {
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_SPACE) && !_isSwitchPressed)
+            if (Input.WasPressed(Key.Space))
             {
                 var nIndex = _activeSpriteIndex + 1;
 
@@ -54,28 +52,22 @@ namespace IsometricMagic.Game.Scenes
                 }
                 
                 _activeSpriteIndex = nIndex;
-                _isSwitchPressed = true;
-            }
-
-            if (Input.IsReleased(SDL.SDL_Keycode.SDLK_SPACE) && _isSwitchPressed)
-            {
-                _isSwitchPressed = false;
             }
 
             UpdateActiveSprite();
 
             // Switch scenes
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_0))
+            if (Input.WasPressed(Key.Num0))
             {
                 SceneManager.LoadByName("second");
             }
             
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_9))
+            if (Input.WasPressed(Key.Num9))
             {
                 SceneManager.LoadByName("bench");
             }
             
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_8))
+            if (Input.WasPressed(Key.Num8))
             {
                 SceneManager.LoadByName("iso_test");
             }

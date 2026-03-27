@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using IsometricMagic.Engine;
 using IsometricMagic.Game.Animation;
-using SDL2;
 
 namespace IsometricMagic.Game.Scenes
 {
@@ -83,7 +82,7 @@ namespace IsometricMagic.Game.Scenes
         {
             _currentSequence.Update(Application.DeltaTime);
 
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_SPACE))
+            if (Input.WasPressed(Key.Space))
             {
                 _currentSequence.Stop();
                 

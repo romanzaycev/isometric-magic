@@ -1,26 +1,12 @@
+# Isometric Magic Game Project Guidelines 
 
-## Testing
+## Project Structure
+- `Engine/` - Core engine classes (graphics, input, scenes, camera)
+- `Game/` - Game-specific code (characters, maps, animations, controllers)
+- `resources/` - Game assets (textures, configs)
+- Root level: `Program.cs`, project file, `config.ini`
 
-**Note: No test project currently exists.** To add tests:
-
-```bash
-# Create a test project (if needed)
-dotnet new xunit -n IsometricMagic.Tests
-dotnet add IsometricMagic.Tests reference isometric-magic.csproj
-
-# Run all tests
-dotnet test
-
-# Run a specific test
-dotnet test --filter "FullyQualifiedName~TestClassName"
-
-# Run with verbosity
-dotnet test --verbosity normal
-```
-
-## Code Style Guidelines
-
-### Naming Conventions
+## Naming Conventions
 - **Classes/Structs/Enums**: PascalCase (e.g., `SceneManager`, `CharacterState`)
 - **Interfaces**: PascalCase with `I` prefix (e.g., `IGraphics`, `ICameraController`)
 - **Methods/Properties**: PascalCase (e.g., `GetInstance()`, `Update()`)
@@ -30,7 +16,7 @@ dotnet test --verbosity normal
 - **Constants**: UPPER_SNAKE_CASE (e.g., `MAIN`, `UI`)
 - **Enums values**: PascalCase (e.g., `Idle`, `Running`)
 
-### Import Organization
+## Import Organization
 Order imports as follows:
 ```csharp
 using System;
@@ -46,38 +32,32 @@ using IsometricMagic.Engine;
 using IsometricMagic.Game.Scenes;
 ```
 
-### Formatting
+## Formatting
 - **Braces**: K&R style (opening brace on same line)
 - **Indentation**: 4 spaces (no tabs)
 - **Max line length**: 120 characters
 - **Use `var`** when type is obvious from right-hand side
 - **Prefer expression-bodied members** for simple properties
 
-### Error Handling
+## Error Handling
 - Use try-catch in entry points (Program.cs)
 - Write errors to `Console.Error`
 - Re-throw after logging unhandled exceptions
 - Use pattern matching for switch expressions (C# 8.0+)
 
-### Code Patterns
+## Code Patterns
 - **Singletons**: Use static readonly instance field + private constructor
 - **Static accessors**: `GetInstance()` method for singletons
 - **Virtual methods**: Use for lifecycle hooks (Initialize, Update, DeInitialize)
 - **Coroutine pattern**: Use `IEnumerator` for async loading scenes
 - **Protected fields**: Use for shared state accessible by subclasses
 
-### Project Structure
-- `Engine/` - Core engine classes (graphics, input, scenes, camera)
-- `Game/` - Game-specific code (characters, maps, animations, controllers)
-- `resources/` - Game assets (textures, configs)
-- Root level: `Program.cs`, project file, `config.ini`
-
-### Key Dependencies
+## Key Dependencies
 - `SDL2` - Graphics and input (via P/Invoke bindings)
 - `Newtonsoft.Json` (13.0.1) - JSON parsing
 - `ini-parser-netstandard` (2.5.2) - INI config files
 
-### Important Notes
+## Important Notes
 - Project uses `AllowUnsafeBlocks` for SDL2 interop
 - No solution file (.sln) - build directly from csproj
 - SDL2 native libraries must be available in system PATH or project root

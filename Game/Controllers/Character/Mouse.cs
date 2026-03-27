@@ -1,6 +1,5 @@
 using IsometricMagic.Engine;
 using IsometricMagic.Game.Model;
-using SDL2;
 
 namespace IsometricMagic.Game.Controllers.Character
 {
@@ -13,14 +12,14 @@ namespace IsometricMagic.Game.Controllers.Character
         
         public override void HandleMovement(Game.Character.Character character, IsoWorldPositionConverter positionConverter)
         {
-            if (Input.IsMousePressed(SDL.SDL_BUTTON_LEFT) && !_isDrag)
+            if (Input.WasPressed(MouseButton.Left) && !_isDrag)
             {
                 _startMouseX = Input.MouseX;
                 _startMouseY = Input.MouseY;
                 _isDrag = true;
             }
 
-            if (Input.IsMouseReleased(SDL.SDL_BUTTON_LEFT) && _isDrag)
+            if (Input.WasReleased(MouseButton.Left) && _isDrag)
             {
                 _isDrag = false;
             }

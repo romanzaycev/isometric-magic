@@ -1,6 +1,5 @@
 using IsometricMagic.Engine;
 using IsometricMagic.Game.Model;
-using SDL2;
 
 namespace IsometricMagic.Game.Controllers.Character
 {
@@ -11,22 +10,22 @@ namespace IsometricMagic.Game.Controllers.Character
             var moveX = 0;
             var moveY = 0;
             
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_UP))
+            if (Input.IsDown(Key.Up))
             {
                 moveY = -5;
             }
 
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_DOWN))
+            if (Input.IsDown(Key.Down))
             {
                 moveY = 5;
             }
             
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_LEFT))
+            if (Input.IsDown(Key.Left))
             {
                 moveX = -5;
             }
             
-            if (Input.IsPressed(SDL.SDL_Keycode.SDLK_RIGHT))
+            if (Input.IsDown(Key.Right))
             {
                 moveX = 5;
             }
