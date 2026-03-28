@@ -3,28 +3,17 @@ using System.Numerics;
 using IsometricMagic.Engine;
 using IsometricMagic.Engine.Graphics.Effects;
 using IsometricMagic.Engine.Graphics.Lighting;
-using IsometricMagic.Engine.Graphics.Materials;
-using IsometricMagic.Game.Character;
-using IsometricMagic.Game.Controllers.Camera;
-using IsometricMagic.Game.Controllers.Character;
+using IsometricMagic.Game.Components;
 using IsometricMagic.Game.Model;
 
 namespace IsometricMagic.Game.Scenes
 {
     public class IsoTest : Scene
     {
-        private readonly Dictionary<string, Texture> _tileTextures = new();
         private IsoWorldPositionConverter _positionConverter = null!;
-        private Human _human = null!;
-        private int _mapWidth;
-        private int _mapHeight;
-        private int _tileWidth;
-        private int _tileHeight;
-        private readonly LookAtController _camController = new();
-        private readonly CharacterMovementController _movementController = new KeyboardOrGamepad();
-        private Light2D _movingLight = null!;
-        private float _lightAngle;
-        private Vector2 _lightCenter;
+        private Entity? _playerEntity;
+        private Entity? _lightEntity;
+        private HumanoidAnimationComponent? _animationComponent;
 
         public IsoTest() : base("iso_test", true)
         {
@@ -32,84 +21,46 @@ namespace IsometricMagic.Game.Scenes
 
         protected override IEnumerator InitializeAsync()
         {
-            // Camera setup
-            Camera.SetController(_camController);
-            
-            // Map setup
             var map = Maps.Loader.Load("map1");
             yield return true;
 
             var tileSet = Tiles.Loader.Load(map.TileSet);
             yield return true;
 
-            if (map != null)
-            {
-                var mainLayer = map.Layers.First(l => l.Name == "main");
+            _positionConverter = new IsoWorldPositionConverter(
+                map.TileWidth,
+                map.TileHeight,
+                map.Width,
+                map.Height
+            );
 
-                _mapWidth = map.Width;
-                _mapHeight = map.Height;
+            var mapEntity = CreateEntity("Map");
+            var tilemapRenderer = mapEntity.AddComponent<IsoTilemapRendererComponent>();
+            tilemapRenderer.Load(map, tileSet, _positionConverter, MainLayer);
+            tilemapRenderer.BuildAll();
 
-                _tileWidth = map.TileWidth;
-                _tileHeight = map.TileHeight;
+            _playerEntity = CreateEntity("Player");
+            var worldPosComp = _playerEntity.AddComponent<WorldPositionComponent>();
+            worldPosComp.WorldPosX = 400;
+            worldPosComp.WorldPosY = 400;
 
-                _positionConverter = new IsoWorldPositionConverter(
-                    _tileWidth,
-                    _tileHeight,
-                    _mapWidth,
-                    _mapHeight
-                );
-                
-                var i = 0;
+            _animationComponent = _playerEntity.AddComponent<HumanoidAnimationComponent>();
+            _animationComponent.TargetLayer = MainLayer;
+            _animationComponent.Sorting = 1000;
 
-                for (var y = 0; y < _mapHeight; y++)
-                {
-                    for (var x = _mapWidth - 1; x >= 0; x--)
-                    {
-                        var tileId = mainLayer.Data[i];
+            var motor = _playerEntity.AddComponent<HumanoidMotorComponent>();
+            motor.SetConverter(_positionConverter);
 
-                        if (tileId > 0)
-                        {
-                            var tile = tileSet.Tiles[tileId];
-                            Texture tex;
+            var cameraFollow = _playerEntity.AddComponent<CameraFollowComponent>();
+            cameraFollow.SetConverter(_positionConverter);
 
-                            if (!_tileTextures.ContainsKey(tile.Image.Source))
-                            {
-                                tex = new Texture(tile.Image.Width, tile.Image.Height);
-                                tex.LoadImage($"./resources/data/textures/{tile.Image.Source}");
+            var lightCenter = _positionConverter.GetCanvasPosition(new Vector2(600, 600));
 
-                                _tileTextures.Add(tile.Image.Source, tex);
-                            }
-                            else
-                            {
-                                tex = _tileTextures[tile.Image.Source];
-                            }
-
-                            var sprite = new Sprite
-                            {
-                                Width = tile.Image.Width,
-                                Height = tile.Image.Height,
-                                Position = _positionConverter.GetTilePosition(x, y),
-                                Texture = tex,
-                                Sorting = i,
-                                OriginPoint = OriginPoint.LeftBottom
-                            };
-                            sprite.Material = new NormalMappedLitSpriteMaterial();
-                            
-                            MainLayer.Add(sprite);
-                        }
-
-                        i++;
-                    }
-
-                    yield return true;
-                }
-
-                _human = new Human(MainLayer)
-                {
-                    WorldPosY = 400,
-                    WorldPosX = 400
-                };
-            }
+            _lightEntity = CreateEntity("MovingLight");
+            var orbitLight = _lightEntity.AddComponent<OrbitLightComponent>();
+            orbitLight.Center = lightCenter;
+            orbitLight.Radius = 300f;
+            orbitLight.Speed = 0.8f;
 
             PostProcess.Add(new VignetteEffect { Intensity = 0.2f });
             Lighting.AmbientIntensity = 0.5f;
@@ -125,44 +76,14 @@ namespace IsometricMagic.Game.Scenes
                     Color = new Vector3(0.1f, 1f, 1f),
                 }
             );
-
-            _lightCenter = _positionConverter.GetCanvasPosition(
-                new Vector2(600, 600)
-            );
-            _movingLight = new Light2D(_lightCenter)
-            {
-                Intensity = 2.5f,
-                Radius = 256f,
-                Height = 2f,
-                Falloff = 2f,
-                InnerRadius = 32f,
-                CenterAttenuation = 0.5f,
-                Color = new Vector3(1f, 0.4f, 0.1f),
-            };
-            Lighting.Add(_movingLight);
         }
 
         public override void Update()
         {
-            _movementController.HandleMovement(_human, _positionConverter);
-            _human.CurrentSequence?.Update(Application.DeltaTime);
-            
-            if (_human.CurrentSequence?.CurrentSprite != null)
-            {
-                var pos = _positionConverter.GetCanvasPosition(_human);
-
-                _human.CurrentSequence.CurrentSprite.Position = pos;
-                _camController.SetPos(pos);
-            }
-
-            _lightAngle += Application.DeltaTime * 0.8f;
-            var offset = new Vector2(MathF.Cos(_lightAngle) * 300f, MathF.Sin(_lightAngle) * 300f);
-            _movingLight.Position = _lightCenter + offset;
         }
 
         protected override void DeInitialize()
         {
-            Camera.SetController(null);
         }
     }
 }

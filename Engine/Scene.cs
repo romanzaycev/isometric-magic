@@ -1,4 +1,6 @@
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using IsometricMagic.Engine.Graphics.Effects;
 using IsometricMagic.Engine.Graphics.Lighting;
 
@@ -12,7 +14,7 @@ namespace IsometricMagic.Engine
         protected static readonly SceneManager SceneManager = SceneManager.GetInstance();
         protected static readonly Camera Camera = Application.GetInstance().GetRenderer().GetCamera();
         protected static readonly Application Application = Application.GetInstance();
-        
+
         private readonly string _name;
         public string Name => _name;
 
@@ -31,11 +33,18 @@ namespace IsometricMagic.Engine
         private readonly SceneLighting _lighting = new();
         public SceneLighting Lighting => _lighting;
 
+        public Entity Root { get; }
+
+        private readonly List<Entity> _entityDestroyQueue = new();
+
         public Scene(string name)
         {
             _name = name;
             _mainLayer = new SceneLayer(this, MAIN);
             _uiLayer = new SceneLayer(this, UI);
+            Root = new Entity("SceneRoot");
+            Root.Scene = this;
+            Root.SetActiveInHierarchyInternal(true);
         }
 
         public Scene(string name, bool isAsyncInitializer)
@@ -44,6 +53,103 @@ namespace IsometricMagic.Engine
             _isAsyncInitializer = isAsyncInitializer;
             _mainLayer = new SceneLayer(this, MAIN);
             _uiLayer = new SceneLayer(this, UI);
+            Root = new Entity("SceneRoot");
+            Root.Scene = this;
+            Root.SetActiveInHierarchyInternal(true);
+        }
+
+        public Entity CreateEntity(string name, Entity? parent = null)
+        {
+            var entity = new Entity(name);
+            entity.SetParent(parent ?? Root, true);
+            return entity;
+        }
+
+        public void InternalUpdate()
+        {
+            Update();
+
+            var dt = Application.DeltaTime;
+            Root.CallUpdate(dt);
+            Root.CallLateUpdate(dt);
+
+            ProcessDestroyQueue();
+        }
+
+        private void ProcessDestroyQueue()
+        {
+            foreach (var entity in _entityDestroyQueue)
+            {
+                entity.ProcessDestroy();
+            }
+            _entityDestroyQueue.Clear();
+        }
+
+        public Entity? FindEntityByName(string name)
+        {
+            return FindEntityByNameRecursive(Root, name);
+        }
+
+        private static Entity? FindEntityByNameRecursive(Entity parent, string name)
+        {
+            foreach (var child in parent.Children)
+            {
+                if (child.Name == name) return child;
+                var found = FindEntityByNameRecursive(child, name);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        public IEnumerable<Entity> FindEntitiesByTag(string tag)
+        {
+            return FindEntitiesByTagRecursive(Root, tag);
+        }
+
+        private static IEnumerable<Entity> FindEntitiesByTagRecursive(Entity parent, string tag)
+        {
+            foreach (var child in parent.Children)
+            {
+                if (child.Tag == tag) yield return child;
+                foreach (var deeper in FindEntitiesByTagRecursive(child, tag))
+                {
+                    yield return deeper;
+                }
+            }
+        }
+
+        public T? FindComponent<T>() where T : Component
+        {
+            return FindComponentRecursive<T>(Root).FirstOrDefault();
+        }
+
+        public IEnumerable<T> FindComponents<T>() where T : Component
+        {
+            return FindComponentRecursive<T>(Root);
+        }
+
+        private static IEnumerable<T> FindComponentRecursive<T>(Entity parent) where T : Component
+        {
+            foreach (var child in parent.Children)
+            {
+                foreach (var c in child.Components)
+                {
+                    if (c is T result) yield return result;
+                }
+
+                foreach (var deeper in FindComponentRecursive<T>(child))
+                {
+                    yield return deeper;
+                }
+            }
+        }
+
+        internal void AddToDestroyQueue(Entity entity)
+        {
+            if (!_entityDestroyQueue.Contains(entity))
+            {
+                _entityDestroyQueue.Add(entity);
+            }
         }
 
         public void Load()
@@ -60,43 +166,45 @@ namespace IsometricMagic.Engine
         {
             DeInitialize();
 
-            for (int i = 0; i < _mainLayer.Sprites.Count; i++)
+            Root.RequestDestroy();
+            ProcessDestroyQueue();
+
+            var mainSprites = _mainLayer.Sprites.ToList();
+            foreach (var sprite in mainSprites)
             {
-                if (_mainLayer.Sprites[i].Texture != null)
+                if (sprite.Texture != null)
                 {
-                    TextureHolder.GetInstance().Remove(_mainLayer.Sprites[i].Texture);
+                    TextureHolder.GetInstance().Remove(sprite.Texture);
                 }
-                
-                _mainLayer.Remove(_mainLayer.Sprites[i]);
+                _mainLayer.Remove(sprite);
             }
 
-            for (int i = 0; i < _uiLayer.Sprites.Count; i++)
+            var uiSprites = _uiLayer.Sprites.ToList();
+            foreach (var sprite in uiSprites)
             {
-                if (_uiLayer.Sprites[i].Texture != null) {
-                    TextureHolder.GetInstance().Remove(_uiLayer.Sprites[i].Texture);
+                if (sprite.Texture != null)
+                {
+                    TextureHolder.GetInstance().Remove(sprite.Texture);
                 }
-                
-                _uiLayer.Remove(_uiLayer.Sprites[i]);
+                _uiLayer.Remove(sprite);
             }
         }
 
         protected virtual void Initialize()
         {
         }
-        
+
         protected virtual IEnumerator InitializeAsync()
         {
             yield break;
         }
-        
+
         public virtual void Update()
         {
-            
         }
 
         protected virtual void DeInitialize()
         {
-            
         }
     }
 }
