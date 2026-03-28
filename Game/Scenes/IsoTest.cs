@@ -12,8 +12,8 @@ namespace IsometricMagic.Game.Scenes
     public class IsoTest : Scene
     {
         private readonly Dictionary<string, Texture> _tileTextures = new();
-        private IsoWorldPositionConverter _positionConverter;
-        private Human _human;
+        private IsoWorldPositionConverter _positionConverter = null!;
+        private Human _human = null!;
         private readonly LookAtController _camController = new();
         //private readonly CharacterMovementController _movementController = new Mouse();
         private readonly CharacterMovementController _movementController = new KeyboardOrGamepad();

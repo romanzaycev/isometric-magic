@@ -10,6 +10,6 @@ namespace IsometricMagic.Game.Tiles
         public int Height { get; private set; }
         
         [Newtonsoft.Json.JsonProperty("source")]
-        public string Source { get; private set; }
+        public required string Source { get; init; }
     }
 }

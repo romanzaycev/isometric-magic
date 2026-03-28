@@ -7,7 +7,7 @@ namespace IsometricMagic.Engine
     {
         public uint InitFlags { get; set; }
         public IMG_InitFlags ImageFlags { get; set; }
-        public string RenderScaleQuality { get; set; }
+        public required string RenderScaleQuality { get; set; }
 
         public static SdlBootstrapOptions CreateDefault()
         {

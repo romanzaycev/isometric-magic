@@ -8,7 +8,7 @@ namespace IsometricMagic.Game.Scenes
     public class Animation : Scene
     {
         private readonly List<Sequence> _animations = new();
-        private Sequence _currentSequence;
+        private Sequence _currentSequence = null!;
         private int _currentAnimationIndex;
 
         public Animation() : base("animation", true)

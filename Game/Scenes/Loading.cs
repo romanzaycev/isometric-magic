@@ -6,8 +6,8 @@ namespace IsometricMagic.Game.Scenes
 {
     public class Loading : Scene
     {
-        private Sprite _loadingText;
-        private Sprite _loadingCircle;
+        private Sprite _loadingText = null!;
+        private Sprite _loadingCircle = null!;
         private const float LoadingCircleSpeed = 0.3f;
         private double _currLoadingCircleAngle;
         

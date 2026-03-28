@@ -7,6 +7,6 @@ namespace IsometricMagic.Game.Tiles
         public int Id { get; private set; }
         
         [Newtonsoft.Json.JsonProperty("image")]
-        public TileImage Image { get; private set; }
+        public required TileImage Image { get; init; }
     }
 }

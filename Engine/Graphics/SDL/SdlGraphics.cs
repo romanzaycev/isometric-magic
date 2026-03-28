@@ -11,7 +11,7 @@ namespace IsometricMagic.Engine.Graphics.SDL
         // private static int SDL_TEXTUREACCESS_STREAMING = 1;
         private static int SDL_TEXTUREACCESS_TARGET = 2;
         
-        private GraphicsParams _graphicsParams;
+        private GraphicsParams _graphicsParams = null!;
         private IntPtr _sdlWindow;
         private IntPtr _sdlRenderer;
         private readonly Dictionary<NativeTexture, IntPtr> _sdlSurfaces = new();

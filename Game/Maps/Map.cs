@@ -4,7 +4,7 @@ namespace IsometricMagic.Game.Maps
     public class Map
     {
         [Newtonsoft.Json.JsonProperty("name")]
-        public string Name { get; private set; }
+        public required string Name { get; init; }
 
         [Newtonsoft.Json.JsonProperty("width")]
         public int Width { get; private set; }
@@ -19,9 +19,9 @@ namespace IsometricMagic.Game.Maps
         public int TileHeight { get; private set; }
 
         [Newtonsoft.Json.JsonProperty("tileSet")]
-        public string TileSet { get; private set; }
+        public required string TileSet { get; init; }
 
         [Newtonsoft.Json.JsonProperty("layers")]
-        public MapLayer[] Layers { get; private set; }
+        public required MapLayer[] Layers { get; init; }
     }
 }

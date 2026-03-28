@@ -6,7 +6,7 @@ namespace IsometricMagic.Game.Tiles
     public class TileSet
     {
         [Newtonsoft.Json.JsonProperty("name")]
-        public string Name { get; private set; }
+        public required string Name { get; init; }
 
         [Newtonsoft.Json.JsonProperty("tiles")]
         private List<Tile> _jsonTiles = new();

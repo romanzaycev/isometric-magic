@@ -9,7 +9,7 @@ namespace IsometricMagic.Game.Tiles
         {
             var jsonMapData = File.ReadAllText($"./resources/data/sets/{name}.json");
             
-            return JsonConvert.DeserializeObject<TileSet>(jsonMapData);
+            return JsonConvert.DeserializeObject<TileSet>(jsonMapData)!;
         }
     }
 }

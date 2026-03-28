@@ -8,9 +8,9 @@ namespace IsometricMagic.Engine
     {
         private static readonly Application Instance = new();
         private static readonly SceneManager SceneManager = SceneManager.GetInstance();
-        private AppConfig _config;
+        private AppConfig _config = null!;
         private bool _isInitialized;
-        private Renderer _renderer;
+        private Renderer _renderer = null!;
         private bool _repaintWindowNeeded;
         private ulong _desiredDelta;
         private ulong _startTick;
@@ -21,8 +21,8 @@ namespace IsometricMagic.Engine
 
         private int _viewportWidth;
         private int _viewportHeight;
-        private static IEnumerator _loadingEnumerator;
-        private IGraphics _graphics;
+        private static IEnumerator? _loadingEnumerator;
+        private IGraphics _graphics = null!;
 
         public int ViewportWidth => _viewportWidth;
         public int ViewportHeight => _viewportHeight;

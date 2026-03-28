@@ -58,7 +58,7 @@ namespace IsometricMagic.Engine
         public int Width;
         public int Height;
 
-        private Texture _texture; 
+        private Texture _texture = null!; 
 
         public Texture Texture
         {

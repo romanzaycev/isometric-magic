@@ -9,7 +9,7 @@ namespace IsometricMagic.Game.Maps
         {
             var jsonMapData = File.ReadAllText($"./resources/data/maps/{name}.json");
             
-            return JsonConvert.DeserializeObject<Map>(jsonMapData);
+            return JsonConvert.DeserializeObject<Map>(jsonMapData)!;
         }
     }
 }

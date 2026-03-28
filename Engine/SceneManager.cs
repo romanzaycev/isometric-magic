@@ -9,9 +9,9 @@ namespace IsometricMagic.Engine
         private static readonly SceneManager Instance = new();
         private readonly Dictionary<string, Scene> _scenes = new();
         private readonly Scene _defaultScene = new("default");
-        private Scene _loadingScene;
-        private Scene _currentScene;
-        private Scene _isWaitingScene;
+        private Scene _loadingScene = null!;
+        private Scene _currentScene = null!;
+        private Scene _isWaitingScene = null!;
 
         public static SceneManager GetInstance()
         {
@@ -38,7 +38,7 @@ namespace IsometricMagic.Engine
                 Load();
             }
 
-            return _currentScene;
+            return _currentScene!;
         }
 
         public void FinishAsync()
