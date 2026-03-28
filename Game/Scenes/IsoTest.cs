@@ -16,9 +16,15 @@ namespace IsometricMagic.Game.Scenes
         private readonly Dictionary<string, Texture> _tileTextures = new();
         private IsoWorldPositionConverter _positionConverter = null!;
         private Human _human = null!;
+        private int _mapWidth;
+        private int _mapHeight;
+        private int _tileWidth;
+        private int _tileHeight;
         private readonly LookAtController _camController = new();
-        //private readonly CharacterMovementController _movementController = new Mouse();
         private readonly CharacterMovementController _movementController = new KeyboardOrGamepad();
+        private Light2D _movingLight = null!;
+        private float _lightAngle;
+        private Vector2 _lightCenter;
 
         public IsoTest() : base("iso_test", true)
         {
@@ -40,24 +46,24 @@ namespace IsometricMagic.Game.Scenes
             {
                 var mainLayer = map.Layers.First(l => l.Name == "main");
 
-                var mapWidth = map.Width;
-                var mapHeight = map.Height;
+                _mapWidth = map.Width;
+                _mapHeight = map.Height;
 
-                var tileWidth = map.TileWidth;
-                var tileHeight = map.TileHeight;
+                _tileWidth = map.TileWidth;
+                _tileHeight = map.TileHeight;
 
                 _positionConverter = new IsoWorldPositionConverter(
-                    tileWidth,
-                    tileHeight,
-                    mapWidth,
-                    mapHeight
+                    _tileWidth,
+                    _tileHeight,
+                    _mapWidth,
+                    _mapHeight
                 );
                 
                 var i = 0;
 
-                for (var y = 0; y < mapHeight; y++)
+                for (var y = 0; y < _mapHeight; y++)
                 {
-                    for (var x = mapWidth - 1; x >= 0; x--)
+                    for (var x = _mapWidth - 1; x >= 0; x--)
                     {
                         var tileId = mainLayer.Data[i];
 
@@ -119,6 +125,21 @@ namespace IsometricMagic.Game.Scenes
                     Color = new Vector3(0.1f, 1f, 1f),
                 }
             );
+
+            _lightCenter = _positionConverter.GetCanvasPosition(
+                new Vector2(600, 600)
+            );
+            _movingLight = new Light2D(_lightCenter)
+            {
+                Intensity = 2.5f,
+                Radius = 256f,
+                Height = 2f,
+                Falloff = 2f,
+                InnerRadius = 32f,
+                CenterAttenuation = 0.5f,
+                Color = new Vector3(1f, 0.4f, 0.1f),
+            };
+            Lighting.Add(_movingLight);
         }
 
         public override void Update()
@@ -133,6 +154,10 @@ namespace IsometricMagic.Game.Scenes
                 _human.CurrentSequence.CurrentSprite.Position = pos;
                 _camController.SetPos(pos);
             }
+
+            _lightAngle += Application.DeltaTime * 0.8f;
+            var offset = new Vector2(MathF.Cos(_lightAngle) * 300f, MathF.Sin(_lightAngle) * 300f);
+            _movingLight.Position = _lightCenter + offset;
         }
 
         protected override void DeInitialize()
