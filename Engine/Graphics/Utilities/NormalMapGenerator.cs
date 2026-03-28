@@ -7,6 +7,8 @@ namespace IsometricMagic.Engine.Graphics.Utilities
 {
     public static class NormalMapGenerator
     {
+        private const float AlphaCutoff = 0.01f;
+
         public static byte[] GenerateFromImage(string imagePath, out int width, out int height, float strength = 1f)
         {
             var surface = IMG_Load(imagePath);
@@ -31,6 +33,7 @@ namespace IsometricMagic.Engine.Graphics.Utilities
 
             var pixelCount = width * height;
             var luminance = new float[pixelCount];
+            var alpha = new float[pixelCount];
 
             SDL_LockSurface(converted);
             unsafe
@@ -45,7 +48,9 @@ namespace IsometricMagic.Engine.Graphics.Utilities
                         var r = row[idx + 0];
                         var g = row[idx + 1];
                         var b = row[idx + 2];
+                        var a = row[idx + 3];
                         luminance[y * width + x] = (0.2126f * r + 0.7152f * g + 0.0722f * b) / 255f;
+                        alpha[y * width + x] = a / 255f;
                     }
                 }
             }
@@ -62,27 +67,47 @@ namespace IsometricMagic.Engine.Graphics.Utilities
                     var x0 = Math.Max(x - 1, 0);
                     var x1 = Math.Min(x + 1, width - 1);
 
-                    var tl = luminance[y0 * width + x0];
-                    var t = luminance[y0 * width + x];
-                    var tr = luminance[y0 * width + x1];
-                    var l = luminance[y * width + x0];
-                    var r = luminance[y * width + x1];
-                    var bl = luminance[y1 * width + x0];
-                    var b = luminance[y1 * width + x];
-                    var br = luminance[y1 * width + x1];
+                    var idx = y * width + x;
+                    var aCenter = alpha[idx];
+                    var hCenter = luminance[idx] * aCenter;
+
+                    var tl = alpha[y0 * width + x0] < AlphaCutoff ? hCenter : luminance[y0 * width + x0] * alpha[y0 * width + x0];
+                    var t  = alpha[y0 * width + x ] < AlphaCutoff ? hCenter : luminance[y0 * width + x ] * alpha[y0 * width + x ];
+                    var tr = alpha[y0 * width + x1] < AlphaCutoff ? hCenter : luminance[y0 * width + x1] * alpha[y0 * width + x1];
+                    var l  = alpha[y  * width + x0] < AlphaCutoff ? hCenter : luminance[y  * width + x0] * alpha[y  * width + x0];
+                    var r  = alpha[y  * width + x1] < AlphaCutoff ? hCenter : luminance[y  * width + x1] * alpha[y  * width + x1];
+                    var bl = alpha[y1 * width + x0] < AlphaCutoff ? hCenter : luminance[y1 * width + x0] * alpha[y1 * width + x0];
+                    var b  = alpha[y1 * width + x ] < AlphaCutoff ? hCenter : luminance[y1 * width + x ] * alpha[y1 * width + x ];
+                    var br = alpha[y1 * width + x1] < AlphaCutoff ? hCenter : luminance[y1 * width + x1] * alpha[y1 * width + x1];
 
                     var dx = (tr + 2f * r + br) - (tl + 2f * l + bl);
                     var dy = (bl + 2f * b + br) - (tl + 2f * t + tr);
 
-                    var nx = -dx * strength;
-                    var ny = -dy * strength;
+                    dx *= (strength / 8f);
+                    dy *= (strength / 8f);
+
+                    var gradientAttenuation = aCenter;
+                    dx *= gradientAttenuation;
+                    dy *= gradientAttenuation;
+
+                    var outIndex = idx * 4;
+                    if (aCenter < AlphaCutoff)
+                    {
+                        output[outIndex + 0] = 128;
+                        output[outIndex + 1] = 128;
+                        output[outIndex + 2] = 255;
+                        output[outIndex + 3] = 255;
+                        continue;
+                    }
+
+                    var nx = -dx;
+                    var ny = -dy;
                     var nz = 1f;
                     var len = (float) Math.Sqrt(nx * nx + ny * ny + nz * nz);
                     nx /= len;
                     ny /= len;
                     nz /= len;
 
-                    var outIndex = (y * width + x) * 4;
                     output[outIndex + 0] = (byte) Math.Clamp((nx * 0.5f + 0.5f) * 255f, 0f, 255f);
                     output[outIndex + 1] = (byte) Math.Clamp((ny * 0.5f + 0.5f) * 255f, 0f, 255f);
                     output[outIndex + 2] = (byte) Math.Clamp((nz * 0.5f + 0.5f) * 255f, 0f, 255f);

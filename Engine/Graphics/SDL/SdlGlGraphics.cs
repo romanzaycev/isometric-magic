@@ -406,19 +406,29 @@ namespace IsometricMagic.Engine.Graphics.SDL
                 spritePosX += offsetX;
                 spritePosY += offsetY;
 
+                var worldSpritePosX = spritePosX;
+                var worldSpritePosY = spritePosY;
+                var screenSpritePosX = spritePosX;
+                var screenSpritePosY = spritePosY;
+
                 if (isCameraLayer)
                 {
-                    if (IsCulled(sprite.Width, sprite.Height, spritePosX, spritePosY, cameraRect))
+                    if (IsCulled(sprite.Width, sprite.Height, screenSpritePosX, screenSpritePosY, cameraRect))
                     {
                         continue;
                     }
 
-                    spritePosX -= cameraOffsetX;
-                    spritePosY -= cameraOffsetY;
+                    screenSpritePosX -= cameraOffsetX;
+                    screenSpritePosY -= cameraOffsetY;
                 }
 
-                var vertices = BuildQuadVertices(spritePosX, spritePosY, sprite.Width, sprite.Height,
-                    sprite.Transformation.Rotation.Angle, sprite.Transformation.Rotation.Clockwise);
+                var vertices = BuildQuadVertices(
+                    worldSpritePosX, worldSpritePosY,
+                    screenSpritePosX, screenSpritePosY,
+                    sprite.Width, sprite.Height,
+                    sprite.Transformation.Rotation.Angle,
+                    sprite.Transformation.Rotation.Clockwise
+                );
                 UpdateSpriteBuffer(vertices);
 
                 var material = ResolveMaterial(sprite);
@@ -478,32 +488,47 @@ namespace IsometricMagic.Engine.Graphics.SDL
             return generated;
         }
 
-        private float[] BuildQuadVertices(int x, int y, int width, int height, double angle, bool clockwise)
+        private float[] BuildQuadVertices(
+            int worldX, int worldY,
+            int screenX, int screenY,
+            int width, int height,
+            double angle, bool clockwise)
         {
             var rotationDeg = MathHelper.NorRotationToDegree(clockwise ? angle : -angle);
             var rotationRad = (float) (rotationDeg * Math.PI / 180f);
 
-            var x0 = x;
-            var y0 = y;
-            var x1 = x + width;
-            var y1 = y + height;
+            float worldX0 = worldX;
+            float worldY0 = worldY;
+            float worldX1 = worldX + width;
+            float worldY1 = worldY + height;
+            float worldCenterX = worldX + width / 2f;
+            float worldCenterY = worldY + height / 2f;
 
-            var centerX = x + width / 2f;
-            var centerY = y + height / 2f;
+            var worldTl = RotatePoint(worldX0, worldY0, worldCenterX, worldCenterY, rotationRad);
+            var worldTr = RotatePoint(worldX1, worldY0, worldCenterX, worldCenterY, rotationRad);
+            var worldBr = RotatePoint(worldX1, worldY1, worldCenterX, worldCenterY, rotationRad);
+            var worldBl = RotatePoint(worldX0, worldY1, worldCenterX, worldCenterY, rotationRad);
 
-            var tl = RotatePoint(x0, y0, centerX, centerY, rotationRad);
-            var tr = RotatePoint(x1, y0, centerX, centerY, rotationRad);
-            var br = RotatePoint(x1, y1, centerX, centerY, rotationRad);
-            var bl = RotatePoint(x0, y1, centerX, centerY, rotationRad);
+            float screenX0 = screenX;
+            float screenY0 = screenY;
+            float screenX1 = screenX + width;
+            float screenY1 = screenY + height;
+            float screenCenterX = screenX + width / 2f;
+            float screenCenterY = screenY + height / 2f;
+
+            var screenTl = RotatePoint(screenX0, screenY0, screenCenterX, screenCenterY, rotationRad);
+            var screenTr = RotatePoint(screenX1, screenY0, screenCenterX, screenCenterY, rotationRad);
+            var screenBr = RotatePoint(screenX1, screenY1, screenCenterX, screenCenterY, rotationRad);
+            var screenBl = RotatePoint(screenX0, screenY1, screenCenterX, screenCenterY, rotationRad);
 
             return new float[]
             {
-                ToNdcX(tl.X), ToNdcY(tl.Y), 0f, 0f, tl.X, tl.Y,
-                ToNdcX(tr.X), ToNdcY(tr.Y), 1f, 0f, tr.X, tr.Y,
-                ToNdcX(br.X), ToNdcY(br.Y), 1f, 1f, br.X, br.Y,
-                ToNdcX(tl.X), ToNdcY(tl.Y), 0f, 0f, tl.X, tl.Y,
-                ToNdcX(br.X), ToNdcY(br.Y), 1f, 1f, br.X, br.Y,
-                ToNdcX(bl.X), ToNdcY(bl.Y), 0f, 1f, bl.X, bl.Y
+                ToNdcX(screenTl.X), ToNdcY(screenTl.Y), 0f, 0f, worldTl.X, worldTl.Y,
+                ToNdcX(screenTr.X), ToNdcY(screenTr.Y), 1f, 0f, worldTr.X, worldTr.Y,
+                ToNdcX(screenBr.X), ToNdcY(screenBr.Y), 1f, 1f, worldBr.X, worldBr.Y,
+                ToNdcX(screenTl.X), ToNdcY(screenTl.Y), 0f, 0f, worldTl.X, worldTl.Y,
+                ToNdcX(screenBr.X), ToNdcY(screenBr.Y), 1f, 1f, worldBr.X, worldBr.Y,
+                ToNdcX(screenBl.X), ToNdcY(screenBl.Y), 0f, 1f, worldBl.X, worldBl.Y
             };
         }
 

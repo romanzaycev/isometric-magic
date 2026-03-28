@@ -106,11 +106,13 @@ namespace IsometricMagic.Game.Scenes
             }
 
             PostProcess.Add(new VignetteEffect());
-            Lighting.Add((new Light2D(new Vector2(400, 250))
-            {
-                Intensity = 0.2f,
-                Color = new Vector3(0.1f, 1f, 1f),
-            }));
+            Lighting.Add(
+                new Light2D(_positionConverter.GetCanvasPosition(new Vector2(410, 410)))
+                {
+                    Intensity = 1f,
+                    Color = new Vector3(1f, 1f, 1f),
+                }
+            );
         }
 
         public override void Update()

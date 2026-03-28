@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using IsometricMagic.Engine;
+using IsometricMagic.Engine.Graphics.Materials;
 using IsometricMagic.Game.Animation;
 
 namespace IsometricMagic.Game.Character
@@ -57,6 +58,7 @@ namespace IsometricMagic.Game.Character
                             }
                         };
                         tex.LoadImage($"{framesPath}/{frameName}{i}{extension}");
+                        sprite.Material = new NormalMappedLitSpriteMaterial();
                         
                         sprites.Add(sprite);
                         layer.Add(sprite);
