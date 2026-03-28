@@ -8,7 +8,7 @@ namespace IsometricMagic.Engine.Graphics.Effects
         private GlShaderProgram? _shader;
         public bool Enabled { get; set; } = true;
 
-        public float Intensity { get; set; } = 0.5f;
+        public float Intensity { get; set; } = 0.2f;
         public float Radius { get; set; } = 0.75f;
         public float Softness { get; set; } = 0.25f;
 

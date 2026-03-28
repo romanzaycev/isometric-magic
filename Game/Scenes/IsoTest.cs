@@ -105,12 +105,18 @@ namespace IsometricMagic.Game.Scenes
                 };
             }
 
-            PostProcess.Add(new VignetteEffect());
+            PostProcess.Add(new VignetteEffect { Intensity = 0.2f });
+            Lighting.AmbientIntensity = 0.5f;
             Lighting.Add(
                 new Light2D(_positionConverter.GetCanvasPosition(new Vector2(410, 410)))
                 {
-                    Intensity = 1f,
-                    Color = new Vector3(1f, 1f, 1f),
+                    Intensity = 2f,
+                    Radius = 512f,
+                    Height = 1.8f,
+                    Falloff = 2f,
+                    InnerRadius = 64f,
+                    CenterAttenuation = 0.1f,
+                    Color = new Vector3(0.1f, 1f, 1f),
                 }
             );
         }

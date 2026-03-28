@@ -32,10 +32,13 @@ namespace IsometricMagic.Engine.Graphics.Materials
             context.Gl.BindTexture(TextureTarget.Texture2D, normalTextureId);
             _shader.SetInt("u_normalMap", 1);
 
-            var lights = context.Scene.Lighting.Lights;
+            var lighting = context.Scene.Lighting;
+            var lights = lighting.Lights;
             var lightCount = lights.Count;
 
             _shader.SetInt("u_lightCount", lightCount);
+            _shader.SetVector3("u_ambientColor", lighting.AmbientColor.X, lighting.AmbientColor.Y, lighting.AmbientColor.Z);
+            _shader.SetFloat("u_ambientIntensity", lighting.AmbientIntensity);
 
             for (var i = 0; i < MAX_LIGHTS; i++)
             {
@@ -45,16 +48,24 @@ namespace IsometricMagic.Engine.Graphics.Materials
                     _shader.SetVector2($"u_lights[{i}].pos", light.Position.X, light.Position.Y);
                     _shader.SetVector3($"u_lights[{i}].color", light.Color.X, light.Color.Y, light.Color.Z);
                     _shader.SetFloat($"u_lights[{i}].intensity", light.Intensity);
+                    _shader.SetFloat($"u_lights[{i}].radius", light.Radius);
+                    _shader.SetFloat($"u_lights[{i}].height", light.Height);
+                    _shader.SetFloat($"u_lights[{i}].falloff", light.Falloff);
+                    _shader.SetFloat($"u_lights[{i}].innerRadius", light.InnerRadius);
+                    _shader.SetFloat($"u_lights[{i}].centerAttenuation", light.CenterAttenuation);
                 }
                 else
                 {
                     _shader.SetVector2($"u_lights[{i}].pos", 0f, 0f);
                     _shader.SetVector3($"u_lights[{i}].color", 0f, 0f, 0f);
                     _shader.SetFloat($"u_lights[{i}].intensity", 0f);
+                    _shader.SetFloat($"u_lights[{i}].radius", 0f);
+                    _shader.SetFloat($"u_lights[{i}].height", 0f);
+                    _shader.SetFloat($"u_lights[{i}].falloff", 0f);
+                    _shader.SetFloat($"u_lights[{i}].innerRadius", 0f);
+                    _shader.SetFloat($"u_lights[{i}].centerAttenuation", 1f);
                 }
             }
-
-            _shader.SetVector3("u_ambient", AmbientColor.X, AmbientColor.Y, AmbientColor.Z);
         }
 
         public void Unbind(GlRenderContext context)
@@ -90,14 +101,21 @@ uniform sampler2D u_albedo;
 uniform sampler2D u_normalMap;
 uniform int u_lightCount;
 
+uniform vec3 u_ambientColor;
+uniform float u_ambientIntensity;
+
 struct Light {
     vec2 pos;
     vec3 color;
     float intensity;
+    float radius;
+    float height;
+    float falloff;
+    float innerRadius;
+    float centerAttenuation;
 };
 
 uniform Light u_lights[8];
-uniform vec3 u_ambient;
 
 void main()
 {
@@ -105,15 +123,32 @@ void main()
     vec3 normalSample = texture(u_normalMap, v_uv).xyz * 2.0 - 1.0;
     vec3 normal = normalize(normalSample);
 
-    vec3 totalLighting = u_ambient;
+    vec3 totalLighting = u_ambientColor * u_ambientIntensity;
 
     for (int i = 0; i < 8; i++) {
         if (i >= u_lightCount) break;
         Light light = u_lights[i];
-        vec3 lightDir = normalize(vec3(light.pos - v_world, 0.1));
+
+        vec2 toLight = light.pos - v_world;
+        float dist = length(toLight);
+        float safeRadius = max(light.radius, 0.0001);
+        float atten = clamp(1.0 - dist / safeRadius, 0.0, 1.0);
+        atten = pow(atten, light.falloff);
+
+        if (light.innerRadius > 0.0001) {
+            float safeInner = max(light.innerRadius, 0.0001);
+            float t = smoothstep(0.0, safeInner, dist);
+            float center = mix(light.centerAttenuation, 1.0, t);
+            atten *= center;
+        }
+
+        vec3 lightDir = normalize(vec3(toLight, light.height));
         float diff = max(dot(normal, lightDir), 0.0);
-        totalLighting += light.color * diff * light.intensity;
+
+        totalLighting += light.color * diff * light.intensity * atten;
     }
+
+    totalLighting = min(totalLighting, vec3(1.5));
 
     vec3 color = baseColor.rgb * totalLighting;
     FragColor = vec4(color, baseColor.a);
