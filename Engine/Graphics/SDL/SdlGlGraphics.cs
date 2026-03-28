@@ -164,7 +164,8 @@ namespace IsometricMagic.Engine.Graphics.SDL
                 throw new InvalidOperationException($"IMG_Load error: {IMG_GetError()}");
             }
 
-            var converted = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA8888, 0);
+            var targetFormat = BitConverter.IsLittleEndian ? SDL_PIXELFORMAT_ABGR8888 : SDL_PIXELFORMAT_RGBA8888;
+            var converted = SDL_ConvertSurfaceFormat(surface, targetFormat, 0);
             SDL_FreeSurface(surface);
             if (converted == IntPtr.Zero)
             {
