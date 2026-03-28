@@ -40,7 +40,7 @@ namespace IsometricMagic.Game.Components
                 Falloff = 2f,
                 InnerRadius = 32f,
                 CenterAttenuation = 0.5f,
-                Color = new Vector3(1f, 0.4f, 0.1f),
+                Color = new Vector3(1f, 0.1f, 0.1f),
             };
             Scene?.Lighting.Add(_light);
         }

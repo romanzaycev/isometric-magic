@@ -69,6 +69,7 @@ namespace IsometricMagic.Game.Animation
             _currentFrameIndex = 0;
             _time = 0;
             _lastChangeTime = 0;
+            UpdateVisibility();
         }
         
         public void Stop()

@@ -44,23 +44,35 @@ namespace IsometricMagic.Game.Scenes
             worldPosComp.WorldPosX = 400;
             worldPosComp.WorldPosY = 400;
 
-            _animationComponent = _playerEntity.AddComponent<HumanoidAnimationComponent>();
-            _animationComponent.TargetLayer = MainLayer;
-            _animationComponent.Sorting = 1000;
+            _animationComponent = new HumanoidAnimationComponent
+            {
+                TargetLayer = MainLayer,
+                Sorting = 1000
+            };
+            _playerEntity.AddComponent(_animationComponent);
 
-            var motor = _playerEntity.AddComponent<HumanoidMotorComponent>();
+            var motor = new HumanoidMotorComponent();
             motor.SetConverter(_positionConverter);
+            _playerEntity.AddComponent(motor);
 
-            var cameraFollow = _playerEntity.AddComponent<CameraFollowComponent>();
+            var cameraFollow = new CameraFollowComponent();
             cameraFollow.SetConverter(_positionConverter);
+            _playerEntity.AddComponent(cameraFollow);
+
+            var positionSync = new HumanoidWorldPositionSyncComponent();
+            positionSync.SetConverter(_positionConverter);
+            _playerEntity.AddComponent(positionSync);
 
             var lightCenter = _positionConverter.GetCanvasPosition(new Vector2(600, 600));
 
             _lightEntity = CreateEntity("MovingLight");
-            var orbitLight = _lightEntity.AddComponent<OrbitLightComponent>();
-            orbitLight.Center = lightCenter;
-            orbitLight.Radius = 300f;
-            orbitLight.Speed = 0.8f;
+            var orbitLight = new OrbitLightComponent
+            {
+                Center = lightCenter,
+                Radius = 300f,
+                Speed = 0.8f
+            };
+            _lightEntity.AddComponent(orbitLight);
 
             PostProcess.Add(new VignetteEffect { Intensity = 0.2f });
             Lighting.AmbientIntensity = 0.5f;

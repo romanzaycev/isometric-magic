@@ -223,6 +223,11 @@ namespace IsometricMagic.Engine
             {
                 component.CallUpdate(dt);
             }
+
+            foreach (var child in _children)
+            {
+                child.CallUpdate(dt);
+            }
         }
 
         internal void CallLateUpdate(float dt)
@@ -232,6 +237,11 @@ namespace IsometricMagic.Engine
             foreach (var component in _components)
             {
                 component.CallLateUpdate(dt);
+            }
+
+            foreach (var child in _children)
+            {
+                child.CallLateUpdate(dt);
             }
         }
 
