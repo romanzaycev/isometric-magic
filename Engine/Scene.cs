@@ -1,4 +1,6 @@
 using System.Collections;
+using IsometricMagic.Engine.Graphics.Effects;
+using IsometricMagic.Engine.Graphics.Lighting;
 
 namespace IsometricMagic.Engine
 {
@@ -22,6 +24,12 @@ namespace IsometricMagic.Engine
 
         protected bool _isAsyncInitializer = false;
         public bool IsAsyncInitializer => _isAsyncInitializer;
+
+        private readonly PostProcessStack _postProcess = new();
+        public PostProcessStack PostProcess => _postProcess;
+
+        private readonly SceneLighting _lighting = new();
+        public SceneLighting Lighting => _lighting;
 
         public Scene(string name)
         {

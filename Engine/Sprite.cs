@@ -1,4 +1,5 @@
 using System.Numerics;
+using IsometricMagic.Engine.Graphics.Materials;
 
 namespace IsometricMagic.Engine
 {
@@ -59,6 +60,8 @@ namespace IsometricMagic.Engine
         public int Height;
 
         private Texture _texture = null!; 
+        public Texture? NormalMap;
+        public IMaterial? Material;
 
         public Texture Texture
         {

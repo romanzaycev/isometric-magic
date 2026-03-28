@@ -58,7 +58,15 @@ namespace IsometricMagic.Engine
             }
 
             Graphics.LoadImageToTexture(out var nTex, imagePath);
-            _nativeTextures.Add(tex, nTex);
+            if (_nativeTextures.ContainsKey(tex))
+            {
+                Graphics.DestroyTexture(_nativeTextures[tex]);
+                _nativeTextures[tex] = nTex;
+            }
+            else
+            {
+                _nativeTextures.Add(tex, nTex);
+            }
         }
 
         public void DestroyAll()

@@ -14,7 +14,6 @@ namespace IsometricMagic.Engine.Graphics.SDL
         private GraphicsParams _graphicsParams = null!;
         private IntPtr _sdlWindow;
         private IntPtr _sdlRenderer;
-        private readonly Dictionary<NativeTexture, IntPtr> _sdlSurfaces = new();
 
         public void Initialize(GraphicsParams graphicsParams)
         {
@@ -71,30 +70,37 @@ namespace IsometricMagic.Engine.Graphics.SDL
                 throw new NotImplementedException();
             }
 
-            if (access != TextureAccess.Static || access != TextureAccess.Target)
+            if (access != TextureAccess.Static && access != TextureAccess.Target)
             {
                 throw new NotImplementedException();
             }
 
-            return new NativeTexture(
-                SDL_CreateTexture(
-                    _sdlRenderer,
-                    SDL_PIXELFORMAT_RGBA8888,
-                    (access == TextureAccess.Target) ? SDL_TEXTUREACCESS_TARGET : SDL_TEXTUREACCESS_STATIC,
-                    width,
-                    height
-                )
+            var sdlTexture = SDL_CreateTexture(
+                _sdlRenderer,
+                SDL_PIXELFORMAT_RGBA8888,
+                (access == TextureAccess.Target) ? SDL_TEXTUREACCESS_TARGET : SDL_TEXTUREACCESS_STATIC,
+                width,
+                height
             );
+
+            return new SdlNativeTexture(sdlTexture, IntPtr.Zero);
         }
 
         public void DestroyTexture(NativeTexture nativeTexture)
         {
-            SDL_DestroyTexture(nativeTexture.Holder);
-            
-            if (_sdlSurfaces.ContainsKey(nativeTexture))
+            if (nativeTexture is not SdlNativeTexture sdlNativeTexture)
             {
-                SDL_FreeSurface(_sdlSurfaces[nativeTexture]);
-                _sdlSurfaces.Remove(nativeTexture);
+                return;
+            }
+
+            if (sdlNativeTexture.Texture != IntPtr.Zero)
+            {
+                SDL_DestroyTexture(sdlNativeTexture.Texture);
+            }
+
+            if (sdlNativeTexture.Surface != IntPtr.Zero)
+            {
+                SDL_FreeSurface(sdlNativeTexture.Surface);
             }
         }
 
@@ -112,8 +118,7 @@ namespace IsometricMagic.Engine.Graphics.SDL
                 sdlSurface
             );
 
-            nativeTexture = new NativeTexture(sdlTexture);
-            _sdlSurfaces.Add(nativeTexture, sdlSurface);
+            nativeTexture = new SdlNativeTexture(sdlTexture, sdlSurface);
         }
         
         private void InitWindow()
@@ -266,7 +271,7 @@ namespace IsometricMagic.Engine.Graphics.SDL
                 {
                     SDL_RenderCopy(
                         _sdlRenderer,
-                        TextureHolder.GetInstance().GetNativeTexture(tex).Holder,
+                        ((SdlNativeTexture) TextureHolder.GetInstance().GetNativeTexture(tex)).Texture,
                         ref sourceRect,
                         ref targetRect
                     );
@@ -290,7 +295,7 @@ namespace IsometricMagic.Engine.Graphics.SDL
 
                     SDL_RenderCopyEx(
                         _sdlRenderer,
-                        TextureHolder.GetInstance().GetNativeTexture(tex).Holder,
+                        ((SdlNativeTexture) TextureHolder.GetInstance().GetNativeTexture(tex)).Texture,
                         ref sourceRect,
                         ref targetRect,
                         MathHelper.NorRotationToDegree((rotation.Clockwise) ? rotation.Angle : -rotation.Angle),

@@ -7,9 +7,9 @@ namespace IsometricMagic.Engine
         public int Width { get; }
         public int Height { get; }
 
-        private string _image = null!;
+        private string? _image;
 
-        private string Image => _image;
+        public string? ImagePath => _image;
         public bool TextureTarget { get; }
 
         public Texture(int width, int height, bool textureTarget = false)

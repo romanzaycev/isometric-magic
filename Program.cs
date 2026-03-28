@@ -1,4 +1,5 @@
 using IsometricMagic.Engine;
+using IsometricMagic.Engine.Graphics;
 using IsometricMagic.Game.Scenes;
 using static SDL2.SDL;
 
@@ -14,7 +15,9 @@ namespace IsometricMagic
                 var sdlOptions = SdlBootstrapOptions.CreateDefault();
                 SdlBootstrap.Init(sdlOptions);
                 var app = Application.GetInstance();
-                var graphics = new Engine.Graphics.SDL.SdlGraphics();
+                IGraphics graphics = appConfig.GraphicsBackend == GraphicsBackend.OpenGL
+                    ? new Engine.Graphics.SDL.SdlGlGraphics()
+                    : new Engine.Graphics.SDL.SdlGraphics();
                 
                 app.Init(appConfig, graphics);
 

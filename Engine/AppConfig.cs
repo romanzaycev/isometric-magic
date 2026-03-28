@@ -1,5 +1,6 @@
 using IniParser;
 using IniParser.Model;
+using IsometricMagic.Engine.Graphics;
 
 namespace IsometricMagic.Engine
 {
@@ -84,6 +85,23 @@ namespace IsometricMagic.Engine
             }
         }
 
+        private bool _graphicsBackendFetched = false;
+        private GraphicsBackend _graphicsBackend = GraphicsBackend.Sdl;
+
+        public GraphicsBackend GraphicsBackend
+        {
+            get
+            {
+                if (!_graphicsBackendFetched)
+                {
+                    _graphicsBackend = GetGraphicsBackend(_data["Graphics"]["Backend"], GraphicsBackend.Sdl);
+                    _graphicsBackendFetched = true;
+                }
+
+                return _graphicsBackend;
+            }
+        }
+
         public AppConfig(string iniFile)
         {
             var parser = new FileIniDataParser();
@@ -101,6 +119,21 @@ namespace IsometricMagic.Engine
             {
                 "true" or "1" or "on" => true,
                 "false" or "0" or "off" => false,
+                _ => defaultValue
+            };
+        }
+
+        private static GraphicsBackend GetGraphicsBackend(string value, GraphicsBackend defaultValue)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return defaultValue;
+            }
+
+            return value.Trim().ToLower() switch
+            {
+                "opengl" or "gl" => GraphicsBackend.OpenGL,
+                "sdl" or "sdlrenderer" or "renderer" => GraphicsBackend.Sdl,
                 _ => defaultValue
             };
         }
