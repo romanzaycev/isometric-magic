@@ -1,7 +1,6 @@
-using System;
 using System.Collections;
 using IsometricMagic.Engine.Graphics;
-using SDL2;
+using static SDL2.SDL;
 
 namespace IsometricMagic.Engine
 {
@@ -74,23 +73,23 @@ namespace IsometricMagic.Engine
 
         public void Update()
         {
-            var now = SDL.SDL_GetTicks();
+            var now = SDL_GetTicks();
 
             if (now > _dtLast)
             {
                 _deltaTime =  (float)(now - _dtLast) / 1000;
                 _dtLast = now;
             }
-            
+
             SceneManager.GetCurrent().Update();
             _renderer.GetCamera().Controller?.UpdateCamera(_renderer.GetCamera());
             _renderer.DrawAll();
             RepaintWindow();
         }
 
-        public void HandleWindowEvent(SDL.SDL_Event sdlEvent)
+        public void HandleWindowEvent(SDL_Event sdlEvent)
         {
-            if (sdlEvent.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED)
+            if (sdlEvent.window.windowEvent == SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED)
             {
                 _repaintWindowNeeded = true;
             }
@@ -103,7 +102,7 @@ namespace IsometricMagic.Engine
 
         public void StartTick()
         {
-            _startTick = SDL.SDL_GetPerformanceCounter();
+            _startTick = SDL_GetPerformanceCounter();
         }
 
         public void EndTick()
@@ -119,8 +118,8 @@ namespace IsometricMagic.Engine
                 }
             }
             
-            var end = SDL.SDL_GetPerformanceCounter();
-            var freq = SDL.SDL_GetPerformanceFrequency();
+            var end = SDL_GetPerformanceCounter();
+            var freq = SDL_GetPerformanceFrequency();
 
             if (_desiredDelta > 0 && freq > 0)
             {
@@ -129,7 +128,7 @@ namespace IsometricMagic.Engine
 
                 if (_desiredDelta > elapsedMs)
                 {
-                    SDL.SDL_Delay((uint) Math.Floor((float) (_desiredDelta - elapsedMs)));
+                    SDL_Delay((uint) Math.Floor((float) (_desiredDelta - elapsedMs)));
                 }
             }
         }

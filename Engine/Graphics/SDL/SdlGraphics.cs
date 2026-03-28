@@ -1,7 +1,7 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using static SDL2.SDL;
+using static SDL2.SDL_image;
 
 namespace IsometricMagic.Engine.Graphics.SDL
 {
@@ -27,28 +27,28 @@ namespace IsometricMagic.Engine.Graphics.SDL
         {
             if (_sdlRenderer != IntPtr.Zero)
             {
-                SDL2.SDL.SDL_DestroyRenderer(_sdlRenderer);
+                SDL_DestroyRenderer(_sdlRenderer);
             }
 
             if (_sdlWindow != IntPtr.Zero)
             {
-                SDL2.SDL.SDL_DestroyWindow(_sdlWindow);
+                SDL_DestroyWindow(_sdlWindow);
             }
         }
 
         public void RepaintWindow(out int width, out int height)
         {
-            var windowSurface = SDL2.SDL.SDL_GetWindowSurface(_sdlWindow);
-            SDL2.SDL.SDL_GetWindowSize(_sdlWindow, out var w, out var h);
+            var windowSurface = SDL_GetWindowSurface(_sdlWindow);
+            SDL_GetWindowSize(_sdlWindow, out var w, out var h);
 
-            SDL2.SDL.SDL_Rect windowRect;
+            SDL_Rect windowRect;
             windowRect.x = 0;
             windowRect.y = 0;
             windowRect.w = w;
             windowRect.h = h;
 
-            SDL2.SDL.SDL_FillRect(windowSurface, ref windowRect, 0xff000000);
-            SDL2.SDL.SDL_UpdateWindowSurface(_sdlWindow);
+            SDL_FillRect(windowSurface, ref windowRect, 0xff000000);
+            SDL_UpdateWindowSurface(_sdlWindow);
 
             width = w;
             height = h;
@@ -56,12 +56,12 @@ namespace IsometricMagic.Engine.Graphics.SDL
 
         public void Draw(Scene scene, Camera camera)
         {
-            SDL2.SDL.SDL_SetRenderDrawColor(_sdlRenderer, 0x00, 0x00, 0x00, 0x00);
-            SDL2.SDL.SDL_RenderClear(_sdlRenderer);
+            SDL_SetRenderDrawColor(_sdlRenderer, 0x00, 0x00, 0x00, 0x00);
+            SDL_RenderClear(_sdlRenderer);
 
             DrawSprites(scene, camera);
 
-            SDL2.SDL.SDL_RenderPresent(_sdlRenderer);
+            SDL_RenderPresent(_sdlRenderer);
         }
 
         public NativeTexture CreateTexture(PixelFormat format, TextureAccess access, int width, int height)
@@ -77,9 +77,9 @@ namespace IsometricMagic.Engine.Graphics.SDL
             }
 
             return new NativeTexture(
-                SDL2.SDL.SDL_CreateTexture(
+                SDL_CreateTexture(
                     _sdlRenderer,
-                    SDL2.SDL.SDL_PIXELFORMAT_RGBA8888,
+                    SDL_PIXELFORMAT_RGBA8888,
                     (access == TextureAccess.Target) ? SDL_TEXTUREACCESS_TARGET : SDL_TEXTUREACCESS_STATIC,
                     width,
                     height
@@ -89,25 +89,25 @@ namespace IsometricMagic.Engine.Graphics.SDL
 
         public void DestroyTexture(NativeTexture nativeTexture)
         {
-            SDL2.SDL.SDL_DestroyTexture(nativeTexture.Holder);
+            SDL_DestroyTexture(nativeTexture.Holder);
             
             if (_sdlSurfaces.ContainsKey(nativeTexture))
             {
-                SDL2.SDL.SDL_FreeSurface(_sdlSurfaces[nativeTexture]);
+                SDL_FreeSurface(_sdlSurfaces[nativeTexture]);
                 _sdlSurfaces.Remove(nativeTexture);
             }
         }
 
         public void LoadImageToTexture(out NativeTexture nativeTexture, string imagePath)
         {
-            var sdlSurface = SDL2.SDL_image.IMG_Load(imagePath);
+            var sdlSurface = IMG_Load(imagePath);
 
             if (sdlSurface == IntPtr.Zero)
             {
-                throw new Exception($"IMG_Load error: {SDL2.SDL_image.IMG_GetError()}");
+                throw new Exception($"IMG_Load error: {IMG_GetError()}");
             }
 
-            var sdlTexture = SDL2.SDL.SDL_CreateTextureFromSurface(
+            var sdlTexture = SDL_CreateTextureFromSurface(
                 _sdlRenderer,
                 sdlSurface
             );
@@ -118,43 +118,43 @@ namespace IsometricMagic.Engine.Graphics.SDL
         
         private void InitWindow()
         {
-            _sdlWindow = SDL2.SDL.SDL_CreateWindow(
+            _sdlWindow = SDL_CreateWindow(
                 "Isometric Magic",
-                SDL2.SDL.SDL_WINDOWPOS_CENTERED,
-                SDL2.SDL.SDL_WINDOWPOS_CENTERED,
+                SDL_WINDOWPOS_CENTERED,
+                SDL_WINDOWPOS_CENTERED,
                 _graphicsParams.InitialWindowWidth,
                 _graphicsParams.InitialWindowHeight,
-                SDL2.SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE
+                SDL_WindowFlags.SDL_WINDOW_RESIZABLE
             );
 
             if (_sdlWindow == IntPtr.Zero)
             {
                 Stop();
-                throw new Exception($"SDL_CreateWindow error: {SDL2.SDL.SDL_GetError()}");
+                throw new Exception($"SDL_CreateWindow error: {SDL_GetError()}");
             }
 
             if (_graphicsParams.IsFullscreen)
             {
-                SDL2.SDL.SDL_SetWindowFullscreen(_sdlWindow, (uint) SDL2.SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN);
+                SDL_SetWindowFullscreen(_sdlWindow, (uint) SDL_WindowFlags.SDL_WINDOW_FULLSCREEN);
             }
         }
 
         private void InitRenderer()
         {
-            var flags = SDL2.SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED;
+            var flags = SDL_RendererFlags.SDL_RENDERER_ACCELERATED;
 
-            if (_graphicsParams.VSync) flags |= SDL2.SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC;
+            if (_graphicsParams.VSync) flags |= SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC;
 
-            _sdlRenderer = SDL2.SDL.SDL_CreateRenderer(
+            _sdlRenderer = SDL_CreateRenderer(
                 _sdlWindow,
-                -1,
+                0,
                 flags
             );
 
             if (_sdlRenderer == IntPtr.Zero)
             {
                 Stop();
-                throw new InvalidOperationException($"SDL_CreateRenderer error: {SDL2.SDL.SDL_GetError()}");
+                throw new InvalidOperationException($"SDL_CreateRenderer error: {SDL_GetError()}");
             }
         }
 
@@ -177,7 +177,7 @@ namespace IsometricMagic.Engine.Graphics.SDL
 
                 var tex = sprite.Texture;
 
-                SDL2.SDL.SDL_Rect sourceRect;
+                SDL_Rect sourceRect;
                 sourceRect.w = tex.Width;
                 sourceRect.h = tex.Height;
                 sourceRect.x = 0;
@@ -256,7 +256,7 @@ namespace IsometricMagic.Engine.Graphics.SDL
                     spritePosY -= cameraOffsetY;
                 }
 
-                SDL2.SDL.SDL_Rect targetRect; // @TODO Apply scale transformation
+                SDL_Rect targetRect; // @TODO Apply scale transformation
                 targetRect.w = tex.Width;
                 targetRect.h = tex.Height;
                 targetRect.x = spritePosX;
@@ -264,7 +264,7 @@ namespace IsometricMagic.Engine.Graphics.SDL
 
                 if (sprite.Transformation.Rotation.Angle == 0f)
                 {
-                    SDL2.SDL.SDL_RenderCopy(
+                    SDL_RenderCopy(
                         _sdlRenderer,
                         TextureHolder.GetInstance().GetNativeTexture(tex).Holder,
                         ref sourceRect,
@@ -275,7 +275,7 @@ namespace IsometricMagic.Engine.Graphics.SDL
                 {
                     var rotation = spriteTransformation.Rotation;
 
-                    SDL2.SDL.SDL_Point pivotPoint;
+                    SDL_Point pivotPoint;
 
                     switch (sprite.PivotMode)
                     {
@@ -288,14 +288,14 @@ namespace IsometricMagic.Engine.Graphics.SDL
                             throw new ArgumentException($"Pivot mode {sprite.PivotMode.ToString()} not supported");
                     }
 
-                    SDL2.SDL.SDL_RenderCopyEx(
+                    SDL_RenderCopyEx(
                         _sdlRenderer,
                         TextureHolder.GetInstance().GetNativeTexture(tex).Holder,
                         ref sourceRect,
                         ref targetRect,
                         MathHelper.NorRotationToDegree((rotation.Clockwise) ? rotation.Angle : -rotation.Angle),
                         ref pivotPoint,
-                        SDL2.SDL.SDL_RendererFlip.SDL_FLIP_NONE
+                        SDL_RendererFlip.SDL_FLIP_NONE
                     );
                 }
             }

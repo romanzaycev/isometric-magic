@@ -1,6 +1,4 @@
-using System;
-using System.Collections.Generic;
-using SDL2;
+using static SDL2.SDL;
 
 namespace IsometricMagic.Engine
 {
@@ -44,47 +42,47 @@ namespace IsometricMagic.Engine
             EnsureGamepadInitialized();
         }
 
-        public static void HandleEvent(SDL.SDL_Event evt)
+        public static void HandleEvent(SDL_Event evt)
         {
             switch (evt.type)
             {
-                case SDL.SDL_EventType.SDL_KEYDOWN:
+                case SDL_EventType.SDL_KEYDOWN:
                     HandleKeyDown(evt.key.keysym.sym);
                     break;
-                case SDL.SDL_EventType.SDL_KEYUP:
+                case SDL_EventType.SDL_KEYUP:
                     HandleKeyUp(evt.key.keysym.sym);
                     break;
-                case SDL.SDL_EventType.SDL_MOUSEBUTTONDOWN:
+                case SDL_EventType.SDL_MOUSEBUTTONDOWN:
                     HandleMouseButtonDown(evt.button.button);
                     break;
-                case SDL.SDL_EventType.SDL_MOUSEBUTTONUP:
+                case SDL_EventType.SDL_MOUSEBUTTONUP:
                     HandleMouseButtonUp(evt.button.button);
                     break;
-                case SDL.SDL_EventType.SDL_MOUSEMOTION:
+                case SDL_EventType.SDL_MOUSEMOTION:
                     HandleMousePos(evt.motion.x, evt.motion.y);
                     break;
-                case SDL.SDL_EventType.SDL_CONTROLLERDEVICEADDED:
+                case SDL_EventType.SDL_CONTROLLERDEVICEADDED:
                     HandleGamepadDeviceAdded(evt.cdevice.which);
                     break;
-                case SDL.SDL_EventType.SDL_CONTROLLERDEVICEREMOVED:
+                case SDL_EventType.SDL_CONTROLLERDEVICEREMOVED:
                     HandleGamepadDeviceRemoved(evt.cdevice.which);
                     break;
-                case SDL.SDL_EventType.SDL_CONTROLLERDEVICEREMAPPED:
+                case SDL_EventType.SDL_CONTROLLERDEVICEREMAPPED:
                     HandleGamepadDeviceRemapped(evt.cdevice.which);
                     break;
-                case SDL.SDL_EventType.SDL_CONTROLLERBUTTONDOWN:
+                case SDL_EventType.SDL_CONTROLLERBUTTONDOWN:
                     HandleGamepadButtonDown(evt.cbutton.which, evt.cbutton.button);
                     break;
-                case SDL.SDL_EventType.SDL_CONTROLLERBUTTONUP:
+                case SDL_EventType.SDL_CONTROLLERBUTTONUP:
                     HandleGamepadButtonUp(evt.cbutton.which, evt.cbutton.button);
                     break;
-                case SDL.SDL_EventType.SDL_CONTROLLERAXISMOTION:
+                case SDL_EventType.SDL_CONTROLLERAXISMOTION:
                     HandleGamepadAxisMotion(evt.caxis.which, evt.caxis.axis, evt.caxis.axisValue);
                     break;
             }
         }
 
-        private static void HandleKeyDown(SDL.SDL_Keycode keyCode)
+        private static void HandleKeyDown(SDL_Keycode keyCode)
         {
             if (SdlKeycodeMapper.TryMap(keyCode, out var key))
             {
@@ -96,7 +94,7 @@ namespace IsometricMagic.Engine
             }
         }
 
-        private static void HandleKeyUp(SDL.SDL_Keycode keyCode)
+        private static void HandleKeyUp(SDL_Keycode keyCode)
         {
             if (SdlKeycodeMapper.TryMap(keyCode, out var key))
             {
@@ -233,8 +231,7 @@ namespace IsometricMagic.Engine
             return ClampNegPos(adjustedStick * sign);
         }
 
-        [System.Obsolete("Use IsDown(Key) instead")]
-        public static bool IsPressed(SDL.SDL_Keycode keyCode)
+        public static bool IsPressed(SDL_Keycode keyCode)
         {
             if (SdlKeycodeMapper.TryMap(keyCode, out var key))
             {
@@ -243,8 +240,7 @@ namespace IsometricMagic.Engine
             return false;
         }
 
-        [System.Obsolete("Use IsUp(Key) instead")]
-        public static bool IsReleased(SDL.SDL_Keycode keyCode)
+        public static bool IsReleased(SDL_Keycode keyCode)
         {
             if (SdlKeycodeMapper.TryMap(keyCode, out var key))
             {
@@ -253,7 +249,6 @@ namespace IsometricMagic.Engine
             return true;
         }
 
-        [System.Obsolete("Use IsDown(MouseButton) instead")]
         public static bool IsMousePressed(uint mouseButton)
         {
             if (TryMapMouseButton(mouseButton, out var button))
@@ -262,8 +257,7 @@ namespace IsometricMagic.Engine
             }
             return false;
         }
-
-        [System.Obsolete("Use IsUp(MouseButton) instead")]
+        
         public static bool IsMouseReleased(uint mouseButton)
         {
             if (TryMapMouseButton(mouseButton, out var button))
@@ -273,20 +267,18 @@ namespace IsometricMagic.Engine
             return true;
         }
 
-        
-
         private static bool TryMapMouseButton(uint sdlButton, out MouseButton button)
         {
             button = default;
             switch (sdlButton)
             {
-                case SDL.SDL_BUTTON_LEFT:
+                case SDL_BUTTON_LEFT:
                     button = MouseButton.Left;
                     return true;
-                case SDL.SDL_BUTTON_RIGHT:
+                case SDL_BUTTON_RIGHT:
                     button = MouseButton.Right;
                     return true;
-                case SDL.SDL_BUTTON_MIDDLE:
+                case SDL_BUTTON_MIDDLE:
                     button = MouseButton.Middle;
                     return true;
             }
@@ -301,12 +293,12 @@ namespace IsometricMagic.Engine
             }
 
             _gamepadInitialized = true;
-            SDL.SDL_GameControllerEventState(SDL.SDL_ENABLE);
+            SDL_GameControllerEventState(SDL_ENABLE);
 
-            var count = SDL.SDL_NumJoysticks();
+            var count = SDL_NumJoysticks();
             for (var i = 0; i < count; i++)
             {
-                if (SDL.SDL_IsGameController(i) != SDL.SDL_bool.SDL_TRUE)
+                if (SDL_IsGameController(i) != SDL_bool.SDL_TRUE)
                 {
                     continue;
                 }
@@ -336,7 +328,7 @@ namespace IsometricMagic.Engine
                 return;
             }
 
-            SDL.SDL_GameControllerClose(_gameController);
+            SDL_GameControllerClose(_gameController);
             _gameController = IntPtr.Zero;
             _gamepadInstanceId = -1;
             GamepadButtonState.Clear();
@@ -357,8 +349,8 @@ namespace IsometricMagic.Engine
                 return;
             }
 
-            var joystick = SDL.SDL_GameControllerGetJoystick(_gameController);
-            _gamepadInstanceId = SDL.SDL_JoystickInstanceID(joystick);
+            var joystick = SDL_GameControllerGetJoystick(_gameController);
+            _gamepadInstanceId = SDL_JoystickInstanceID(joystick);
         }
 
         private static void HandleGamepadButtonDown(int instanceId, byte sdlButton)
@@ -429,20 +421,20 @@ namespace IsometricMagic.Engine
                 return false;
             }
 
-            if (SDL.SDL_IsGameController(deviceIndex) != SDL.SDL_bool.SDL_TRUE)
+            if (SDL_IsGameController(deviceIndex) != SDL_bool.SDL_TRUE)
             {
                 return false;
             }
 
-            var controller = SDL.SDL_GameControllerOpen(deviceIndex);
+            var controller = SDL_GameControllerOpen(deviceIndex);
             if (controller == IntPtr.Zero)
             {
                 return false;
             }
 
             _gameController = controller;
-            var joystick = SDL.SDL_GameControllerGetJoystick(_gameController);
-            _gamepadInstanceId = SDL.SDL_JoystickInstanceID(joystick);
+            var joystick = SDL_GameControllerGetJoystick(_gameController);
+            _gamepadInstanceId = SDL_JoystickInstanceID(joystick);
 
             GamepadButtonState.Clear();
             GamepadAxisState.Clear();
@@ -453,48 +445,48 @@ namespace IsometricMagic.Engine
         private static bool TryMapGamepadButton(byte sdlButton, out GamepadButton button)
         {
             button = default;
-            switch ((SDL.SDL_GameControllerButton) sdlButton)
+            switch ((SDL_GameControllerButton) sdlButton)
             {
-                case SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A:
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A:
                     button = GamepadButton.A;
                     return true;
-                case SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_B:
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_B:
                     button = GamepadButton.B;
                     return true;
-                case SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_X:
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_X:
                     button = GamepadButton.X;
                     return true;
-                case SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_Y:
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_Y:
                     button = GamepadButton.Y;
                     return true;
-                case SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_UP:
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_UP:
                     button = GamepadButton.DpadUp;
                     return true;
-                case SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_DOWN:
                     button = GamepadButton.DpadDown;
                     return true;
-                case SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_LEFT:
                     button = GamepadButton.DpadLeft;
                     return true;
-                case SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
                     button = GamepadButton.DpadRight;
                     return true;
-                case SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_START:
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_START:
                     button = GamepadButton.Start;
                     return true;
-                case SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_BACK:
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_BACK:
                     button = GamepadButton.Back;
                     return true;
-                case SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
                     button = GamepadButton.LeftShoulder;
                     return true;
-                case SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
                     button = GamepadButton.RightShoulder;
                     return true;
-                case SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSTICK:
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSTICK:
                     button = GamepadButton.LeftStick;
                     return true;
-                case SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSTICK:
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSTICK:
                     button = GamepadButton.RightStick;
                     return true;
             }
@@ -505,24 +497,24 @@ namespace IsometricMagic.Engine
         private static bool TryMapGamepadAxis(byte sdlAxis, out GamepadAxis axis)
         {
             axis = default;
-            switch ((SDL.SDL_GameControllerAxis) sdlAxis)
+            switch ((SDL_GameControllerAxis) sdlAxis)
             {
-                case SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTX:
+                case SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTX:
                     axis = GamepadAxis.LeftX;
                     return true;
-                case SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTY:
+                case SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTY:
                     axis = GamepadAxis.LeftY;
                     return true;
-                case SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_RIGHTX:
+                case SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_RIGHTX:
                     axis = GamepadAxis.RightX;
                     return true;
-                case SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_RIGHTY:
+                case SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_RIGHTY:
                     axis = GamepadAxis.RightY;
                     return true;
-                case SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERLEFT:
+                case SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERLEFT:
                     axis = GamepadAxis.LeftTrigger;
                     return true;
-                case SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
+                case SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
                     axis = GamepadAxis.RightTrigger;
                     return true;
             }

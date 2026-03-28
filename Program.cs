@@ -1,7 +1,6 @@
-using System;
-using SDL2;
 using IsometricMagic.Engine;
 using IsometricMagic.Game.Scenes;
+using static SDL2.SDL;
 
 namespace IsometricMagic
 {
@@ -36,59 +35,59 @@ namespace IsometricMagic
                     
                     Input.BeginFrame();
                     
-                    SDL.SDL_Event sdlEvent;
+                    SDL_Event sdlEvent;
                     
-                    while (SDL.SDL_PollEvent(out sdlEvent) != 0)
+                    while (SDL_PollEvent(out sdlEvent) != 0)
                     {
                         switch (sdlEvent.type)
                         {
-                            case SDL.SDL_EventType.SDL_WINDOWEVENT:
+                            case SDL_EventType.SDL_WINDOWEVENT:
                                 app.HandleWindowEvent(sdlEvent);
                                 break;
 
-                            case SDL.SDL_EventType.SDL_QUIT:
+                            case SDL_EventType.SDL_QUIT:
                                 isRunning = false;
                                 break;
 
-                            case SDL.SDL_EventType.SDL_KEYDOWN:
-                                if (sdlEvent.key.keysym.sym == SDL.SDL_Keycode.SDLK_ESCAPE)
+                            case SDL_EventType.SDL_KEYDOWN:
+                                if (sdlEvent.key.keysym.sym == SDL_Keycode.SDLK_ESCAPE)
                                 {
                                     isRunning = false;
                                 }
                                 Input.HandleEvent(sdlEvent);
                                 break;
-                            
-                            case SDL.SDL_EventType.SDL_KEYUP:
+                             
+                            case SDL_EventType.SDL_KEYUP:
                                 Input.HandleEvent(sdlEvent);
                                 break;
-                            
-                            case SDL.SDL_EventType.SDL_MOUSEBUTTONDOWN:
+                             
+                            case SDL_EventType.SDL_MOUSEBUTTONDOWN:
                                 Input.HandleEvent(sdlEvent);
                                 break;
-                                
-                            case SDL.SDL_EventType.SDL_MOUSEBUTTONUP:
+                                 
+                            case SDL_EventType.SDL_MOUSEBUTTONUP:
                                 Input.HandleEvent(sdlEvent);
                                 break;
-                            
-                            case SDL.SDL_EventType.SDL_MOUSEMOTION:
+                             
+                            case SDL_EventType.SDL_MOUSEMOTION:
                                 Input.HandleEvent(sdlEvent);
                                 break;
-                            case SDL.SDL_EventType.SDL_CONTROLLERAXISMOTION:
+                            case SDL_EventType.SDL_CONTROLLERAXISMOTION:
                                 Input.HandleEvent(sdlEvent);
                                 break;
-                            case SDL.SDL_EventType.SDL_CONTROLLERBUTTONDOWN:
+                            case SDL_EventType.SDL_CONTROLLERBUTTONDOWN:
                                 Input.HandleEvent(sdlEvent);
                                 break;
-                            case SDL.SDL_EventType.SDL_CONTROLLERBUTTONUP:
+                            case SDL_EventType.SDL_CONTROLLERBUTTONUP:
                                 Input.HandleEvent(sdlEvent);
                                 break;
-                            case SDL.SDL_EventType.SDL_CONTROLLERDEVICEADDED:
+                            case SDL_EventType.SDL_CONTROLLERDEVICEADDED:
                                 Input.HandleEvent(sdlEvent);
                                 break;
-                            case SDL.SDL_EventType.SDL_CONTROLLERDEVICEREMOVED:
+                            case SDL_EventType.SDL_CONTROLLERDEVICEREMOVED:
                                 Input.HandleEvent(sdlEvent);
                                 break;
-                            case SDL.SDL_EventType.SDL_CONTROLLERDEVICEREMAPPED:
+                            case SDL_EventType.SDL_CONTROLLERDEVICEREMAPPED:
                                 Input.HandleEvent(sdlEvent);
                                 break;
                         }

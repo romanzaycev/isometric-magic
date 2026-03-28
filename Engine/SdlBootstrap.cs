@@ -1,23 +1,23 @@
-using System;
-using SDL2;
+using static SDL2.SDL;
+using static SDL2.SDL_image;
 
 namespace IsometricMagic.Engine
 {
     public sealed class SdlBootstrapOptions
     {
         public uint InitFlags { get; set; }
-        public SDL_image.IMG_InitFlags ImageFlags { get; set; }
+        public IMG_InitFlags ImageFlags { get; set; }
         public string RenderScaleQuality { get; set; }
 
         public static SdlBootstrapOptions CreateDefault()
         {
             return new SdlBootstrapOptions
             {
-                InitFlags = SDL.SDL_INIT_VIDEO | SDL.SDL_INIT_GAMECONTROLLER | SDL.SDL_INIT_JOYSTICK,
-                ImageFlags = SDL_image.IMG_InitFlags.IMG_INIT_JPG |
-                             SDL_image.IMG_InitFlags.IMG_INIT_PNG |
-                             SDL_image.IMG_InitFlags.IMG_INIT_WEBP |
-                             SDL_image.IMG_InitFlags.IMG_INIT_TIF,
+                InitFlags = SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK,
+                ImageFlags = IMG_InitFlags.IMG_INIT_JPG |
+                             IMG_InitFlags.IMG_INIT_PNG |
+                             IMG_InitFlags.IMG_INIT_WEBP |
+                             IMG_InitFlags.IMG_INIT_TIF,
                 RenderScaleQuality = "best"
             };
         }
@@ -37,26 +37,26 @@ namespace IsometricMagic.Engine
             }
 
             var resolvedOptions = options ?? SdlBootstrapOptions.CreateDefault();
-            var sdlInitResult = SDL.SDL_Init(resolvedOptions.InitFlags);
+            var sdlInitResult = SDL_Init(resolvedOptions.InitFlags);
 
             if (sdlInitResult < 0)
             {
-                throw new InvalidOperationException($"SDL_Init error: {SDL.SDL_GetError()}");
+                throw new InvalidOperationException($"SDL_Init error: {SDL_GetError()}");
             }
 
             if (resolvedOptions.ImageFlags != 0)
             {
-                var sdlImageInitResult = SDL_image.IMG_Init(resolvedOptions.ImageFlags);
+                var sdlImageInitResult = IMG_Init(resolvedOptions.ImageFlags);
 
                 if (sdlImageInitResult < 0)
                 {
-                    throw new InvalidOperationException($"IMG_Init error: {SDL_image.IMG_GetError()}");
+                    throw new InvalidOperationException($"IMG_Init error: {IMG_GetError()}");
                 }
             }
 
             if (!string.IsNullOrWhiteSpace(resolvedOptions.RenderScaleQuality))
             {
-                SDL.SDL_SetHint(SDL.SDL_HINT_RENDER_SCALE_QUALITY, resolvedOptions.RenderScaleQuality);
+                SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, resolvedOptions.RenderScaleQuality);
             }
 
             _isInitialized = true;
@@ -64,16 +64,16 @@ namespace IsometricMagic.Engine
 
         public static void InitSubSystem(uint flags)
         {
-            var result = SDL.SDL_InitSubSystem(flags);
+            var result = SDL_InitSubSystem(flags);
             if (result < 0)
             {
-                throw new InvalidOperationException($"SDL_InitSubSystem error: {SDL.SDL_GetError()}");
+                throw new InvalidOperationException($"SDL_InitSubSystem error: {SDL_GetError()}");
             }
         }
 
         public static void QuitSubSystem(uint flags)
         {
-            SDL.SDL_QuitSubSystem(flags);
+            SDL_QuitSubSystem(flags);
         }
 
         public static void Quit()
@@ -83,8 +83,8 @@ namespace IsometricMagic.Engine
                 return;
             }
 
-            SDL_image.IMG_Quit();
-            SDL.SDL_Quit();
+            IMG_Quit();
+            SDL_Quit();
             _isInitialized = false;
         }
     }
