@@ -10,8 +10,6 @@ namespace IsometricMagic.Engine.Graphics.Materials
         public bool Enabled { get; set; } = true;
 
         public Vector3 AmbientColor = new(0.2f, 0.2f, 0.2f);
-        public Vector3 LightColor = new(1f, 0.95f, 0.85f);
-        public float LightIntensity = 1.25f;
 
         public void Bind(GlRenderContext context, Sprite sprite, GlNativeTexture albedo, GlNativeTexture? normalMap)
         {

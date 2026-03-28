@@ -1,7 +1,9 @@
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+using System.Numerics;
 using IsometricMagic.Engine;
+using IsometricMagic.Engine.Graphics.Effects;
+using IsometricMagic.Engine.Graphics.Lighting;
+using IsometricMagic.Engine.Graphics.Materials;
 using IsometricMagic.Game.Character;
 using IsometricMagic.Game.Controllers.Camera;
 using IsometricMagic.Game.Controllers.Character;
@@ -85,6 +87,7 @@ namespace IsometricMagic.Game.Scenes
                                 Sorting = i,
                                 OriginPoint = OriginPoint.LeftBottom
                             };
+                            sprite.Material = new NormalMappedLitSpriteMaterial();
                             
                             MainLayer.Add(sprite);
                         }
@@ -101,6 +104,13 @@ namespace IsometricMagic.Game.Scenes
                     WorldPosX = 400
                 };
             }
+
+            PostProcess.Add(new VignetteEffect());
+            Lighting.Add((new Light2D(new Vector2(400, 250))
+            {
+                Intensity = 0.2f,
+                Color = new Vector3(0.1f, 1f, 1f),
+            }));
         }
 
         public override void Update()
