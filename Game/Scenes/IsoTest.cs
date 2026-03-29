@@ -3,10 +3,12 @@ using System.Numerics;
 using IsometricMagic.Engine;
 using IsometricMagic.Engine.Graphics.Effects;
 using IsometricMagic.Engine.Graphics.Lighting;
+using IsometricMagic.Engine.Graphics.Materials;
 using IsometricMagic.Game.Components.Actor;
 using IsometricMagic.Game.Components.Camera;
 using IsometricMagic.Game.Components.Spatial;
 using IsometricMagic.Game.Components.Character.Humanoid;
+using IsometricMagic.Game.Components.Rendering;
 using IsometricMagic.Game.Components.Tilemap;
 using IsometricMagic.Game.Components.Vfx.Light;
 using IsometricMagic.Game.Controllers.Character;
@@ -68,6 +70,29 @@ namespace IsometricMagic.Game.Scenes
             positionSync.SetConverter(positionConverter);
             playerEntity.AddComponent(positionSync);
 
+            // Objects
+            var stone0 = CreateEntity("stone0");
+            stone0.AddComponent(new WorldPositionComponent()
+            {
+                WorldPosX = 410,
+                WorldPosY = 410,
+            });
+            stone0.AddComponent(new SpriteRendererComponent()
+            {
+                ImagePath = "./resources/data/textures/stone0.png",
+                Width = 256,
+                Height = 256,
+                OriginPoint = OriginPoint.BottomCenter,
+                PositionMode = SpritePositionMode.IsoWorldFromWorldPositionComponent,
+                Sorting = 1000,
+                Material = new EmissiveNormalMappedLitSpriteMaterial()
+                {
+                    EmissionColor = new Vector3(0.37f, 0.81f, 0.51f),
+                    EmissionIntensity = 3f,
+                    EmissionMapPath =  "./resources/data/textures/stone0_em.png",
+                },
+            });
+            
             // Vfx
             var lightCenter = positionConverter.GetCanvasPosition(new Vector2(600, 600));
 
@@ -87,17 +112,17 @@ namespace IsometricMagic.Game.Scenes
             });
             
             // Lighting
-            Lighting.AmbientIntensity = 0.5f;
+            Lighting.AmbientIntensity = 0.45f;
             Lighting.Add(
                 new Light2D(positionConverter.GetCanvasPosition(new Vector2(410, 410)))
                 {
-                    Intensity = 2f,
+                    Intensity = 5f,
                     Radius = 512f,
-                    Height = 1.8f,
+                    Height = 2f,
                     Falloff = 2f,
                     InnerRadius = 64f,
                     CenterAttenuation = 0.1f,
-                    Color = new Vector3(0.1f, 1f, 1f),
+                    Color = new Vector3(0.37f, 0.81f, 0.51f),
                 }
             );
             
@@ -106,13 +131,13 @@ namespace IsometricMagic.Game.Scenes
             {
                 Threshold = 1.2f,
                 Knee = 0.6f,
-                Intensity = 0.9f,
+                Intensity = 0.95f,
                 BlurIterations = 4
             });
             PostProcess.Add(new ToneMapEffect
             {
-                Exposure = 0.55f,
-                Gamma = 1.2f,
+                Exposure = 0.6f,
+                Gamma = 1.3f,
                 Contrast = 1.05f,
             });
             PostProcess.Add(new VignetteEffect

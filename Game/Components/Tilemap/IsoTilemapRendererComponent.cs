@@ -2,15 +2,17 @@ using System.Collections.Generic;
 using IsometricMagic.Engine;
 using IsometricMagic.Game.Maps;
 using IsometricMagic.Game.Model;
+using IsometricMagic.Game.Components.Spatial;
 using IsometricMagic.Game.Tiles;
 
 namespace IsometricMagic.Game.Components.Tilemap
 {
-    public class IsoTilemapRendererComponent : Component
+    public class IsoTilemapRendererComponent : WorldPositionConverterProviderComponent
     {
         private Map _map = null!;
         private TileSet _tileSet = null!;
         private IsoWorldPositionConverter _converter = null!;
+        public override IsoWorldPositionConverter? Converter => _converter;
         private SceneLayer _targetLayer = null!;
 
         private readonly Dictionary<string, LayerState> _layerStates = new();

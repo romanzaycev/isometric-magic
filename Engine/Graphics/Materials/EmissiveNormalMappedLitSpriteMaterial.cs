@@ -1,4 +1,6 @@
+using System;
 using System.Numerics;
+using IsometricMagic.Engine;
 using IsometricMagic.Engine.Graphics.Lighting;
 using IsometricMagic.Engine.Graphics.OpenGL;
 using Silk.NET.OpenGL;
@@ -13,7 +15,45 @@ namespace IsometricMagic.Engine.Graphics.Materials
         public Vector3 EmissionColor = new(1f, 1f, 1f);
         public float EmissionIntensity = 0f;
 
+        private Texture? _emissionMapTexture;
+        private string? _emissionMapPath;
+        private Texture? _emissionMapFromPath;
+        private string? _emissionMapLoadedPath;
+
         private const int MAX_LIGHTS = 8;
+
+        public Texture? EmissionMapTexture
+        {
+            get => _emissionMapTexture;
+            set
+            {
+                if (_emissionMapTexture == value)
+                {
+                    return;
+                }
+
+                _emissionMapTexture = value;
+                if (_emissionMapTexture != null)
+                {
+                    ReleasePathEmissionMap();
+                }
+            }
+        }
+
+        public string? EmissionMapPath
+        {
+            get => _emissionMapPath;
+            set
+            {
+                if (string.Equals(_emissionMapPath, value, StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                _emissionMapPath = value;
+                ReleasePathEmissionMap();
+            }
+        }
 
         public void Bind(GlRenderContext context, Sprite sprite, GlNativeTexture albedo, GlNativeTexture? normalMap)
         {
@@ -32,6 +72,13 @@ namespace IsometricMagic.Engine.Graphics.Materials
             var normalTextureId = normalMap?.TextureId ?? 0u;
             context.Gl.BindTexture(TextureTarget.Texture2D, normalTextureId);
             _shader.SetInt("u_normalMap", 1);
+
+            var emissionMap = ResolveEmissionMapTexture();
+            context.Gl.ActiveTexture(TextureUnit.Texture2);
+            var emissionTextureId = emissionMap?.TextureId ?? 0u;
+            context.Gl.BindTexture(TextureTarget.Texture2D, emissionTextureId);
+            _shader.SetInt("u_emissionMap", 2);
+            _shader.SetInt("u_hasEmissionMap", emissionMap != null ? 1 : 0);
 
             _shader.SetVector3("u_emissionColor", EmissionColor.X, EmissionColor.Y, EmissionColor.Z);
             _shader.SetFloat("u_emissionIntensity", EmissionIntensity);
@@ -74,10 +121,51 @@ namespace IsometricMagic.Engine.Graphics.Materials
 
         public void Unbind(GlRenderContext context)
         {
+            context.Gl.ActiveTexture(TextureUnit.Texture2);
+            context.Gl.BindTexture(TextureTarget.Texture2D, 0);
             context.Gl.ActiveTexture(TextureUnit.Texture1);
             context.Gl.BindTexture(TextureTarget.Texture2D, 0);
             context.Gl.ActiveTexture(TextureUnit.Texture0);
             context.Gl.BindTexture(TextureTarget.Texture2D, 0);
+        }
+
+        private GlNativeTexture? ResolveEmissionMapTexture()
+        {
+            if (_emissionMapTexture != null)
+            {
+                return TextureHolder.GetInstance().GetNativeTexture(_emissionMapTexture) as GlNativeTexture;
+            }
+
+            var path = _emissionMapPath;
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return null;
+            }
+
+            if (_emissionMapFromPath == null ||
+                !string.Equals(_emissionMapLoadedPath, path, StringComparison.Ordinal))
+            {
+                ReleasePathEmissionMap();
+                var tex = new Texture(1, 1);
+                tex.LoadImage(path);
+                _emissionMapFromPath = tex;
+                _emissionMapLoadedPath = path;
+            }
+
+            return TextureHolder.GetInstance().GetNativeTexture(_emissionMapFromPath) as GlNativeTexture;
+        }
+
+        private void ReleasePathEmissionMap()
+        {
+            if (_emissionMapFromPath == null)
+            {
+                _emissionMapLoadedPath = null;
+                return;
+            }
+
+            _emissionMapFromPath.Destroy();
+            _emissionMapFromPath = null;
+            _emissionMapLoadedPath = null;
         }
 
         private const string VertexSource = @"#version 330 core
@@ -103,7 +191,9 @@ out vec4 FragColor;
 
 uniform sampler2D u_albedo;
 uniform sampler2D u_normalMap;
+uniform sampler2D u_emissionMap;
 uniform int u_lightCount;
+uniform int u_hasEmissionMap;
 
 uniform vec3 u_ambientColor;
 uniform float u_ambientIntensity;
@@ -158,7 +248,11 @@ void main()
     totalLighting = min(totalLighting, vec3(1.5));
 
     vec3 litColor = baseColor.rgb * totalLighting;
-    vec3 emission = u_emissionColor * u_emissionIntensity * baseColor.a;
+    vec3 emissionMask = vec3(1.0);
+    if (u_hasEmissionMap == 1) {
+        emissionMask = texture(u_emissionMap, v_uv).rgb;
+    }
+    vec3 emission = u_emissionColor * u_emissionIntensity * emissionMask * baseColor.a;
     FragColor = vec4(litColor + emission, baseColor.a);
 }
 ";
