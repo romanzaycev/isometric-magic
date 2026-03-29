@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using IsometricMagic.Engine.Graphics.Effects;
 using IsometricMagic.Engine.Graphics.Lighting;
+using IsometricMagic.Engine.Tweening;
 
 namespace IsometricMagic.Engine
 {
@@ -32,6 +33,8 @@ namespace IsometricMagic.Engine
 
         private readonly SceneLighting _lighting = new();
         public SceneLighting Lighting => _lighting;
+
+        public TweenManager Tweens { get; } = new();
 
         public Entity Root { get; }
 
@@ -67,9 +70,9 @@ namespace IsometricMagic.Engine
 
         public void InternalUpdate()
         {
-            Update();
-
             var dt = Application.DeltaTime;
+            Tweens.Update(dt);
+            Update();
             Root.CallUpdate(dt);
             Root.CallLateUpdate(dt);
 
@@ -186,6 +189,7 @@ namespace IsometricMagic.Engine
 
         public void Unload()
         {
+            Tweens.Clear();
             DeInitialize();
 
             Root.RequestDestroy();
