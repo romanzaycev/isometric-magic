@@ -1,6 +1,6 @@
 using IsometricMagic.Engine;
 
-namespace IsometricMagic.Game.Components
+namespace IsometricMagic.Game.Components.Spatial
 {
     public class WorldPositionComponent : Component
     {

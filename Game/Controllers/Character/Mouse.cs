@@ -1,5 +1,5 @@
 using IsometricMagic.Engine;
-using IsometricMagic.Game.Components;
+using IsometricMagic.Game.Components.Actor;
 
 namespace IsometricMagic.Game.Controllers.Character
 {

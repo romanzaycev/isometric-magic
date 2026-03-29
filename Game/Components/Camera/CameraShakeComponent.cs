@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using IsometricMagic.Engine;
 
-namespace IsometricMagic.Game.Components
+namespace IsometricMagic.Game.Components.Camera
 {
     public class CameraShakeComponent : CameraInfluenceComponent
     {

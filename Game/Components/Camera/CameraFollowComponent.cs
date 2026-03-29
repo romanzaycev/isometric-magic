@@ -2,8 +2,9 @@ using System.Collections.Generic;
 using System.Numerics;
 using IsometricMagic.Engine;
 using IsometricMagic.Game.Model;
+using IsometricMagic.Game.Components.Spatial;
 
-namespace IsometricMagic.Game.Components
+namespace IsometricMagic.Game.Components.Camera
 {
     public class CameraFollowComponent : CameraInfluenceComponent
     {
@@ -34,7 +35,7 @@ namespace IsometricMagic.Game.Components
         protected override void Update(float dt)
         {
             if (_positionComponent == null || _converter == null) return;
-
+            
             var pos = _converter.GetCanvasPosition(_positionComponent.WorldPosX, _positionComponent.WorldPosY);
             _targetCenter = new Vector2(pos.X, pos.Y + CenterYOffset);
             _hasTarget = true;

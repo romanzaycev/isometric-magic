@@ -4,6 +4,11 @@ using IsometricMagic.Engine;
 using IsometricMagic.Engine.Graphics.Effects;
 using IsometricMagic.Engine.Graphics.Lighting;
 using IsometricMagic.Game.Components;
+using IsometricMagic.Game.Components.Actor;
+using IsometricMagic.Game.Components.Camera;
+using IsometricMagic.Game.Components.Spatial;
+using IsometricMagic.Game.Components.Character.Humanoid;
+using IsometricMagic.Game.Components.Tilemap;
 using IsometricMagic.Game.Controllers.Character;
 using IsometricMagic.Game.Model;
 
@@ -45,17 +50,16 @@ namespace IsometricMagic.Game.Scenes
             worldPosComp.WorldPosX = 400;
             worldPosComp.WorldPosY = 400;
 
+            var motor = new MotorComponent();
+            motor.SetConverter(_positionConverter);
+            _playerEntity.AddComponent(motor);
+            
             _animationComponent = new HumanoidAnimationComponent
             {
                 TargetLayer = MainLayer,
                 Sorting = 1000
             };
             _playerEntity.AddComponent(_animationComponent);
-
-            var motor = new MotorComponent();
-            motor.SetConverter(_positionConverter);
-            _playerEntity.AddComponent(motor);
-
             _playerEntity.AddComponent(new KeyboardOrGamepad());
 
             var cameraFollow = new CameraFollowComponent();

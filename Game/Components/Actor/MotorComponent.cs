@@ -1,23 +1,23 @@
 using System;
 using IsometricMagic.Engine;
 using IsometricMagic.Game.Model;
+using IsometricMagic.Game.Components.Spatial;
 
-namespace IsometricMagic.Game.Components
+namespace IsometricMagic.Game.Components.Actor
 {
     public class MotorComponent : Component
     {
         private WorldDirection _direction = WorldDirection.N;
-        private CharacterState _state = CharacterState.Idle;
+        private LocomotionState _state = LocomotionState.Idle;
 
         public WorldDirection Direction => _direction;
-        public CharacterState State => _state;
+        public LocomotionState State => _state;
 
         public int MaxMove { get; set; } = 5;
         public IsoWorldPositionConverter? Converter => _converter;
         public WorldPositionComponent? PositionComponent => _positionComponent;
 
         private WorldPositionComponent? _positionComponent;
-        private HumanoidAnimationComponent? _animationComponent;
         private IsoWorldPositionConverter? _converter;
 
         public void SetConverter(IsoWorldPositionConverter converter)
@@ -28,7 +28,6 @@ namespace IsometricMagic.Game.Components
         protected override void Awake()
         {
             _positionComponent = Entity?.GetComponent<WorldPositionComponent>();
-            _animationComponent = Entity?.GetComponent<HumanoidAnimationComponent>();
         }
 
         public void TryMove(int moveX, int moveY)
@@ -81,13 +80,8 @@ namespace IsometricMagic.Game.Components
 
             if (moved)
             {
-                _state = CharacterState.Running;
+                _state = LocomotionState.Running;
                 _direction = GetDirection(moveX, moveY);
-                if (_animationComponent != null)
-                {
-                    _animationComponent.Direction = _direction;
-                    _animationComponent.State = _state;
-                }
             }
             else
             {
@@ -97,14 +91,7 @@ namespace IsometricMagic.Game.Components
 
         public void StopMove()
         {
-            if (_state != CharacterState.Idle)
-            {
-                _state = CharacterState.Idle;
-                if (_animationComponent != null)
-                {
-                    _animationComponent.State = _state;
-                }
-            }
+            _state = LocomotionState.Idle;
         }
 
         private static WorldDirection GetDirection(int moveX, int moveY)

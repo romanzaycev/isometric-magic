@@ -4,7 +4,7 @@ using IsometricMagic.Game.Maps;
 using IsometricMagic.Game.Model;
 using IsometricMagic.Game.Tiles;
 
-namespace IsometricMagic.Game.Components
+namespace IsometricMagic.Game.Components.Tilemap
 {
     public class IsoTilemapRendererComponent : Component
     {

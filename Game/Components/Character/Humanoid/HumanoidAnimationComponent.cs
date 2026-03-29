@@ -3,24 +3,27 @@ using System.Numerics;
 using IsometricMagic.Engine;
 using IsometricMagic.Engine.Graphics.Materials;
 using IsometricMagic.Game.Animation;
+using IsometricMagic.Game.Components.Actor;
 using IsometricMagic.Game.Model;
 
-namespace IsometricMagic.Game.Components
+namespace IsometricMagic.Game.Components.Character.Humanoid
 {
     public class HumanoidAnimationComponent : Component
     {
+        private MotorComponent? _motorComponent;
+        
         private readonly Dictionary<string, Sequence> _animations = new();
         private Sequence? _currentSequence;
         private string _currentAnimationName = "idle_0";
 
         private WorldDirection _direction = WorldDirection.N;
-        private CharacterState _state = CharacterState.Idle;
+        private LocomotionState _state = LocomotionState.Idle;
 
         private readonly List<Sprite> _managedSprites = new();
 
         public SceneLayer? TargetLayer { get; set; }
         public int Sorting { get; set; } = 1000;
-
+        
         public WorldDirection Direction
         {
             get => _direction;
@@ -32,7 +35,7 @@ namespace IsometricMagic.Game.Components
             }
         }
 
-        public CharacterState State
+        public LocomotionState State
         {
             get => _state;
             set
@@ -45,6 +48,7 @@ namespace IsometricMagic.Game.Components
 
         protected override void Awake()
         {
+            _motorComponent = Entity?.GetComponent<MotorComponent>();
             LoadAnimations();
             PlayAnimation("idle_0");
         }
@@ -67,7 +71,15 @@ namespace IsometricMagic.Game.Components
 
         protected override void Update(float dt)
         {
+            if (_motorComponent != null)
+            {
+                _state = _motorComponent.State;
+                _direction = _motorComponent.Direction;
+                UpdateAnimationState();
+            }
+            
             if (_currentSequence == null) return;
+            
             _currentSequence.Update(dt);
         }
 
@@ -128,9 +140,9 @@ namespace IsometricMagic.Game.Components
         {
             var nextAnimation = _state switch
             {
-                CharacterState.Idle => "idle_" + (int)_direction,
-                CharacterState.Running => "running_" + (int)_direction,
-                CharacterState.Dying => "dying_" + (int)_direction,
+                LocomotionState.Idle => "idle_" + (int)_direction,
+                LocomotionState.Running => "running_" + (int)_direction,
+                LocomotionState.Dying => "dying_" + (int)_direction,
                 _ => _currentAnimationName
             };
 

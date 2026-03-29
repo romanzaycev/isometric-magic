@@ -1,7 +1,8 @@
 using IsometricMagic.Engine;
 using IsometricMagic.Game.Model;
+using IsometricMagic.Game.Components.Spatial;
 
-namespace IsometricMagic.Game.Components
+namespace IsometricMagic.Game.Components.Character.Humanoid
 {
     public class HumanoidWorldPositionSyncComponent : Component
     {
