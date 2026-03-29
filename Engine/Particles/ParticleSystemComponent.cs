@@ -231,6 +231,28 @@ namespace IsometricMagic.Engine.Particles
         /// </summary>
         public int AliveCount => _aliveCount;
 
+        public void SetBaseSorting(int baseSorting, bool applyToAlive = true)
+        {
+            if (BaseSorting == baseSorting && !applyToAlive) return;
+            BaseSorting = baseSorting;
+
+            if (!applyToAlive || !_initialized) return;
+
+            if (_aliveCount == 0) return;
+
+            for (var i = 0; i < _aliveCount; i++)
+            {
+                ref var particle = ref _particles[i];
+                var sprite = _sprites[particle.SpriteIndex];
+                var visualOffset = 0;
+                if (particle.VisualIndex >= 0 && particle.VisualIndex < Visuals.Length)
+                {
+                    visualOffset = Visuals[particle.VisualIndex].SortingOffset;
+                }
+                sprite.Sorting = BaseSorting + visualOffset;
+            }
+        }
+
         protected override void Awake()
         {
             if (TargetLayer == null)

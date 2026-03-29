@@ -1,9 +1,11 @@
 using System.Collections.Generic;
+using System.Numerics;
 using IsometricMagic.Engine;
 using IsometricMagic.Game.Maps;
 using IsometricMagic.Game.Model;
 using IsometricMagic.Game.Components.Spatial;
 using IsometricMagic.Game.Tiles;
+using IsometricMagic.Game.Rendering;
 
 namespace IsometricMagic.Game.Components.Tilemap
 {
@@ -14,6 +16,10 @@ namespace IsometricMagic.Game.Components.Tilemap
         private IsoWorldPositionConverter _converter = null!;
         public override IsoWorldPositionConverter? Converter => _converter;
         private SceneLayer _targetLayer = null!;
+        private int _layerStride;
+
+        public int LayerStride => _layerStride;
+        public int WorldLayerBase => _layerStride * _map.Layers.Length;
 
         private readonly Dictionary<string, LayerState> _layerStates = new();
         private readonly Dictionary<string, Texture> _textureCache = new();
@@ -24,6 +30,7 @@ namespace IsometricMagic.Game.Components.Tilemap
             _tileSet = tileSet;
             _converter = converter;
             _targetLayer = targetLayer;
+            _layerStride = IsoSort.CalculateLayerStride(map.Width, map.Height, map.TileWidth, map.TileHeight);
         }
 
         public void BuildAll()
@@ -69,7 +76,7 @@ namespace IsometricMagic.Game.Components.Tilemap
 
             state.Sprites = new Sprite?[layer.Data.Length];
 
-            var layerOffset = CalculateLayerOffset(layerIndex);
+            var layerOffset = CalculateLayerBase(layerIndex);
 
             for (var y = 0; y < _map.Height; y++)
             {
@@ -112,14 +119,14 @@ namespace IsometricMagic.Game.Components.Tilemap
 
             if (sprite == null)
             {
-                var layerOffset = CalculateLayerOffset(GetLayerIndex(layerName));
+                var layerOffset = CalculateLayerBase(GetLayerIndex(layerName));
                 sprite = CreateTileSprite(tileId, x, y, layerOffset);
                 state.Sprites[index] = sprite;
                 _targetLayer.Add(sprite);
             }
             else
             {
-                var layerOffset = CalculateLayerOffset(GetLayerIndex(layerName));
+                var layerOffset = CalculateLayerBase(GetLayerIndex(layerName));
                 var tile = _tileSet.Tiles[tileId];
                 var tex = GetOrLoadTexture(tile);
 
@@ -127,7 +134,7 @@ namespace IsometricMagic.Game.Components.Tilemap
                 sprite.Width = tile.Image.Width;
                 sprite.Height = tile.Image.Height;
                 sprite.Position = _converter.GetTilePosition(x, y);
-                sprite.Sorting = CalculateSortIndex(x, y, layerOffset);
+                sprite.Sorting = CalculateSortIndex(sprite.Position, layerOffset);
             }
         }
 
@@ -158,14 +165,14 @@ namespace IsometricMagic.Game.Components.Tilemap
             return -1;
         }
 
-        private int CalculateLayerOffset(int layerIndex)
+        private int CalculateLayerBase(int layerIndex)
         {
-            return layerIndex * (_map.Width * _map.Height + 1);
+            return layerIndex * _layerStride;
         }
 
-        private int CalculateSortIndex(int x, int y, int layerOffset)
+        private static int CalculateSortIndex(Vector2 canvasPos, int layerOffset)
         {
-            return layerOffset + y * _map.Width + (_map.Width - 1 - x);
+            return IsoSort.FromCanvas(canvasPos, layerOffset, IsoSort.BiasFloor);
         }
 
         private Sprite CreateTileSprite(int tileId, int tileX, int tileY, int layerOffset)
@@ -173,13 +180,14 @@ namespace IsometricMagic.Game.Components.Tilemap
             var tile = _tileSet.Tiles[tileId];
             var tex = GetOrLoadTexture(tile);
 
+            var position = _converter.GetTilePosition(tileX, tileY);
             var sprite = new Sprite
             {
                 Width = tile.Image.Width,
                 Height = tile.Image.Height,
-                Position = _converter.GetTilePosition(tileX, tileY),
+                Position = position,
                 Texture = tex,
-                Sorting = CalculateSortIndex(tileX, tileY, layerOffset),
+                Sorting = CalculateSortIndex(position, layerOffset),
                 OriginPoint = OriginPoint.LeftBottom
             };
             sprite.Material = new Engine.Graphics.Materials.NormalMappedLitSpriteMaterial();

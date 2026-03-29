@@ -91,12 +91,10 @@ namespace IsometricMagic.Engine
 
             set
             {
-                if (value != _sorting)
-                {
-                    SpriteHolder.TrySetReindex(this);
-                }
-
+                if (value == _sorting) return;
+                var oldSorting = _sorting;
                 _sorting = value;
+                SpriteHolder.TrySetReindex(this, oldSorting, value);
             }
         }
 

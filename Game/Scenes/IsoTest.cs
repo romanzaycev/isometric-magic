@@ -12,8 +12,11 @@ using IsometricMagic.Game.Components.Character.Humanoid;
 using IsometricMagic.Game.Components.Rendering;
 using IsometricMagic.Game.Components.Tilemap;
 using IsometricMagic.Game.Components.Vfx.Light;
+using IsometricMagic.Game.Components.Collision;
+using IsometricMagic.Game.Components.Particles;
 using IsometricMagic.Game.Controllers.Character;
 using IsometricMagic.Game.Model;
+using IsometricMagic.Game.Rendering;
 
 namespace IsometricMagic.Game.Scenes
 {
@@ -25,7 +28,8 @@ namespace IsometricMagic.Game.Scenes
 
         protected override IEnumerator InitializeAsync()
         {
-            // Tilemap
+            # region Tilemap
+            
             var map = Maps.Loader.Load("map1");
             yield return true;
 
@@ -43,8 +47,14 @@ namespace IsometricMagic.Game.Scenes
             var tilemapRenderer = mapEntity.AddComponent<IsoTilemapRendererComponent>();
             tilemapRenderer.Load(map, tileSet, positionConverter, MainLayer);
             tilemapRenderer.BuildAll();
+            var worldLayerBase = tilemapRenderer.WorldLayerBase;
 
-            // Player
+            var collisionWorld = CreateEntity("CollisionWorld");
+            collisionWorld.AddComponent<CollisionWorldComponent>();
+            
+            # endregion
+
+            # region Player
             var playerEntity = CreateEntity("Player");
             var worldPosComp = playerEntity.AddComponent<WorldPositionComponent>();
             worldPosComp.WorldPosX = 400;
@@ -57,7 +67,7 @@ namespace IsometricMagic.Game.Scenes
             var playerAnimationComponent = new HumanoidAnimationComponent
             {
                 TargetLayer = MainLayer,
-                Sorting = 1000
+                Sorting = 0
             };
             playerEntity.AddComponent(playerAnimationComponent);
             // Player movement controller
@@ -69,9 +79,20 @@ namespace IsometricMagic.Game.Scenes
 
             var positionSync = new HumanoidWorldPositionSyncComponent();
             positionSync.SetConverter(positionConverter);
+            positionSync.LayerBase = worldLayerBase;
             playerEntity.AddComponent(positionSync);
 
-            // Objects
+            playerEntity.AddComponent(new WorldColliderComponent
+            {
+                Radius = 20f,
+                IsStatic = false,
+                DebugDraw = true
+            });
+            
+            # endregion
+
+            # region Objects
+            
             var stone0 = CreateEntity("stone0");
             stone0.AddComponent(new WorldPositionComponent()
             {
@@ -91,8 +112,19 @@ namespace IsometricMagic.Game.Scenes
                 Height = 256,
                 OriginPoint = OriginPoint.BottomCenter,
                 PositionMode = SpritePositionMode.IsoWorldFromWorldPositionComponent,
-                Sorting = 1000,
+                Sorting = 0,
                 Material = stoneEmissionMaterial,
+            });
+            stone0.AddComponent(new IsoDepthSortComponent()
+            {
+                Bias = IsoSort.BiasObject,
+                LayerBase = worldLayerBase
+            });
+            stone0.AddComponent(new WorldColliderComponent
+            {
+                Radius = 60f,
+                IsStatic = true,
+                DebugDraw = true
             });
 
             var stoneCanvasPos = positionConverter.GetCanvasPosition(new Vector2(410, 410));
@@ -119,6 +151,11 @@ namespace IsometricMagic.Game.Scenes
             };
 
             var sparksEntity = CreateEntity("Stone0Sparks");
+            sparksEntity.AddComponent(new WorldPositionComponent
+            {
+                WorldPosX = 410,
+                WorldPosY = 410,
+            });
             var sparks = new ParticleSystemComponent
             {
                 TargetLayer = MainLayer,
@@ -155,6 +192,10 @@ namespace IsometricMagic.Game.Scenes
                 new FloatCurve.Key(1f, 0f)
             );
             sparksEntity.AddComponent(sparks);
+            sparksEntity.AddComponent(new IsoParticleEmitterComponent
+            {
+                LayerBase = worldLayerBase
+            });
 
             var smokeTexture1 = new Texture(512, 512);
             smokeTexture1.LoadImage("./resources/data/textures/vfx/particles/smoke_01.png");
@@ -177,6 +218,11 @@ namespace IsometricMagic.Game.Scenes
             };
 
             var smokeEntity = CreateEntity("Stone0Smoke");
+            smokeEntity.AddComponent(new WorldPositionComponent
+            {
+                WorldPosX = 410,
+                WorldPosY = 410,
+            });
             var smoke = new ParticleSystemComponent
             {
                 TargetLayer = MainLayer,
@@ -213,8 +259,14 @@ namespace IsometricMagic.Game.Scenes
                 new FloatCurve.Key(1f, 1.2f)
             );
             smokeEntity.AddComponent(smoke);
+            smokeEntity.AddComponent(new IsoParticleEmitterComponent
+            {
+                LayerBase = worldLayerBase
+            });
+            # endregion
             
-            // Vfx
+            # region Vfx
+            
             var lightCenter = positionConverter.GetCanvasPosition(new Vector2(600, 600));
 
             var lightEntity = CreateEntity("MovingLight");
@@ -229,10 +281,14 @@ namespace IsometricMagic.Game.Scenes
             lightEntity.AddComponent(new FireCircleComponent()
             {
                 TargetLayer = MainLayer,
-                Sorting = 1100,
+                LayerBase = worldLayerBase + tilemapRenderer.LayerStride,
+                Bias = IsoSort.BiasVfx,
             });
             
-            // Lighting
+            # endregion
+            
+            # region Lighting
+            
             Lighting.AmbientIntensity = 0.45f;
             Lighting.Add(
                 new Light2D(positionConverter.GetCanvasPosition(new Vector2(410, 410)))
@@ -247,7 +303,10 @@ namespace IsometricMagic.Game.Scenes
                 }
             );
             
-            // pp
+            # endregion
+            
+            # region pp
+            
             PostProcess.Add(new BloomEffect
             {
                 Threshold = 1.2f,
@@ -265,6 +324,8 @@ namespace IsometricMagic.Game.Scenes
             {
                 Intensity = 0.2f
             });
+            
+            #endregion
         }
 
         public override void Update()

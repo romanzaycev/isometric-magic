@@ -3,15 +3,17 @@ using IsometricMagic.Engine;
 using IsometricMagic.Engine.Graphics.Materials;
 using IsometricMagic.Game.Animation;
 using IsometricMagic.Game.Components.Spatial;
+using IsometricMagic.Game.Rendering;
 
 namespace IsometricMagic.Game.Components.Vfx.Light;
 
 public class FireCircleComponent : Component
 {
     private WorldPositionComponent? _worldPosition;
-    
+
+    public int LayerBase { get; set; }
+    public int Bias { get; set; } = IsoSort.BiasVfx;
     public SceneLayer? TargetLayer { get; set; }
-    public int Sorting { get; set; } = 1100;
     
     private Sequence? _sequence;
     private readonly List<Sprite> _sprites = new();
@@ -34,7 +36,6 @@ public class FireCircleComponent : Component
                 Height = 50,
                 Texture = tex,
                 OriginPoint = OriginPoint.Centered,
-                Sorting = 2000,
             };
             tex.LoadImage(string.Format(animationPath, i.ToString().PadLeft(3, '0')));
             sprite.Material = new EmissiveNormalMappedLitSpriteMaterial
@@ -42,7 +43,6 @@ public class FireCircleComponent : Component
                 EmissionColor = new Vector3(1f, 0.6f, 0.2f),
                 EmissionIntensity = 2.5f
             };
-            //sprite.Visible = false;
 
             _sprites.Add(sprite);
             TargetLayer.Add(sprite);
@@ -62,6 +62,22 @@ public class FireCircleComponent : Component
             {
                 _sequence.CurrentSprite.Position = new Vector2(_worldPosition.WorldPosX, _worldPosition.WorldPosY);
             }
+        }
+    }
+    
+    protected override void LateUpdate(float dt)
+    {
+        if (_sequence == null || _worldPosition == null) return;
+
+        var sprite = _sequence?.CurrentSprite;
+        if (sprite == null) return;
+
+        var pos = new Vector2(_worldPosition.WorldPosX, _worldPosition.WorldPosY);
+        var sorting = IsoSort.FromCanvas(pos, LayerBase, Bias);
+        
+        if (sprite.Sorting != sorting)
+        {
+            sprite.Sorting = sorting;
         }
     }
 }
