@@ -1,27 +1,34 @@
+using System.Collections.Generic;
 using System.Numerics;
 using IsometricMagic.Engine;
-using IsometricMagic.Game.Controllers.Camera;
 using IsometricMagic.Game.Model;
 
 namespace IsometricMagic.Game.Components
 {
-    public class CameraFollowComponent : Component
+    public class CameraFollowComponent : CameraInfluenceComponent
     {
-        private readonly LookAtController _controller = new();
+        public int MinX { get; set; } = -200;
+        public int MinY { get; set; } = -200;
+        public int CenterYOffset { get; set; } = -100;
+
         private WorldPositionComponent? _positionComponent;
         private IsoWorldPositionConverter? _converter;
+        private Vector2 _targetCenter;
+        private bool _hasTarget;
+
+        public CameraFollowComponent()
+        {
+            Priority = 100;
+        }
 
         public void SetConverter(IsoWorldPositionConverter converter)
         {
             _converter = converter;
         }
 
-        private static readonly Application AppInstance = Application.GetInstance();
-
         protected override void Awake()
         {
             _positionComponent = Entity?.GetComponent<WorldPositionComponent>();
-            AppInstance.GetRenderer().GetCamera().SetController(_controller);
         }
 
         protected override void Update(float dt)
@@ -29,12 +36,30 @@ namespace IsometricMagic.Game.Components
             if (_positionComponent == null || _converter == null) return;
 
             var pos = _converter.GetCanvasPosition(_positionComponent.WorldPosX, _positionComponent.WorldPosY);
-            _controller.SetPos(pos);
+            _targetCenter = new Vector2(pos.X, pos.Y + CenterYOffset);
+            _hasTarget = true;
         }
 
-        protected override void OnDestroy()
+        public override void CollectInfluence(List<CameraInfluence> buffer)
         {
-            AppInstance.GetRenderer().GetCamera().SetController(null);
+            if (!_hasTarget) return;
+
+            var camera = Application.GetInstance().GetRenderer().GetCamera();
+            var rect = camera.Rect;
+            var nextX = _targetCenter.X - rect.Width / 2f;
+            var nextY = _targetCenter.Y - rect.Height / 2f;
+
+            if (nextX < MinX)
+            {
+                _targetCenter.X = MinX + rect.Width / 2f;
+            }
+
+            if (nextY < MinY)
+            {
+                _targetCenter.Y = MinY + rect.Height / 2f;
+            }
+
+            AddSetCenter(buffer, _targetCenter, Priority);
         }
     }
 }

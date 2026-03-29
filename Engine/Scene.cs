@@ -128,6 +128,12 @@ namespace IsometricMagic.Engine
             return FindComponentRecursive<T>(Root);
         }
 
+        internal void CollectCameraInfluences(List<CameraInfluence> buffer)
+        {
+            buffer.Clear();
+            CollectCameraInfluencesRecursive(Root, buffer);
+        }
+
         private static IEnumerable<T> FindComponentRecursive<T>(Entity parent) where T : Component
         {
             foreach (var child in parent.Children)
@@ -141,6 +147,22 @@ namespace IsometricMagic.Engine
                 {
                     yield return deeper;
                 }
+            }
+        }
+
+        private static void CollectCameraInfluencesRecursive(Entity entity, List<CameraInfluence> buffer)
+        {
+            foreach (var component in entity.Components)
+            {
+                if (component is CameraInfluenceComponent influenceComponent && influenceComponent.IsActiveAndEnabled)
+                {
+                    influenceComponent.CollectInfluence(buffer);
+                }
+            }
+
+            foreach (var child in entity.Children)
+            {
+                CollectCameraInfluencesRecursive(child, buffer);
             }
         }
 

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using IsometricMagic.Engine.Graphics;
 using static SDL2.SDL;
 
@@ -23,6 +24,8 @@ namespace IsometricMagic.Engine
         private int _viewportHeight;
         private static IEnumerator? _loadingEnumerator;
         private IGraphics _graphics = null!;
+        private readonly CameraComposer _cameraComposer = new();
+        private readonly List<CameraInfluence> _cameraInfluences = new();
 
         public int ViewportWidth => _viewportWidth;
         public int ViewportHeight => _viewportHeight;
@@ -77,12 +80,14 @@ namespace IsometricMagic.Engine
 
             if (now > _dtLast)
             {
-                _deltaTime =  (float)(now - _dtLast) / 1000;
-                _dtLast = now;
-            }
+            _deltaTime =  (float)(now - _dtLast) / 1000;
+            _dtLast = now;
+        }
 
-            SceneManager.GetCurrent().InternalUpdate();
-            _renderer.GetCamera().Controller?.UpdateCamera(_renderer.GetCamera());
+            var scene = SceneManager.GetCurrent();
+            scene.InternalUpdate();
+            scene.CollectCameraInfluences(_cameraInfluences);
+            _cameraComposer.Apply(_renderer.GetCamera(), _deltaTime, _cameraInfluences);
             _renderer.DrawAll();
             RepaintWindow();
         }
