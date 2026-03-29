@@ -4,6 +4,7 @@ using IsometricMagic.Engine;
 using IsometricMagic.Engine.Graphics.Effects;
 using IsometricMagic.Engine.Graphics.Lighting;
 using IsometricMagic.Game.Components;
+using IsometricMagic.Game.Controllers.Character;
 using IsometricMagic.Game.Model;
 
 namespace IsometricMagic.Game.Scenes
@@ -51,9 +52,11 @@ namespace IsometricMagic.Game.Scenes
             };
             _playerEntity.AddComponent(_animationComponent);
 
-            var motor = new HumanoidMotorComponent();
+            var motor = new MotorComponent();
             motor.SetConverter(_positionConverter);
             _playerEntity.AddComponent(motor);
+
+            _playerEntity.AddComponent(new KeyboardOrGamepad());
 
             var cameraFollow = new CameraFollowComponent();
             cameraFollow.SetConverter(_positionConverter);

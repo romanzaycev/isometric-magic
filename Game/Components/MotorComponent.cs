@@ -1,19 +1,20 @@
 using System;
 using IsometricMagic.Engine;
-using IsometricMagic.Game.Character;
 using IsometricMagic.Game.Model;
 
 namespace IsometricMagic.Game.Components
 {
-    public class HumanoidMotorComponent : Component
+    public class MotorComponent : Component
     {
-        private const int MAX_MOVE = 5;
-
         private WorldDirection _direction = WorldDirection.N;
         private CharacterState _state = CharacterState.Idle;
 
         public WorldDirection Direction => _direction;
         public CharacterState State => _state;
+
+        public int MaxMove { get; set; } = 5;
+        public IsoWorldPositionConverter? Converter => _converter;
+        public WorldPositionComponent? PositionComponent => _positionComponent;
 
         private WorldPositionComponent? _positionComponent;
         private HumanoidAnimationComponent? _animationComponent;
@@ -30,11 +31,9 @@ namespace IsometricMagic.Game.Components
             _animationComponent = Entity?.GetComponent<HumanoidAnimationComponent>();
         }
 
-        protected override void Update(float dt)
+        public void TryMove(int moveX, int moveY)
         {
-            if (_positionComponent == null) return;
-
-            var (moveX, moveY) = ReadInput();
+            if (_converter == null || _positionComponent == null) return;
 
             if (moveX == 0 && moveY == 0)
             {
@@ -42,49 +41,17 @@ namespace IsometricMagic.Game.Components
                 return;
             }
 
-            TryMove(moveX, moveY);
-        }
-
-        private (int moveX, int moveY) ReadInput()
-        {
-            var inputX = 0;
-            var inputY = 0;
-
-            if (Input.WasPressed(Key.W) || Input.WasPressed(Key.Up))
-            {
-                inputY -= 1;
-            }
-            if (Input.WasPressed(Key.S) || Input.WasPressed(Key.Down))
-            {
-                inputY += 1;
-            }
-            if (Input.WasPressed(Key.A) || Input.WasPressed(Key.Left))
-            {
-                inputX -= 1;
-            }
-            if (Input.WasPressed(Key.D) || Input.WasPressed(Key.Right))
-            {
-                inputX += 1;
-            }
-
-            return (inputX, inputY);
-        }
-
-        private void TryMove(int moveX, int moveY)
-        {
-            if (_converter == null || _positionComponent == null) return;
-
             var absMoveX = Math.Abs(moveX);
             var absMoveY = Math.Abs(moveY);
 
             if (absMoveX > 0)
             {
-                moveX = moveX < 0 ? -Math.Min(absMoveX, MAX_MOVE) : Math.Min(absMoveX, MAX_MOVE);
+                moveX = moveX < 0 ? -Math.Min(absMoveX, MaxMove) : Math.Min(absMoveX, MaxMove);
             }
 
             if (absMoveY > 0)
             {
-                moveY = moveY < 0 ? -Math.Min(absMoveY, MAX_MOVE) : Math.Min(absMoveY, MAX_MOVE);
+                moveY = moveY < 0 ? -Math.Min(absMoveY, MaxMove) : Math.Min(absMoveY, MaxMove);
             }
 
             var nextXPos = _positionComponent.WorldPosX + moveX;
@@ -128,7 +95,7 @@ namespace IsometricMagic.Game.Components
             }
         }
 
-        private void StopMove()
+        public void StopMove()
         {
             if (_state != CharacterState.Idle)
             {

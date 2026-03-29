@@ -1,36 +1,45 @@
 using IsometricMagic.Engine;
-using IsometricMagic.Game.Model;
+using IsometricMagic.Game.Components;
 
 namespace IsometricMagic.Game.Controllers.Character
 {
-    public class Keyboard : CharacterMovementController
+    public class Keyboard : Component
     {
-        public override void HandleMovement(Game.Character.Character character, IsoWorldPositionConverter positionConverter)
+        private MotorComponent? _motor;
+
+        protected override void Awake()
         {
+            _motor = Entity?.GetComponent<MotorComponent>();
+        }
+
+        protected override void Update(float dt)
+        {
+            if (_motor == null) return;
+
             var moveX = 0;
             var moveY = 0;
-            
-            if (Input.IsDown(Key.Up))
+
+            if (Input.IsDown(Key.Up) || Input.IsDown(Key.W))
             {
-                moveY = -5;
+                moveY = -_motor.MaxMove;
             }
 
-            if (Input.IsDown(Key.Down))
+            if (Input.IsDown(Key.Down) || Input.IsDown(Key.S))
             {
-                moveY = 5;
-            }
-            
-            if (Input.IsDown(Key.Left))
-            {
-                moveX = -5;
-            }
-            
-            if (Input.IsDown(Key.Right))
-            {
-                moveX = 5;
+                moveY = _motor.MaxMove;
             }
 
-            TryMove(moveX, moveY, character, positionConverter);
+            if (Input.IsDown(Key.Left) || Input.IsDown(Key.A))
+            {
+                moveX = -_motor.MaxMove;
+            }
+
+            if (Input.IsDown(Key.Right) || Input.IsDown(Key.D))
+            {
+                moveX = _motor.MaxMove;
+            }
+
+            _motor.TryMove(moveX, moveY);
         }
     }
 }

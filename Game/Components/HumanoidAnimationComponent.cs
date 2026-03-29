@@ -3,7 +3,6 @@ using System.Numerics;
 using IsometricMagic.Engine;
 using IsometricMagic.Engine.Graphics.Materials;
 using IsometricMagic.Game.Animation;
-using IsometricMagic.Game.Character;
 using IsometricMagic.Game.Model;
 
 namespace IsometricMagic.Game.Components
