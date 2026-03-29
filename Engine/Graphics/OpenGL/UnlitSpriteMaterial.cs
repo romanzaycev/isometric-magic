@@ -18,6 +18,8 @@ namespace IsometricMagic.Engine.Graphics.OpenGL
             context.Gl.ActiveTexture(TextureUnit.Texture0);
             context.Gl.BindTexture(TextureTarget.Texture2D, albedo.TextureId);
             _shader.SetInt("u_texture", 0);
+            var tint = sprite.Color;
+            _shader.SetVector4("u_tint", tint.X, tint.Y, tint.Z, tint.W);
         }
 
         public void Unbind(GlRenderContext context)
@@ -44,10 +46,11 @@ in vec2 v_uv;
 out vec4 FragColor;
 
 uniform sampler2D u_texture;
+uniform vec4 u_tint;
 
 void main()
 {
-    FragColor = texture(u_texture, v_uv);
+    FragColor = texture(u_texture, v_uv) * u_tint;
 }
 ";
     }

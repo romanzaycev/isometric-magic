@@ -52,6 +52,8 @@ namespace IsometricMagic.Engine
         public Vector2 Position = Vector2.Zero;
         public Vector2 Origin = Vector2.Zero;
         public Vector2 Pivot = Vector2.Zero;
+
+        public Vector4 Color = new(1f, 1f, 1f, 1f);
         
         public PivotMode PivotMode = PivotMode.Centered;
         public OriginPoint OriginPoint = OriginPoint.LeftTop;

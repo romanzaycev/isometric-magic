@@ -267,11 +267,16 @@ namespace IsometricMagic.Engine.Graphics.SDL
                 targetRect.x = spritePosX;
                 targetRect.y = spritePosY;
 
+                var nativeTexture = ((SdlNativeTexture) TextureHolder.GetInstance().GetNativeTexture(tex)).Texture;
+                var tint = sprite.Color;
+                SDL_SetTextureColorMod(nativeTexture, ToByte(tint.X), ToByte(tint.Y), ToByte(tint.Z));
+                SDL_SetTextureAlphaMod(nativeTexture, ToByte(tint.W));
+
                 if (sprite.Transformation.Rotation.Angle == 0f)
                 {
                     SDL_RenderCopy(
                         _sdlRenderer,
-                        ((SdlNativeTexture) TextureHolder.GetInstance().GetNativeTexture(tex)).Texture,
+                        nativeTexture,
                         ref sourceRect,
                         ref targetRect
                     );
@@ -295,7 +300,7 @@ namespace IsometricMagic.Engine.Graphics.SDL
 
                     SDL_RenderCopyEx(
                         _sdlRenderer,
-                        ((SdlNativeTexture) TextureHolder.GetInstance().GetNativeTexture(tex)).Texture,
+                        nativeTexture,
                         ref sourceRect,
                         ref targetRect,
                         MathHelper.NorRotationToDegree((rotation.Clockwise) ? rotation.Angle : -rotation.Angle),
@@ -304,6 +309,13 @@ namespace IsometricMagic.Engine.Graphics.SDL
                     );
                 }
             }
+        }
+
+        private static byte ToByte(float value)
+        {
+            if (value <= 0f) return 0;
+            if (value >= 1f) return 255;
+            return (byte) (value * 255f);
         }
 
         private static bool IsCulled(int width, int height, int x, int y, Rectangle cameraRect)

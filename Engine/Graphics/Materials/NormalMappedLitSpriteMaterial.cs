@@ -27,6 +27,9 @@ namespace IsometricMagic.Engine.Graphics.Materials
             context.Gl.BindTexture(TextureTarget.Texture2D, albedo.TextureId);
             _shader.SetInt("u_albedo", 0);
 
+            var tint = sprite.Color;
+            _shader.SetVector4("u_tint", tint.X, tint.Y, tint.Z, tint.W);
+
             context.Gl.ActiveTexture(TextureUnit.Texture1);
             var normalTextureId = normalMap?.TextureId ?? 0u;
             context.Gl.BindTexture(TextureTarget.Texture2D, normalTextureId);
@@ -100,6 +103,7 @@ out vec4 FragColor;
 uniform sampler2D u_albedo;
 uniform sampler2D u_normalMap;
 uniform int u_lightCount;
+uniform vec4 u_tint;
 
 uniform vec3 u_ambientColor;
 uniform float u_ambientIntensity;
@@ -119,7 +123,7 @@ uniform Light u_lights[8];
 
 void main()
 {
-    vec4 baseColor = texture(u_albedo, v_uv);
+    vec4 baseColor = texture(u_albedo, v_uv) * u_tint;
     vec3 normalSample = texture(u_normalMap, v_uv).xyz * 2.0 - 1.0;
     vec3 normal = normalize(normalSample);
 

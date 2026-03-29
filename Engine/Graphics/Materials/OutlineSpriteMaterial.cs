@@ -29,6 +29,8 @@ namespace IsometricMagic.Engine.Graphics.Materials
             var texelY = albedo.Height > 0 ? 1f / albedo.Height : 0f;
 
             _shader.SetVector4("u_outlineColor", outline.Color.X, outline.Color.Y, outline.Color.Z, outline.Color.W);
+            var tint = sprite.Color;
+            _shader.SetVector4("u_tint", tint.X, tint.Y, tint.Z, tint.W);
             _shader.SetFloat("u_thickness", clampedThickness);
             _shader.SetVector2("u_texelSize", texelX, texelY);
         }
@@ -57,6 +59,7 @@ out vec4 FragColor;
 
 uniform sampler2D u_texture;
 uniform vec4 u_outlineColor;
+uniform vec4 u_tint;
 uniform vec2 u_texelSize;
 uniform float u_thickness;
 
@@ -91,7 +94,8 @@ void main()
     }
 
     float edge = clamp(maxAlpha - baseAlpha, 0.0, 1.0);
-    FragColor = vec4(u_outlineColor.rgb, u_outlineColor.a * edge);
+    vec4 color = u_outlineColor * u_tint;
+    FragColor = vec4(color.rgb, color.a * edge);
 }
 ";
     }

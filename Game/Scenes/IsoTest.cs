@@ -4,6 +4,7 @@ using IsometricMagic.Engine;
 using IsometricMagic.Engine.Graphics.Effects;
 using IsometricMagic.Engine.Graphics.Lighting;
 using IsometricMagic.Engine.Graphics.Materials;
+using IsometricMagic.Engine.Particles;
 using IsometricMagic.Game.Components.Actor;
 using IsometricMagic.Game.Components.Camera;
 using IsometricMagic.Game.Components.Spatial;
@@ -77,6 +78,12 @@ namespace IsometricMagic.Game.Scenes
                 WorldPosX = 410,
                 WorldPosY = 410,
             });
+            var stoneEmissionMaterial = new EmissiveNormalMappedLitSpriteMaterial()
+            {
+                EmissionColor = new Vector3(0.37f, 0.81f, 0.51f),
+                EmissionIntensity = 3f,
+                EmissionMapPath = "./resources/data/textures/stone0_em.png",
+            };
             stone0.AddComponent(new SpriteRendererComponent()
             {
                 ImagePath = "./resources/data/textures/stone0.png",
@@ -85,13 +92,127 @@ namespace IsometricMagic.Game.Scenes
                 OriginPoint = OriginPoint.BottomCenter,
                 PositionMode = SpritePositionMode.IsoWorldFromWorldPositionComponent,
                 Sorting = 1000,
-                Material = new EmissiveNormalMappedLitSpriteMaterial()
-                {
-                    EmissionColor = new Vector3(0.37f, 0.81f, 0.51f),
-                    EmissionIntensity = 3f,
-                    EmissionMapPath =  "./resources/data/textures/stone0_em.png",
-                },
+                Material = stoneEmissionMaterial,
             });
+
+            var stoneCanvasPos = positionConverter.GetCanvasPosition(new Vector2(410, 410));
+            var emissionColor = stoneEmissionMaterial.EmissionColor;
+
+            var sparkTexture1 = new Texture(512, 512);
+            sparkTexture1.LoadImage("./resources/data/textures/vfx/particles/star_01.png");
+            var sparkTexture2 = new Texture(512, 512);
+            sparkTexture2.LoadImage("./resources/data/textures/vfx/particles/star_02.png");
+            var sparkTexture3 = new Texture(512, 512);
+            sparkTexture3.LoadImage("./resources/data/textures/vfx/particles/star_03.png");
+
+            var sparkMaterial = new EmissiveNormalMappedLitSpriteMaterial
+            {
+                EmissionColor = emissionColor,
+                EmissionIntensity = 2.2f
+            };
+
+            var sparkVisuals = new[]
+            {
+                new ParticleVisual(sparkTexture1, 512, 512) { Material = sparkMaterial },
+                new ParticleVisual(sparkTexture2, 512, 512) { Material = sparkMaterial },
+                new ParticleVisual(sparkTexture3, 512, 512) { Material = sparkMaterial }
+            };
+
+            var sparksEntity = CreateEntity("Stone0Sparks");
+            var sparks = new ParticleSystemComponent
+            {
+                TargetLayer = MainLayer,
+                Visuals = sparkVisuals,
+                Capacity = 160,
+                RatePerSecond = 10f,
+                SpawnShape = ParticleSpawnShape.Circle,
+                SpawnRadius = 20f,
+                Position = stoneCanvasPos,
+                Offset = new Vector2(0f, -220f),
+                UseEntityTransform = false,
+                LifetimeMin = 0.9f,
+                LifetimeMax = 2.5f,
+                VelocityMin = new Vector2(-18f, -70f),
+                VelocityMax = new Vector2(18f, -150f),
+                Gravity = new Vector2(0f, -10f),
+                Drag = 0.35f,
+                SizeMin = 0.07f,
+                SizeMax = 0.12f,
+                RotationMin = 0f,
+                RotationMax = 1f,
+                AngularVelocityMin = -0.6f,
+                AngularVelocityMax = 0.6f,
+                BaseSorting = 1200
+            };
+            sparks.ColorOverLife.SetKeys(
+                new ColorGradient.Key(0f, new Vector4(emissionColor, 0f)),
+                new ColorGradient.Key(0.15f, new Vector4(emissionColor, 1f)),
+                new ColorGradient.Key(1f, new Vector4(emissionColor, 0f))
+            );
+            sparks.SizeOverLife.SetKeys(
+                new FloatCurve.Key(0f, 0.5f),
+                new FloatCurve.Key(0.2f, 1f),
+                new FloatCurve.Key(1f, 0f)
+            );
+            sparksEntity.AddComponent(sparks);
+
+            var smokeTexture1 = new Texture(512, 512);
+            smokeTexture1.LoadImage("./resources/data/textures/vfx/particles/smoke_01.png");
+            var smokeTexture2 = new Texture(512, 512);
+            smokeTexture2.LoadImage("./resources/data/textures/vfx/particles/smoke_02.png");
+            var smokeTexture3 = new Texture(512, 512);
+            smokeTexture3.LoadImage("./resources/data/textures/vfx/particles/smoke_03.png");
+
+            var smokeMaterial = new EmissiveNormalMappedLitSpriteMaterial
+            {
+                EmissionColor = new Vector3(0.49f, 0.91f, 0.63f),
+                EmissionIntensity = 1.2f
+            };
+
+            var smokeVisuals = new[]
+            {
+                new ParticleVisual(smokeTexture1, 512, 512) { Material = smokeMaterial },
+                new ParticleVisual(smokeTexture2, 512, 512) { Material = smokeMaterial },
+                new ParticleVisual(smokeTexture3, 512, 512) { Material = smokeMaterial }
+            };
+
+            var smokeEntity = CreateEntity("Stone0Smoke");
+            var smoke = new ParticleSystemComponent
+            {
+                TargetLayer = MainLayer,
+                Visuals = smokeVisuals,
+                Capacity = 96,
+                RatePerSecond = 3f,
+                SpawnShape = ParticleSpawnShape.Circle,
+                SpawnRadius = 18f,
+                Position = stoneCanvasPos,
+                Offset = new Vector2(0f, -200f),
+                UseEntityTransform = false,
+                LifetimeMin = 2.2f,
+                LifetimeMax = 3.6f,
+                VelocityMin = new Vector2(-8f, -20f),
+                VelocityMax = new Vector2(8f, -45f),
+                Gravity = new Vector2(0f, -6f),
+                Drag = 0.2f,
+                SizeMin = 0.22f,
+                SizeMax = 0.35f,
+                RotationMin = 0f,
+                RotationMax = 1f,
+                AngularVelocityMin = -0.1f,
+                AngularVelocityMax = 0.1f,
+                BaseSorting = 1150
+            };
+            smoke.ColorOverLife.SetKeys(
+                new ColorGradient.Key(0f, new Vector4(emissionColor, 0f)),
+                new ColorGradient.Key(0.2f, new Vector4(emissionColor, 0.35f)),
+                new ColorGradient.Key(1f, new Vector4(emissionColor, 0f))
+            );
+            smoke.SizeOverLife.SetKeys(
+                new FloatCurve.Key(0f, 0.6f),
+                new FloatCurve.Key(0.6f, 1f),
+                new FloatCurve.Key(1f, 1.2f)
+            );
+            smokeEntity.AddComponent(smoke);
             
             // Vfx
             var lightCenter = positionConverter.GetCanvasPosition(new Vector2(600, 600));
