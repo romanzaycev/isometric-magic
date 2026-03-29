@@ -35,15 +35,20 @@ namespace IsometricMagic.Game.Model
 
         public Vector2 GetCanvasPosition(Vector2 worldPos)
         {
-            return GetCanvasPosition((int) worldPos.X, (int) worldPos.Y);
+            return GetCanvasPosition(worldPos.X, worldPos.Y);
         }
 
-        public Vector2 GetCanvasPosition(int worldX, int worldY)
+        public Vector2 GetCanvasPosition(float worldX, float worldY)
         {
             return new Vector2(
                 worldY + worldX,
                 _originY + (worldY / _scaleFactor - worldX / _scaleFactor)
             );
+        }
+
+        public Vector2 GetCanvasPosition(int worldX, int worldY)
+        {
+            return GetCanvasPosition((float)worldX, (float)worldY);
         }
 
         public Vector2 GetTilePosition(int tileX, int tileY)

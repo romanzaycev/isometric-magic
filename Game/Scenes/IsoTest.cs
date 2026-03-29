@@ -57,9 +57,16 @@ namespace IsometricMagic.Game.Scenes
             # region Player
             var playerEntity = CreateEntity("Player");
             var worldPosComp = playerEntity.AddComponent<WorldPositionComponent>();
-            worldPosComp.WorldPosX = 400;
-            worldPosComp.WorldPosY = 400;
+            worldPosComp.WorldPosX = 470;
+            worldPosComp.WorldPosY = 470;
 
+            playerEntity.AddComponent(new WorldColliderComponent
+            {
+                Radius = 20f,
+                IsStatic = false,
+                // DebugDraw = true,
+            });
+            
             var motor = new MotorComponent();
             motor.SetConverter(positionConverter);
             playerEntity.AddComponent(motor);
@@ -81,13 +88,6 @@ namespace IsometricMagic.Game.Scenes
             positionSync.SetConverter(positionConverter);
             positionSync.LayerBase = worldLayerBase;
             playerEntity.AddComponent(positionSync);
-
-            playerEntity.AddComponent(new WorldColliderComponent
-            {
-                Radius = 20f,
-                IsStatic = false,
-                DebugDraw = true
-            });
             
             # endregion
 
@@ -124,7 +124,7 @@ namespace IsometricMagic.Game.Scenes
             {
                 Radius = 60f,
                 IsStatic = true,
-                DebugDraw = true
+                // DebugDraw = true
             });
 
             var stoneCanvasPos = positionConverter.GetCanvasPosition(new Vector2(410, 410));

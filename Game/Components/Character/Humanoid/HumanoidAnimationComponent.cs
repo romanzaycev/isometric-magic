@@ -158,10 +158,18 @@ namespace IsometricMagic.Game.Components.Character.Humanoid
         {
             if (_animations.TryGetValue(name, out var seq))
             {
+                var previous = _currentSequence;
                 _currentSequence?.Stop();
                 _currentAnimationName = name;
                 _currentSequence = seq;
-                _currentSequence.Play();
+                if (previous != null)
+                {
+                    _currentSequence.AdoptPlaybackFrom(previous);
+                }
+                else
+                {
+                    _currentSequence.Play();
+                }
             }
         }
 
