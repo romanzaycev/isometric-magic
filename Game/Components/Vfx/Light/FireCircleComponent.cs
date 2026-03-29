@@ -1,5 +1,6 @@
 using System.Numerics;
 using IsometricMagic.Engine;
+using IsometricMagic.Engine.Graphics.Materials;
 using IsometricMagic.Game.Animation;
 using IsometricMagic.Game.Components.Spatial;
 
@@ -36,7 +37,11 @@ public class FireCircleComponent : Component
                 Sorting = 2000,
             };
             tex.LoadImage(string.Format(animationPath, i.ToString().PadLeft(3, '0')));
-            //sprite.Material = new NormalMappedLitSpriteMaterial();
+            sprite.Material = new EmissiveNormalMappedLitSpriteMaterial
+            {
+                EmissionColor = new Vector3(1f, 0.6f, 0.2f),
+                EmissionIntensity = 2.5f
+            };
             //sprite.Visible = false;
 
             _sprites.Add(sprite);

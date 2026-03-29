@@ -460,7 +460,8 @@ namespace IsometricMagic.Engine.Graphics.SDL
 
         private GlNativeTexture? ResolveNormalMap(Sprite sprite)
         {
-            if (sprite.Material is not NormalMappedLitSpriteMaterial)
+            if (sprite.Material is not NormalMappedLitSpriteMaterial &&
+                sprite.Material is not EmissiveNormalMappedLitSpriteMaterial)
             {
                 return null;
             }
@@ -574,9 +575,9 @@ namespace IsometricMagic.Engine.Graphics.SDL
                 return;
             }
 
-            _sceneTarget = CreateRenderTarget(_viewportWidth, _viewportHeight);
-            _pingTarget = CreateRenderTarget(_viewportWidth, _viewportHeight);
-            _pongTarget = CreateRenderTarget(_viewportWidth, _viewportHeight);
+            _sceneTarget = CreateHdrRenderTarget(_viewportWidth, _viewportHeight);
+            _pingTarget = CreateHdrRenderTarget(_viewportWidth, _viewportHeight);
+            _pongTarget = CreateHdrRenderTarget(_viewportWidth, _viewportHeight);
             _targetsReady = true;
         }
 
@@ -588,9 +589,9 @@ namespace IsometricMagic.Engine.Graphics.SDL
             }
 
             DestroyRenderTargets();
-            _sceneTarget = CreateRenderTarget(width, height);
-            _pingTarget = CreateRenderTarget(width, height);
-            _pongTarget = CreateRenderTarget(width, height);
+            _sceneTarget = CreateHdrRenderTarget(width, height);
+            _pingTarget = CreateHdrRenderTarget(width, height);
+            _pongTarget = CreateHdrRenderTarget(width, height);
             _targetsReady = true;
         }
 
@@ -610,6 +611,24 @@ namespace IsometricMagic.Engine.Graphics.SDL
         private GlRenderTarget CreateRenderTarget(int width, int height)
         {
             var textureId = CreateTextureFromData(width, height, null);
+            var framebufferId = _gl.GenFramebuffer();
+            _gl.BindFramebuffer(FramebufferTarget.Framebuffer, framebufferId);
+            _gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
+                TextureTarget.Texture2D, textureId, 0);
+
+            var status = _gl.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
+            if (status != GLEnum.FramebufferComplete)
+            {
+                throw new InvalidOperationException($"Framebuffer incomplete: {status}");
+            }
+
+            _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            return new GlRenderTarget(framebufferId, textureId, width, height);
+        }
+
+        private GlRenderTarget CreateHdrRenderTarget(int width, int height)
+        {
+            var textureId = CreateHdrTexture(width, height);
             var framebufferId = _gl.GenFramebuffer();
             _gl.BindFramebuffer(FramebufferTarget.Framebuffer, framebufferId);
             _gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
@@ -655,6 +674,25 @@ namespace IsometricMagic.Engine.Graphics.SDL
                     _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint) width, (uint) height, 0,
                         Silk.NET.OpenGL.PixelFormat.Rgba, PixelType.UnsignedByte, dataPtr);
                 }
+            }
+
+            _gl.BindTexture(TextureTarget.Texture2D, 0);
+            return textureId;
+        }
+
+        private uint CreateHdrTexture(int width, int height)
+        {
+            var textureId = _gl.GenTexture();
+            _gl.BindTexture(TextureTarget.Texture2D, textureId);
+            _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int) GLEnum.Linear);
+            _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int) GLEnum.Linear);
+            _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int) GLEnum.ClampToEdge);
+            _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int) GLEnum.ClampToEdge);
+
+            unsafe
+            {
+                _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba16f, (uint) width, (uint) height, 0,
+                    Silk.NET.OpenGL.PixelFormat.Rgba, PixelType.HalfFloat, null);
             }
 
             _gl.BindTexture(TextureTarget.Texture2D, 0);

@@ -102,6 +102,13 @@ namespace IsometricMagic.Game.Scenes
             );
             
             // pp
+            PostProcess.Add(new BloomEffect
+            {
+                Threshold = 1.2f,
+                Knee = 0.6f,
+                Intensity = 0.9f,
+                BlurIterations = 4
+            });
             PostProcess.Add(new VignetteEffect { Intensity = 0.2f });
         }
 
