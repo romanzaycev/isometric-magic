@@ -3,12 +3,12 @@ using System.Numerics;
 using IsometricMagic.Engine;
 using IsometricMagic.Engine.Graphics.Effects;
 using IsometricMagic.Engine.Graphics.Lighting;
-using IsometricMagic.Game.Components;
 using IsometricMagic.Game.Components.Actor;
 using IsometricMagic.Game.Components.Camera;
 using IsometricMagic.Game.Components.Spatial;
 using IsometricMagic.Game.Components.Character.Humanoid;
 using IsometricMagic.Game.Components.Tilemap;
+using IsometricMagic.Game.Components.Vfx.Light;
 using IsometricMagic.Game.Controllers.Character;
 using IsometricMagic.Game.Model;
 
@@ -16,24 +16,20 @@ namespace IsometricMagic.Game.Scenes
 {
     public class IsoTest : Scene
     {
-        private IsoWorldPositionConverter _positionConverter = null!;
-        private Entity? _playerEntity;
-        private Entity? _lightEntity;
-        private HumanoidAnimationComponent? _animationComponent;
-
         public IsoTest() : base("iso_test", true)
         {
         }
 
         protected override IEnumerator InitializeAsync()
         {
+            // Tilemap
             var map = Maps.Loader.Load("map1");
             yield return true;
 
             var tileSet = Tiles.Loader.Load(map.TileSet);
             yield return true;
 
-            _positionConverter = new IsoWorldPositionConverter(
+            var positionConverter = new IsoWorldPositionConverter(
                 map.TileWidth,
                 map.TileHeight,
                 map.Width,
@@ -42,49 +38,58 @@ namespace IsometricMagic.Game.Scenes
 
             var mapEntity = CreateEntity("Map");
             var tilemapRenderer = mapEntity.AddComponent<IsoTilemapRendererComponent>();
-            tilemapRenderer.Load(map, tileSet, _positionConverter, MainLayer);
+            tilemapRenderer.Load(map, tileSet, positionConverter, MainLayer);
             tilemapRenderer.BuildAll();
 
-            _playerEntity = CreateEntity("Player");
-            var worldPosComp = _playerEntity.AddComponent<WorldPositionComponent>();
+            // Player
+            var playerEntity = CreateEntity("Player");
+            var worldPosComp = playerEntity.AddComponent<WorldPositionComponent>();
             worldPosComp.WorldPosX = 400;
             worldPosComp.WorldPosY = 400;
 
             var motor = new MotorComponent();
-            motor.SetConverter(_positionConverter);
-            _playerEntity.AddComponent(motor);
+            motor.SetConverter(positionConverter);
+            playerEntity.AddComponent(motor);
             
-            _animationComponent = new HumanoidAnimationComponent
+            var playerAnimationComponent = new HumanoidAnimationComponent
             {
                 TargetLayer = MainLayer,
                 Sorting = 1000
             };
-            _playerEntity.AddComponent(_animationComponent);
-            _playerEntity.AddComponent(new KeyboardOrGamepad());
+            playerEntity.AddComponent(playerAnimationComponent);
+            // Player movement controller
+            playerEntity.AddComponent(new KeyboardOrGamepad());
 
             var cameraFollow = new CameraFollowComponent();
-            cameraFollow.SetConverter(_positionConverter);
-            _playerEntity.AddComponent(cameraFollow);
+            cameraFollow.SetConverter(positionConverter);
+            playerEntity.AddComponent(cameraFollow);
 
             var positionSync = new HumanoidWorldPositionSyncComponent();
-            positionSync.SetConverter(_positionConverter);
-            _playerEntity.AddComponent(positionSync);
+            positionSync.SetConverter(positionConverter);
+            playerEntity.AddComponent(positionSync);
 
-            var lightCenter = _positionConverter.GetCanvasPosition(new Vector2(600, 600));
+            // Vfx
+            var lightCenter = positionConverter.GetCanvasPosition(new Vector2(600, 600));
 
-            _lightEntity = CreateEntity("MovingLight");
+            var lightEntity = CreateEntity("MovingLight");
+            lightEntity.AddComponent(new WorldPositionComponent());
             var orbitLight = new OrbitLightComponent
             {
                 Center = lightCenter,
                 Radius = 300f,
                 Speed = 0.8f
             };
-            _lightEntity.AddComponent(orbitLight);
-
-            PostProcess.Add(new VignetteEffect { Intensity = 0.2f });
+            lightEntity.AddComponent(orbitLight);
+            lightEntity.AddComponent(new FireCircleComponent()
+            {
+                TargetLayer = MainLayer,
+                Sorting = 1100,
+            });
+            
+            // Lighting
             Lighting.AmbientIntensity = 0.5f;
             Lighting.Add(
-                new Light2D(_positionConverter.GetCanvasPosition(new Vector2(410, 410)))
+                new Light2D(positionConverter.GetCanvasPosition(new Vector2(410, 410)))
                 {
                     Intensity = 2f,
                     Radius = 512f,
@@ -95,6 +100,9 @@ namespace IsometricMagic.Game.Scenes
                     Color = new Vector3(0.1f, 1f, 1f),
                 }
             );
+            
+            // pp
+            PostProcess.Add(new VignetteEffect { Intensity = 0.2f });
         }
 
         public override void Update()
