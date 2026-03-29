@@ -23,6 +23,7 @@ namespace IsometricMagic.Engine.Graphics.SDL
         private GlFullscreenQuad _fullscreenQuad = null!;
         private GlShaderProgram _presentShader = null!;
         private UnlitSpriteMaterial _defaultMaterial = null!;
+        private OutlineSpriteMaterial _outlineMaterial = null!;
 
         private uint _spriteVao;
         private uint _spriteVbo;
@@ -253,6 +254,7 @@ namespace IsometricMagic.Engine.Graphics.SDL
 
             _presentShader = new GlShaderProgram(_gl, PresentVertexSource, PresentFragmentSource);
             _defaultMaterial = new UnlitSpriteMaterial(_gl);
+            _outlineMaterial = new OutlineSpriteMaterial();
 
             _spriteVao = _gl.GenVertexArray();
             _spriteVbo = _gl.GenBuffer();
@@ -429,7 +431,13 @@ namespace IsometricMagic.Engine.Graphics.SDL
                     sprite.Transformation.Rotation.Angle,
                     sprite.Transformation.Rotation.Clockwise
                 );
-                UpdateSpriteBuffer(vertices);
+                var outline = sprite.Outline;
+                var outlineEnabled = outline.Enabled && outline.ThicknessTexels > 0f && outline.Color.W > 0f;
+
+                if (outlineEnabled && outline.Layering == OutlineLayering.Under)
+                {
+                    DrawOutline(sprite, albedo, worldSpritePosX, worldSpritePosY, screenSpritePosX, screenSpritePosY);
+                }
 
                 var material = ResolveMaterial(sprite);
                 if (material == null)
@@ -438,14 +446,59 @@ namespace IsometricMagic.Engine.Graphics.SDL
                 }
 
                 var normalMap = ResolveNormalMap(sprite);
-                material.Bind(_renderContext, sprite, albedo, normalMap);
+                DrawSprite(vertices, material, sprite, albedo, normalMap);
 
-                _gl.BindVertexArray(_spriteVao);
-                _gl.DrawArrays(PrimitiveType.Triangles, 0, 6);
-                _gl.BindVertexArray(0);
-
-                material.Unbind(_renderContext);
+                if (outlineEnabled && outline.Layering == OutlineLayering.Over)
+                {
+                    DrawOutline(sprite, albedo, worldSpritePosX, worldSpritePosY, screenSpritePosX, screenSpritePosY);
+                }
             }
+        }
+
+        private void DrawSprite(float[] vertices, IGlMaterial material, Sprite sprite, GlNativeTexture albedo,
+            GlNativeTexture? normalMap)
+        {
+            UpdateSpriteBuffer(vertices);
+            material.Bind(_renderContext, sprite, albedo, normalMap);
+
+            _gl.BindVertexArray(_spriteVao);
+            _gl.DrawArrays(PrimitiveType.Triangles, 0, 6);
+            _gl.BindVertexArray(0);
+
+            material.Unbind(_renderContext);
+        }
+
+        private void DrawOutline(Sprite sprite, GlNativeTexture albedo,
+            int worldSpritePosX, int worldSpritePosY,
+            int screenSpritePosX, int screenSpritePosY)
+        {
+            var pad = (int) MathF.Ceiling(sprite.Outline.ThicknessTexels);
+            if (pad <= 0)
+            {
+                return;
+            }
+
+            var outlineWidth = sprite.Width + pad * 2;
+            var outlineHeight = sprite.Height + pad * 2;
+            var outlineWorldX = worldSpritePosX - pad;
+            var outlineWorldY = worldSpritePosY - pad;
+            var outlineScreenX = screenSpritePosX - pad;
+            var outlineScreenY = screenSpritePosY - pad;
+
+            var uvPadX = pad / (float) sprite.Width;
+            var uvPadY = pad / (float) sprite.Height;
+
+            var outlineVertices = BuildQuadVertices(
+                outlineWorldX, outlineWorldY,
+                outlineScreenX, outlineScreenY,
+                outlineWidth, outlineHeight,
+                sprite.Transformation.Rotation.Angle,
+                sprite.Transformation.Rotation.Clockwise,
+                -uvPadX, -uvPadY,
+                1f + uvPadX, 1f + uvPadY
+            );
+
+            DrawSprite(outlineVertices, _outlineMaterial, sprite, albedo, null);
         }
 
         private IGlMaterial? ResolveMaterial(Sprite sprite)
@@ -495,6 +548,17 @@ namespace IsometricMagic.Engine.Graphics.SDL
             int width, int height,
             double angle, bool clockwise)
         {
+            return BuildQuadVertices(worldX, worldY, screenX, screenY, width, height, angle, clockwise, 0f, 0f, 1f, 1f);
+        }
+
+        private float[] BuildQuadVertices(
+            int worldX, int worldY,
+            int screenX, int screenY,
+            int width, int height,
+            double angle, bool clockwise,
+            float uvMinX, float uvMinY,
+            float uvMaxX, float uvMaxY)
+        {
             var rotationDeg = MathHelper.NorRotationToDegree(clockwise ? angle : -angle);
             var rotationRad = (float) (rotationDeg * Math.PI / 180f);
 
@@ -524,12 +588,12 @@ namespace IsometricMagic.Engine.Graphics.SDL
 
             return new float[]
             {
-                ToNdcX(screenTl.X), ToNdcY(screenTl.Y), 0f, 0f, worldTl.X, worldTl.Y,
-                ToNdcX(screenTr.X), ToNdcY(screenTr.Y), 1f, 0f, worldTr.X, worldTr.Y,
-                ToNdcX(screenBr.X), ToNdcY(screenBr.Y), 1f, 1f, worldBr.X, worldBr.Y,
-                ToNdcX(screenTl.X), ToNdcY(screenTl.Y), 0f, 0f, worldTl.X, worldTl.Y,
-                ToNdcX(screenBr.X), ToNdcY(screenBr.Y), 1f, 1f, worldBr.X, worldBr.Y,
-                ToNdcX(screenBl.X), ToNdcY(screenBl.Y), 0f, 1f, worldBl.X, worldBl.Y
+                ToNdcX(screenTl.X), ToNdcY(screenTl.Y), uvMinX, uvMinY, worldTl.X, worldTl.Y,
+                ToNdcX(screenTr.X), ToNdcY(screenTr.Y), uvMaxX, uvMinY, worldTr.X, worldTr.Y,
+                ToNdcX(screenBr.X), ToNdcY(screenBr.Y), uvMaxX, uvMaxY, worldBr.X, worldBr.Y,
+                ToNdcX(screenTl.X), ToNdcY(screenTl.Y), uvMinX, uvMinY, worldTl.X, worldTl.Y,
+                ToNdcX(screenBr.X), ToNdcY(screenBr.Y), uvMaxX, uvMaxY, worldBr.X, worldBr.Y,
+                ToNdcX(screenBl.X), ToNdcY(screenBl.Y), uvMinX, uvMaxY, worldBl.X, worldBl.Y
             };
         }
 

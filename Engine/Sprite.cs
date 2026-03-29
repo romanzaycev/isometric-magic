@@ -62,6 +62,7 @@ namespace IsometricMagic.Engine
         private Texture _texture = null!; 
         public Texture? NormalMap;
         public IMaterial? Material;
+        public SpriteOutline Outline { get; } = new();
 
         public Texture Texture
         {

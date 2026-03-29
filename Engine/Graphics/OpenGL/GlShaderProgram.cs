@@ -59,6 +59,11 @@ namespace IsometricMagic.Engine.Graphics.OpenGL
             _gl.Uniform3(GetLocation(name), x, y, z);
         }
 
+        public void SetVector4(string name, float x, float y, float z, float w)
+        {
+            _gl.Uniform4(GetLocation(name), x, y, z, w);
+        }
+
         private uint CompileShader(ShaderType type, string source)
         {
             var shader = _gl.CreateShader(type);

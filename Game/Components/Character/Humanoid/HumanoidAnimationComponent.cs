@@ -119,10 +119,12 @@ namespace IsometricMagic.Game.Components.Character.Humanoid
                             Texture = tex,
                             OriginPoint = OriginPoint.BottomCenter,
                             Sorting = Sorting,
-                            Transformation = { Translate = new Vector2(0, 8) }
+                            Transformation = { Translate = new Vector2(0, 8) },
                         };
                         tex.LoadImage($"{framesPath}/{frameName}{i}{extension}");
                         sprite.Material = new NormalMappedLitSpriteMaterial();
+                        sprite.Outline.Enabled = true;
+                        sprite.Outline.Color = new(0f, 0f, 0f, 0.5f);
                         sprite.Visible = false;
 
                         sprites.Add(sprite);
