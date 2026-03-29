@@ -109,7 +109,16 @@ namespace IsometricMagic.Game.Scenes
                 Intensity = 0.9f,
                 BlurIterations = 4
             });
-            PostProcess.Add(new VignetteEffect { Intensity = 0.2f });
+            PostProcess.Add(new ToneMapEffect
+            {
+                Exposure = 0.55f,
+                Gamma = 1.2f,
+                Contrast = 1.05f,
+            });
+            PostProcess.Add(new VignetteEffect
+            {
+                Intensity = 0.2f
+            });
         }
 
         public override void Update()
