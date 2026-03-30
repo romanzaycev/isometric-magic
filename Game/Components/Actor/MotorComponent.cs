@@ -1,9 +1,9 @@
 using System;
 using System.Numerics;
 using IsometricMagic.Engine;
-using IsometricMagic.Game.Model;
-using IsometricMagic.Game.Components.Spatial;
 using IsometricMagic.Game.Components.Collision;
+using IsometricMagic.Game.Components.Spatial;
+using IsometricMagic.Game.Model;
 
 namespace IsometricMagic.Game.Components.Actor
 {
@@ -22,6 +22,7 @@ namespace IsometricMagic.Game.Components.Actor
 
         private WorldPositionComponent? _positionComponent;
         private IsoWorldPositionConverter? _converter;
+        private bool _converterResolved;
         private CollisionWorldComponent? _collisionWorld;
         private WorldColliderComponent? _collider;
         private Vector2 _floatPosition;
@@ -34,6 +35,7 @@ namespace IsometricMagic.Game.Components.Actor
         public void SetConverter(IsoWorldPositionConverter converter)
         {
             _converter = converter;
+            _converterResolved = true;
         }
 
         protected override void Awake()
@@ -45,6 +47,7 @@ namespace IsometricMagic.Game.Components.Actor
 
         public void TryMove(int moveX, int moveY)
         {
+            EnsureConverter();
             if (_converter == null || _positionComponent == null) return;
 
             if (moveX == 0 && moveY == 0)
@@ -117,6 +120,7 @@ namespace IsometricMagic.Game.Components.Actor
 
         private bool TryMoveCandidate(int targetX, int targetY, bool applyX, bool applyY)
         {
+            EnsureConverter();
             if (_converter == null || _positionComponent == null) return false;
             if (!IsWithinBounds(targetX, targetY, applyX, applyY)) return false;
             if (_collisionWorld == null || _collider == null) return false;
@@ -141,6 +145,18 @@ namespace IsometricMagic.Game.Components.Actor
             }
 
             return moved;
+        }
+
+        private void EnsureConverter()
+        {
+            if (_converterResolved)
+            {
+                return;
+            }
+
+            _converterResolved = true;
+            var provider = Scene?.FindComponent<WorldPositionConverterProviderComponent>();
+            _converter = provider?.Converter;
         }
 
         private bool TryMoveCandidate(Vector2 target, bool applyX, bool applyY)

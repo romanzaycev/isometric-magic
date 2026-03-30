@@ -22,7 +22,7 @@ namespace IsometricMagic.Engine
 
         private int _viewportWidth;
         private int _viewportHeight;
-        private static IEnumerator? _loadingEnumerator;
+        private static readonly Stack<IEnumerator> LoadingEnumeratorStack = new();
         private IGraphics _graphics = null!;
         private readonly CameraComposer _cameraComposer = new();
         private readonly List<CameraInfluence> _cameraInfluences = new();
@@ -55,7 +55,7 @@ namespace IsometricMagic.Engine
             _repaintWindowNeeded = true;
             _isInitialized = true;
 
-            if (_config.TargetFps > 0 && !_config.VSync)
+            if (_config.TargetFps > 0)
             {
                 _desiredDelta = 1000 / (ulong) _config.TargetFps;
             }
@@ -112,15 +112,9 @@ namespace IsometricMagic.Engine
 
         public void EndTick()
         {
-            if (_loadingEnumerator != null)
+            if (LoadingEnumeratorStack.Count > 0)
             {
-                var isLoaded = _loadingEnumerator.MoveNext();
-                
-                if (!isLoaded)
-                {
-                    SceneManager.FinishAsync();
-                    _loadingEnumerator = null;
-                }
+                AdvanceLoadingCoroutine();
             }
             
             var end = SDL_GetPerformanceCounter();
@@ -129,11 +123,21 @@ namespace IsometricMagic.Engine
             if (_desiredDelta > 0 && freq > 0)
             {
                 var delta = end - _startTick;
-                var elapsedMs = delta / freq * 1000;
+                var elapsedMs = (delta * 1000) / freq;
 
                 if (_desiredDelta > elapsedMs)
                 {
                     SDL_Delay((uint) Math.Floor((float) (_desiredDelta - elapsedMs)));
+                }
+            }
+            else
+            {
+                var delta = end - _startTick;
+                var elapsedMs = freq > 0 ? (double) delta * 1000.0 / freq : 0.0;
+
+                if (elapsedMs < 1.0)
+                {
+                    SDL_Delay(1);
                 }
             }
         }
@@ -159,7 +163,57 @@ namespace IsometricMagic.Engine
 
         public void LoadingCoroutinePush(IEnumerator enumerator)
         {
-            _loadingEnumerator = enumerator;
+            LoadingEnumeratorStack.Clear();
+            LoadingEnumeratorStack.Push(enumerator);
+        }
+
+        private static void AdvanceLoadingCoroutine()
+        {
+            if (LoadingEnumeratorStack.Count == 0)
+            {
+                return;
+            }
+
+            var current = LoadingEnumeratorStack.Peek();
+            var hasNext = current.MoveNext();
+            if (!hasNext)
+            {
+                var completed = LoadingEnumeratorStack.Pop();
+                if (completed is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+
+                if (LoadingEnumeratorStack.Count == 0)
+                {
+                    SceneManager.FinishAsync();
+                }
+
+                return;
+            }
+
+            if (current.Current is IEnumerator nested)
+            {
+                if (ContainsCoroutine(nested))
+                {
+                    throw new InvalidOperationException("Cyclic nested loading coroutine detected.");
+                }
+
+                LoadingEnumeratorStack.Push(nested);
+            }
+        }
+
+        private static bool ContainsCoroutine(IEnumerator candidate)
+        {
+            foreach (var coroutine in LoadingEnumeratorStack)
+            {
+                if (ReferenceEquals(coroutine, candidate))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public IGraphics GetGraphics()

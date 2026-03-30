@@ -12,10 +12,12 @@ namespace IsometricMagic.Game.Components.Character.Humanoid
         private WorldPositionComponent? _positionComponent;
         private HumanoidAnimationComponent? _animationComponent;
         private IsoWorldPositionConverter? _converter;
+        private bool _converterResolved;
 
         public void SetConverter(IsoWorldPositionConverter converter)
         {
             _converter = converter;
+            _converterResolved = true;
         }
 
         protected override void Awake()
@@ -26,6 +28,7 @@ namespace IsometricMagic.Game.Components.Character.Humanoid
 
         protected override void LateUpdate(float dt)
         {
+            EnsureConverter();
             if (_positionComponent == null || _animationComponent == null || _converter == null) return;
 
             var sprite = _animationComponent.GetCurrentSprite();
@@ -38,6 +41,18 @@ namespace IsometricMagic.Game.Components.Character.Humanoid
             {
                 sprite.Sorting = sorting;
             }
+        }
+
+        private void EnsureConverter()
+        {
+            if (_converterResolved)
+            {
+                return;
+            }
+
+            _converterResolved = true;
+            var provider = Scene?.FindComponent<WorldPositionConverterProviderComponent>();
+            _converter = provider?.Converter;
         }
     }
 }

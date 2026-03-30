@@ -293,11 +293,21 @@ namespace IsometricMagic.Game.Components.Collision
 
         private List<long> GetCellKeys(Vector2 center, float radius)
         {
+            if (CellSize <= 0)
+            {
+                throw new InvalidOperationException($"Collision world cell size must be greater than 0. Current value: {CellSize}.");
+            }
+
+            if (!float.IsFinite(center.X) || !float.IsFinite(center.Y))
+            {
+                throw new InvalidOperationException($"Collider center contains non-finite value: ({center.X}, {center.Y}).");
+            }
+
             var half = MathF.Max(0f, radius);
-            var minX = (int) MathF.Floor((center.X - half) / CellSize);
-            var maxX = (int) MathF.Floor((center.X + half) / CellSize);
-            var minY = (int) MathF.Floor((center.Y - half) / CellSize);
-            var maxY = (int) MathF.Floor((center.Y + half) / CellSize);
+            var minX = SafeFloorToInt((center.X - half) / CellSize);
+            var maxX = SafeFloorToInt((center.X + half) / CellSize);
+            var minY = SafeFloorToInt((center.Y - half) / CellSize);
+            var maxY = SafeFloorToInt((center.Y + half) / CellSize);
 
             var keys = new List<long>();
             for (var y = minY; y <= maxY; y++)
@@ -308,6 +318,27 @@ namespace IsometricMagic.Game.Components.Collision
                 }
             }
             return keys;
+        }
+
+        private static int SafeFloorToInt(float value)
+        {
+            if (!float.IsFinite(value))
+            {
+                throw new InvalidOperationException($"Grid cell coordinate is non-finite: {value}.");
+            }
+
+            var floored = MathF.Floor(value);
+            if (floored > int.MaxValue)
+            {
+                return int.MaxValue;
+            }
+
+            if (floored < int.MinValue)
+            {
+                return int.MinValue;
+            }
+
+            return (int) floored;
         }
 
         private static bool AreSameKeys(List<long> left, List<long> right)

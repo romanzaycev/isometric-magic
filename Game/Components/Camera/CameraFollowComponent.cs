@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Numerics;
 using IsometricMagic.Engine;
-using IsometricMagic.Game.Model;
 using IsometricMagic.Game.Components.Spatial;
+using IsometricMagic.Game.Model;
 
 namespace IsometricMagic.Game.Components.Camera
 {
@@ -14,6 +14,7 @@ namespace IsometricMagic.Game.Components.Camera
 
         private WorldPositionComponent? _positionComponent;
         private IsoWorldPositionConverter? _converter;
+        private bool _converterResolved;
         private Vector2 _targetCenter;
         private bool _hasTarget;
 
@@ -25,6 +26,7 @@ namespace IsometricMagic.Game.Components.Camera
         public void SetConverter(IsoWorldPositionConverter converter)
         {
             _converter = converter;
+            _converterResolved = true;
         }
 
         protected override void Awake()
@@ -34,6 +36,7 @@ namespace IsometricMagic.Game.Components.Camera
 
         protected override void Update(float dt)
         {
+            EnsureConverter();
             if (_positionComponent == null || _converter == null) return;
             
             var pos = _converter.GetCanvasPosition(_positionComponent.WorldPosX, _positionComponent.WorldPosY);
@@ -61,6 +64,18 @@ namespace IsometricMagic.Game.Components.Camera
             }
 
             AddSetCenter(buffer, _targetCenter, Priority);
+        }
+
+        private void EnsureConverter()
+        {
+            if (_converterResolved)
+            {
+                return;
+            }
+
+            _converterResolved = true;
+            var provider = Scene?.FindComponent<WorldPositionConverterProviderComponent>();
+            _converter = provider?.Converter;
         }
     }
 }
