@@ -3,6 +3,7 @@ using IsometricMagic.Engine.Graphics;
 using IsometricMagic.Engine.Graphics.SDL;
 using IsometricMagic.Engine.Logging;
 using NLog;
+using System.Threading.Tasks;
 using static SDL2.SDL;
 
 namespace IsometricMagic.Engine
@@ -49,23 +50,25 @@ namespace IsometricMagic.Engine
 
         public void Run()
         {
-            var appConfig = new AppConfig(_configPath);
-            LogBootstrap.Initialize(appConfig);
             Application? app = null;
             var sdlInitialized = false;
+            var hasFatalError = false;
+            var fatalExitCode = 0;
 
             try
             {
                 AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+                TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+
+                var appConfig = new AppConfig(_configPath);
+                LogBootstrap.Initialize(appConfig);
 
                 var sdlOptions = SdlBootstrapOptions.CreateDefault();
                 SdlBootstrap.Init(sdlOptions);
                 sdlInitialized = true;
 
                 app = Application.GetInstance();
-                IGraphics graphics = appConfig.GraphicsBackend == GraphicsBackend.OpenGL
-                    ? new SdlGlGraphics()
-                    : new SdlGraphics();
+                IGraphics graphics = new SdlGlGraphics();
 
                 app.Init(appConfig, graphics);
 
@@ -122,9 +125,10 @@ namespace IsometricMagic.Engine
             }
             catch (Exception e)
             {
-                Logger.Error(e, "Unhandled exception in main game loop");
-                Console.Error.WriteLine($"Unhandled exception: {e.Message}");
-                throw;
+                Logger.Fatal(e, "Fatal exception in main game loop");
+                TryFlushLogs();
+                fatalExitCode = FatalErrorReporter.Report(e, LogBootstrap.CurrentErrorLogPath);
+                hasFatalError = true;
             }
             finally
             {
@@ -139,7 +143,13 @@ namespace IsometricMagic.Engine
                 }
 
                 AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
+                TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
                 LogBootstrap.Shutdown();
+            }
+
+            if (hasFatalError)
+            {
+                Environment.ExitCode = fatalExitCode;
             }
         }
 
@@ -148,10 +158,31 @@ namespace IsometricMagic.Engine
             if (args.ExceptionObject is Exception exception)
             {
                 Logger.Fatal(exception, "Unhandled exception");
+                TryFlushLogs();
+                Environment.ExitCode = FatalErrorReporter.Report(exception, LogBootstrap.CurrentErrorLogPath);
                 return;
             }
 
             Logger.Fatal("Unhandled exception object: {Object}", args.ExceptionObject);
+            TryFlushLogs();
+            Environment.ExitCode = FatalErrorReporter.ReportNonException(args.ExceptionObject, LogBootstrap.CurrentErrorLogPath);
+        }
+
+        private static void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs args)
+        {
+            Logger.Error(args.Exception, "Unobserved task exception");
+            args.SetObserved();
+        }
+
+        private static void TryFlushLogs()
+        {
+            try
+            {
+                LogManager.Flush(TimeSpan.FromSeconds(2));
+            }
+            catch
+            {
+            }
         }
     }
 }

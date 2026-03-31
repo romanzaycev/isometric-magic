@@ -40,7 +40,7 @@ using IsometricMagic.Game.Scenes;
 - **Prefer expression-bodied members** for simple properties
 
 ## Error Handling
-- Use try-catch in entry points (Program.cs)
+- Use try-catch in entry points (Program.cs, ApplicationBuilder.cs)
 - Write errors to `Console.Error`
 - Re-throw after logging unhandled exceptions
 - Use pattern matching for switch expressions (C# 8.0+)
@@ -54,6 +54,7 @@ using IsometricMagic.Game.Scenes;
 
 ## Key Dependencies
 - `SDL2` - Graphics and input (via P/Invoke bindings)
+- `Silk.NET.OpenGL` - OpenGL bindings library
 - `Newtonsoft.Json` (13.0.1) - JSON parsing
 - `ini-parser-netstandard` (2.5.2) - INI config files
 
@@ -61,4 +62,4 @@ using IsometricMagic.Game.Scenes;
 - Project uses `AllowUnsafeBlocks` for SDL2 interop
 - No solution file (.sln) - build directly from csproj
 - SDL2 native libraries must be available in system PATH or project root
-- Configuration via `config.ini` (window size, fullscreen, VSync, FPS)
+- Configuration via `config.ini` (window size, fullscreen, VSync, FPS, Logging, etc)

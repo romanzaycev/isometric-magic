@@ -52,3 +52,7 @@ bin/
 obj/
 
 Folder.DotSettings.user
+
+logs/
+*.log
+

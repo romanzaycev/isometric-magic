@@ -1,7 +1,7 @@
 # Isometric Magic Game Project
 
 ## Project Overview
-A C# isometric 2D game engine built on SDL2, targeting .NET 10.0.
+A C# isometric 2D game engine built on SDL2 and OpenGL, targeting .NET 10.0.
 
 ## Build Commands
 

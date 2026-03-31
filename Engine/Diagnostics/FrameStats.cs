@@ -19,7 +19,7 @@ namespace IsometricMagic.Engine.Diagnostics
 
         public int ViewportWidth { get; private set; }
         public int ViewportHeight { get; private set; }
-        public GraphicsBackend Backend { get; private set; } = GraphicsBackend.Sdl;
+        public GraphicsBackend Backend { get; private set; } = GraphicsBackend.OpenGL;
         public bool VSync { get; private set; }
         public string SceneName { get; private set; } = string.Empty;
 

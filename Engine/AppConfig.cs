@@ -90,7 +90,7 @@ namespace IsometricMagic.Engine
         }
 
         private bool _graphicsBackendFetched = false;
-        private GraphicsBackend _graphicsBackend = GraphicsBackend.Sdl;
+        private GraphicsBackend _graphicsBackend = GraphicsBackend.OpenGL;
 
         public GraphicsBackend GraphicsBackend
         {
@@ -98,7 +98,7 @@ namespace IsometricMagic.Engine
             {
                 if (!_graphicsBackendFetched)
                 {
-                    _graphicsBackend = GetGraphicsBackend(_data["Graphics"]["Backend"], GraphicsBackend.Sdl);
+                    _graphicsBackend = GetGraphicsBackend(_data["Graphics"]["Backend"], GraphicsBackend.OpenGL);
                     _graphicsBackendFetched = true;
                 }
 
@@ -461,8 +461,8 @@ namespace IsometricMagic.Engine
             return value.Trim().ToLower() switch
             {
                 "opengl" or "gl" => GraphicsBackend.OpenGL,
-                "sdl" or "sdlrenderer" or "renderer" => GraphicsBackend.Sdl,
-                _ => defaultValue
+                _ => throw new InvalidOperationException(
+                    $"Unsupported graphics backend '{value}'. Supported values: OpenGL, GL.")
             };
         }
     }

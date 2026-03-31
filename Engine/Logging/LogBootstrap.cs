@@ -8,8 +8,12 @@ namespace IsometricMagic.Engine.Logging
 {
     public static class LogBootstrap
     {
+        public static string? CurrentErrorLogPath { get; private set; }
+
         public static void Initialize(AppConfig config)
         {
+            CurrentErrorLogPath = null;
+
             if (!config.LoggingEnabled)
             {
                 LogManager.Configuration = null;
@@ -38,6 +42,7 @@ namespace IsometricMagic.Engine.Logging
             if (config.LoggingErrorEnabled)
             {
                 var path = ResolvePath(config.LoggingErrorPath, runStamp, "error");
+                CurrentErrorLogPath = Path.GetFullPath(path);
                 var target = CreateFileTarget("error_file", path, config.LoggingLayout);
                 nlogConfig.AddTarget(target);
                 nlogConfig.AddRule(LogLevel.Error, LogLevel.Fatal, target);
@@ -49,6 +54,7 @@ namespace IsometricMagic.Engine.Logging
         public static void Shutdown()
         {
             LogManager.Shutdown();
+            CurrentErrorLogPath = null;
         }
 
         private static FileTarget CreateFileTarget(string targetName, string filePath, string layout)

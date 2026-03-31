@@ -1,4 +1,3 @@
-using System;
 using IsometricMagic.Engine.Graphics;
 
 namespace IsometricMagic.Engine
@@ -6,19 +5,6 @@ namespace IsometricMagic.Engine
     public abstract class NativeTexture
     {
         public abstract GraphicsBackend Backend { get; }
-    }
-
-    public sealed class SdlNativeTexture : NativeTexture
-    {
-        public override GraphicsBackend Backend => GraphicsBackend.Sdl;
-        public IntPtr Texture { get; }
-        public IntPtr Surface { get; }
-
-        public SdlNativeTexture(IntPtr texture, IntPtr surface)
-        {
-            Texture = texture;
-            Surface = surface;
-        }
     }
 
     public sealed class GlNativeTexture : NativeTexture
