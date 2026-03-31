@@ -19,6 +19,23 @@ namespace IsometricMagic.Game.Components.Actor
         public int MaxMove { get; set; } = 5;
         public IsoWorldPositionConverter? Converter => _converter;
         public WorldPositionComponent? PositionComponent => _positionComponent;
+        public Vector2 PreciseWorldPosition
+        {
+            get
+            {
+                if (_floatPositionReady)
+                {
+                    return _floatPosition;
+                }
+
+                if (_positionComponent != null)
+                {
+                    return new Vector2(_positionComponent.WorldPosX, _positionComponent.WorldPosY);
+                }
+
+                return Vector2.Zero;
+            }
+        }
 
         private WorldPositionComponent? _positionComponent;
         private IsoWorldPositionConverter? _converter;
@@ -126,6 +143,8 @@ namespace IsometricMagic.Game.Components.Actor
                 var actualY = _positionComponent.WorldPosY - currentY;
                 if (!usedCollision)
                 {
+                    _floatPosition = new Vector2(_positionComponent.WorldPosX, _positionComponent.WorldPosY);
+                    _floatPositionReady = true;
                     _lastMoveDelta = new Vector2(actualX, actualY);
                 }
 

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using IsometricMagic.Engine;
+using IsometricMagic.Game.Components.Actor;
 using IsometricMagic.Game.Components.Spatial;
 using IsometricMagic.Game.Model;
 
@@ -13,6 +14,7 @@ namespace IsometricMagic.Game.Components.Camera
         public int CenterYOffset { get; set; } = -100;
 
         private WorldPositionComponent? _positionComponent;
+        private MotorComponent? _motorComponent;
         private IsoWorldPositionConverter? _converter;
         private bool _converterResolved;
         private Vector2 _targetCenter;
@@ -32,6 +34,7 @@ namespace IsometricMagic.Game.Components.Camera
         protected override void Awake()
         {
             _positionComponent = Entity?.GetComponent<WorldPositionComponent>();
+            _motorComponent = Entity?.GetComponent<MotorComponent>();
         }
 
         protected override void Update(float dt)
@@ -39,7 +42,8 @@ namespace IsometricMagic.Game.Components.Camera
             EnsureConverter();
             if (_positionComponent == null || _converter == null) return;
             
-            var pos = _converter.GetCanvasPosition(_positionComponent.WorldPosX, _positionComponent.WorldPosY);
+            var worldPos = _motorComponent?.PreciseWorldPosition ?? new Vector2(_positionComponent.WorldPosX, _positionComponent.WorldPosY);
+            var pos = _converter.GetCanvasPosition(worldPos.X, worldPos.Y);
             _targetCenter = new Vector2(pos.X, pos.Y + CenterYOffset);
             _hasTarget = true;
         }

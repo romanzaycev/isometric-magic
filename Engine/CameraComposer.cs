@@ -70,43 +70,45 @@ namespace IsometricMagic.Engine
             var finalCenter = hasCenter ? center : baseCenter;
             var finalOffset = offset + shakeOffset;
 
-            rect.X = (int) MathF.Round(finalCenter.X - rect.Width / 2f + finalOffset.X);
-            rect.Y = (int) MathF.Round(finalCenter.Y - rect.Height / 2f + finalOffset.Y);
+            var targetX = finalCenter.X - rect.Width / 2f + finalOffset.X;
+            var targetY = finalCenter.Y - rect.Height / 2f + finalOffset.Y;
 
             if (hasBounds)
             {
-                rect = ClampRect(rect, bounds);
+                ClampPosition(ref targetX, ref targetY, rect.Width, rect.Height, bounds);
             }
+
+            rect.X = (int) MathF.Floor(targetX);
+            rect.Y = (int) MathF.Floor(targetY);
+            camera.SubpixelOffset = new Vector2(targetX - rect.X, targetY - rect.Y);
 
             camera.Rect = rect;
         }
 
-        private static Rectangle ClampRect(Rectangle rect, Rectangle bounds)
+        private static void ClampPosition(ref float x, ref float y, int width, int height, Rectangle bounds)
         {
-            var minX = bounds.Left;
-            var minY = bounds.Top;
-            var maxX = bounds.Right - rect.Width;
-            var maxY = bounds.Bottom - rect.Height;
+            var minX = (float) bounds.Left;
+            var minY = (float) bounds.Top;
+            var maxX = (float) (bounds.Right - width);
+            var maxY = (float) (bounds.Bottom - height);
 
             if (maxX < minX)
             {
-                rect.X = minX;
+                x = minX;
             }
             else
             {
-                rect.X = Math.Clamp(rect.X, minX, maxX);
+                x = Math.Clamp(x, minX, maxX);
             }
 
             if (maxY < minY)
             {
-                rect.Y = minY;
+                y = minY;
             }
             else
             {
-                rect.Y = Math.Clamp(rect.Y, minY, maxY);
+                y = Math.Clamp(y, minY, maxY);
             }
-
-            return rect;
         }
     }
 }

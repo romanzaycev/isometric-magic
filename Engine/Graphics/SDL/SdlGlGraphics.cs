@@ -346,8 +346,8 @@ namespace IsometricMagic.Engine.Graphics.SDL
         private void DrawLayer(SceneLayer layer, Camera camera, bool isCameraLayer)
         {
             var cameraRect = camera.Rect;
-            var cameraOffsetX = cameraRect.X;
-            var cameraOffsetY = cameraRect.Y;
+            var cameraOffsetX = cameraRect.X + camera.SubpixelOffset.X;
+            var cameraOffsetY = cameraRect.Y + camera.SubpixelOffset.Y;
 
             foreach (var sprite in layer.Sprites)
             {
@@ -364,57 +364,57 @@ namespace IsometricMagic.Engine.Graphics.SDL
                 }
 
                 var spriteTransformation = sprite.Transformation;
-                var offsetX = (int) spriteTransformation.Translate.X;
-                var offsetY = (int) spriteTransformation.Translate.Y;
+                var offsetX = spriteTransformation.Translate.X;
+                var offsetY = spriteTransformation.Translate.Y;
 
-                int spritePosX;
-                int spritePosY;
+                float spritePosX;
+                float spritePosY;
 
                 switch (sprite.OriginPoint)
                 {
                     case OriginPoint.LeftTop:
-                        spritePosX = (int) sprite.Position.X;
-                        spritePosY = (int) sprite.Position.Y;
+                        spritePosX = sprite.Position.X;
+                        spritePosY = sprite.Position.Y;
                         break;
 
                     case OriginPoint.LeftCenter:
-                        spritePosX = (int) sprite.Position.X;
-                        spritePosY = (int) (sprite.Position.Y - sprite.Height / 2);
+                        spritePosX = sprite.Position.X;
+                        spritePosY = sprite.Position.Y - sprite.Height / 2f;
                         break;
 
                     case OriginPoint.LeftBottom:
-                        spritePosX = (int) sprite.Position.X;
-                        spritePosY = (int) sprite.Position.Y - sprite.Height;
+                        spritePosX = sprite.Position.X;
+                        spritePosY = sprite.Position.Y - sprite.Height;
                         break;
 
                     case OriginPoint.Centered:
-                        spritePosX = (int) (sprite.Position.X - sprite.Width / 2);
-                        spritePosY = (int) (sprite.Position.Y - sprite.Height / 2);
+                        spritePosX = sprite.Position.X - sprite.Width / 2f;
+                        spritePosY = sprite.Position.Y - sprite.Height / 2f;
                         break;
 
                     case OriginPoint.RightTop:
-                        spritePosX = (int) sprite.Position.X - sprite.Width;
-                        spritePosY = (int) sprite.Position.Y;
+                        spritePosX = sprite.Position.X - sprite.Width;
+                        spritePosY = sprite.Position.Y;
                         break;
 
                     case OriginPoint.RightCenter:
-                        spritePosX = (int) sprite.Position.X - sprite.Width;
-                        spritePosY = (int) (sprite.Position.Y - sprite.Height / 2);
+                        spritePosX = sprite.Position.X - sprite.Width;
+                        spritePosY = sprite.Position.Y - sprite.Height / 2f;
                         break;
 
                     case OriginPoint.RightBottom:
-                        spritePosX = (int) sprite.Position.X - sprite.Width;
-                        spritePosY = (int) (sprite.Position.Y - sprite.Height);
+                        spritePosX = sprite.Position.X - sprite.Width;
+                        spritePosY = sprite.Position.Y - sprite.Height;
                         break;
 
                     case OriginPoint.TopCenter:
-                        spritePosX = (int) (sprite.Position.X - sprite.Width / 2);
-                        spritePosY = (int) sprite.Position.Y;
+                        spritePosX = sprite.Position.X - sprite.Width / 2f;
+                        spritePosY = sprite.Position.Y;
                         break;
 
                     case OriginPoint.BottomCenter:
-                        spritePosX = (int) (sprite.Position.X - sprite.Width / 2);
-                        spritePosY = (int) (sprite.Position.Y - sprite.Height);
+                        spritePosX = sprite.Position.X - sprite.Width / 2f;
+                        spritePosY = sprite.Position.Y - sprite.Height;
                         break;
 
                     default:
@@ -488,8 +488,8 @@ namespace IsometricMagic.Engine.Graphics.SDL
         }
 
         private void DrawOutline(Sprite sprite, GlNativeTexture albedo,
-            int worldSpritePosX, int worldSpritePosY,
-            int screenSpritePosX, int screenSpritePosY)
+            float worldSpritePosX, float worldSpritePosY,
+            float screenSpritePosX, float screenSpritePosY)
         {
             var pad = (int) MathF.Ceiling(sprite.Outline.ThicknessTexels);
             if (pad <= 0)
@@ -562,8 +562,8 @@ namespace IsometricMagic.Engine.Graphics.SDL
         }
 
         private float[] BuildQuadVertices(
-            int worldX, int worldY,
-            int screenX, int screenY,
+            float worldX, float worldY,
+            float screenX, float screenY,
             int width, int height,
             double angle, bool clockwise)
         {
@@ -571,8 +571,8 @@ namespace IsometricMagic.Engine.Graphics.SDL
         }
 
         private float[] BuildQuadVertices(
-            int worldX, int worldY,
-            int screenX, int screenY,
+            float worldX, float worldY,
+            float screenX, float screenY,
             int width, int height,
             double angle, bool clockwise,
             float uvMinX, float uvMinY,
@@ -802,7 +802,7 @@ namespace IsometricMagic.Engine.Graphics.SDL
             return new GlNativeTexture(textureId, 0, false, 1, 1);
         }
 
-        private static bool IsCulled(int width, int height, int x, int y, Rectangle cameraRect)
+        private static bool IsCulled(int width, int height, float x, float y, Rectangle cameraRect)
         {
             return y > cameraRect.Bottom || x > cameraRect.Right || y + height < cameraRect.Top ||
                    x + width < cameraRect.Left;
