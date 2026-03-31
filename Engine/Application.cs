@@ -21,7 +21,7 @@ namespace IsometricMagic.Engine
         private ulong _desiredDelta;
         private ulong _startTick;
 
-        private static ulong _dtLast;
+        private static ulong _dtLastCounter;
         private static float _deltaTime;
         public static float DeltaTime => _deltaTime;
 
@@ -68,7 +68,8 @@ namespace IsometricMagic.Engine
                 _desiredDelta = 1000 / (ulong) _config.TargetFps;
             }
 
-            _dtLast = 0;
+            _dtLastCounter = SDL_GetPerformanceCounter();
+            _deltaTime = 0f;
 
             RepaintWindow();
             Logger.Info("Application initialized. Backend={Backend}, Resolution={Width}x{Height}, VSync={VSync}",
@@ -87,13 +88,19 @@ namespace IsometricMagic.Engine
 
         public void Update()
         {
-            var now = SDL_GetTicks();
-
-            if (now > _dtLast)
+            var nowCounter = SDL_GetPerformanceCounter();
+            var freq = SDL_GetPerformanceFrequency();
+            if (freq > 0 && nowCounter >= _dtLastCounter)
             {
-            _deltaTime =  (float)(now - _dtLast) / 1000;
-            _dtLast = now;
-        }
+                _deltaTime = (float)(nowCounter - _dtLastCounter) / freq;
+                _deltaTime = MathF.Max(0f, MathF.Min(0.1f, _deltaTime));
+            }
+            else
+            {
+                _deltaTime = 0f;
+            }
+
+            _dtLastCounter = nowCounter;
 
             var scene = SceneManager.GetCurrent();
             scene.InternalUpdate();

@@ -19,42 +19,42 @@ namespace IsometricMagic.Game.Controllers.Character
 
             if (IsGamepadInputActive())
             {
-                HandleGamepad();
+                HandleGamepad(dt);
                 return;
             }
 
-            HandleKeyboard();
+            HandleKeyboard(dt);
         }
 
-        private void HandleKeyboard()
+        private void HandleKeyboard(float dt)
         {
-            var moveX = 0;
-            var moveY = 0;
+            var moveX = 0f;
+            var moveY = 0f;
 
             if (Input.IsDown(Key.Up) || Input.IsDown(Key.W))
             {
-                moveY = -_motor!.MaxMove;
+                moveY = -1f;
             }
 
             if (Input.IsDown(Key.Down) || Input.IsDown(Key.S))
             {
-                moveY = _motor!.MaxMove;
+                moveY = 1f;
             }
 
             if (Input.IsDown(Key.Left) || Input.IsDown(Key.A))
             {
-                moveX = -_motor!.MaxMove;
+                moveX = -1f;
             }
 
             if (Input.IsDown(Key.Right) || Input.IsDown(Key.D))
             {
-                moveX = _motor!.MaxMove;
+                moveX = 1f;
             }
 
-            _motor!.TryMove(moveX, moveY);
+            _motor!.TryMoveInput(moveX, moveY, dt);
         }
 
-        private void HandleGamepad()
+        private void HandleGamepad(float dt)
         {
             var moveX = GetAxisMove(GamepadAxis.LeftX);
             var moveY = GetAxisMove(GamepadAxis.LeftY);
@@ -67,38 +67,38 @@ namespace IsometricMagic.Game.Controllers.Character
                 return;
             }
 
-            _motor!.TryMove(moveX, moveY);
+            _motor!.TryMoveInput(moveX, moveY, dt);
         }
 
-        private int GetAxisMove(GamepadAxis axis)
+        private static float GetAxisMove(GamepadAxis axis)
         {
             var value = Input.GetAxis(axis);
-            if (value == 0f)
+            if (Math.Abs(value) < float.Epsilon)
             {
                 return 0;
             }
 
-            return (int)Math.Round(value * _motor!.MaxMove);
+            return value;
         }
 
-        private void ApplyDpad(ref int moveX, ref int moveY)
+        private void ApplyDpad(ref float moveX, ref float moveY)
         {
             if (Input.IsDown(GamepadButton.DpadLeft))
             {
-                moveX = -_motor!.MaxMove;
+                moveX = -1f;
             }
             else if (Input.IsDown(GamepadButton.DpadRight))
             {
-                moveX = _motor!.MaxMove;
+                moveX = 1f;
             }
 
             if (Input.IsDown(GamepadButton.DpadUp))
             {
-                moveY = -_motor!.MaxMove;
+                moveY = -1f;
             }
             else if (Input.IsDown(GamepadButton.DpadDown))
             {
-                moveY = _motor!.MaxMove;
+                moveY = 1f;
             }
         }
 

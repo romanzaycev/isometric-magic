@@ -353,7 +353,7 @@ namespace IsometricMagic.Game.Components.Collision
 
         private static long ToKey(int x, int y)
         {
-            return ((long) x << 32) ^ (uint) y;
+            return unchecked(((long)(uint)x << 32) | (uint)y);
         }
     }
 }

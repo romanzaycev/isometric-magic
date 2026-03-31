@@ -47,31 +47,64 @@ namespace IsometricMagic.Game.Components.Actor
 
         public void TryMove(int moveX, int moveY)
         {
+            var desired = new Vector2(moveX, moveY);
+            TryMoveLegacy(desired);
+        }
+
+        public void TryMoveInput(float inputX, float inputY, float dt)
+        {
             EnsureConverter();
             if (_converter == null || _positionComponent == null) return;
 
-            if (moveX == 0 && moveY == 0)
+            if (!float.IsFinite(inputX) || !float.IsFinite(inputY) || !float.IsFinite(dt) || dt <= 0f)
             {
                 StopMove();
                 return;
             }
 
-            var absMoveX = Math.Abs(moveX);
-            var absMoveY = Math.Abs(moveY);
+            var desired = new Vector2(inputX, inputY) * (MaxMove * 60f * dt);
+            if (desired.LengthSquared() < 0.0001f)
+            {
+                StopMove();
+                return;
+            }
+
+            TryMoveInternal(desired);
+        }
+
+        private void TryMoveLegacy(Vector2 desired)
+        {
+            EnsureConverter();
+            if (_converter == null || _positionComponent == null) return;
+
+            if (desired.LengthSquared() < 0.0001f)
+            {
+                StopMove();
+                return;
+            }
+
+            var absMoveX = MathF.Abs(desired.X);
+            var absMoveY = MathF.Abs(desired.Y);
 
             if (absMoveX > 0)
             {
-                moveX = moveX < 0 ? -Math.Min(absMoveX, MaxMove) : Math.Min(absMoveX, MaxMove);
+                desired.X = desired.X < 0f ? -MathF.Min(absMoveX, MaxMove) : MathF.Min(absMoveX, MaxMove);
             }
 
             if (absMoveY > 0)
             {
-                moveY = moveY < 0 ? -Math.Min(absMoveY, MaxMove) : Math.Min(absMoveY, MaxMove);
+                desired.Y = desired.Y < 0f ? -MathF.Min(absMoveY, MaxMove) : MathF.Min(absMoveY, MaxMove);
             }
+
+            TryMoveInternal(desired);
+        }
+
+        private void TryMoveInternal(Vector2 desired)
+        {
+            if (_converter == null || _positionComponent == null) return;
 
             var currentX = _positionComponent.WorldPosX;
             var currentY = _positionComponent.WorldPosY;
-            var desired = new Vector2(moveX, moveY);
 
             var moved = false;
             var usedCollision = _collisionWorld != null && _collider != null;
@@ -81,8 +114,8 @@ namespace IsometricMagic.Game.Components.Actor
             }
             else
             {
-                var nextXPos = currentX + moveX;
-                var nextYPos = currentY + moveY;
+                var nextXPos = currentX + (int)MathF.Round(desired.X);
+                var nextYPos = currentY + (int)MathF.Round(desired.Y);
                 moved = TryMoveWithoutCollision(nextXPos, nextYPos);
             }
 
@@ -96,8 +129,15 @@ namespace IsometricMagic.Game.Components.Actor
                     _lastMoveDelta = new Vector2(actualX, actualY);
                 }
 
-                var dirX = ApplyDeadband(_lastMoveDelta.X);
-                var dirY = ApplyDeadband(_lastMoveDelta.Y);
+                var directionSample = _lastMoveDelta;
+                var maxAxis = MathF.Max(MathF.Abs(directionSample.X), MathF.Abs(directionSample.Y));
+                if (maxAxis > 0.0001f)
+                {
+                    directionSample /= maxAxis;
+                }
+
+                var dirX = ApplyDeadband(directionSample.X);
+                var dirY = ApplyDeadband(directionSample.Y);
                 if (dirX != 0 || dirY != 0)
                 {
                     _direction = GetDirection(dirX, dirY);

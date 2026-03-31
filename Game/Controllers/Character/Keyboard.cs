@@ -16,30 +16,30 @@ namespace IsometricMagic.Game.Controllers.Character
         {
             if (_motor == null) return;
 
-            var moveX = 0;
-            var moveY = 0;
+            var moveX = 0f;
+            var moveY = 0f;
 
             if (Input.IsDown(Key.Up) || Input.IsDown(Key.W))
             {
-                moveY = -_motor.MaxMove;
+                moveY = -1f;
             }
 
             if (Input.IsDown(Key.Down) || Input.IsDown(Key.S))
             {
-                moveY = _motor.MaxMove;
+                moveY = 1f;
             }
 
             if (Input.IsDown(Key.Left) || Input.IsDown(Key.A))
             {
-                moveX = -_motor.MaxMove;
+                moveX = -1f;
             }
 
             if (Input.IsDown(Key.Right) || Input.IsDown(Key.D))
             {
-                moveX = _motor.MaxMove;
+                moveX = 1f;
             }
 
-            _motor.TryMove(moveX, moveY);
+            _motor.TryMoveInput(moveX, moveY, dt);
         }
     }
 }
