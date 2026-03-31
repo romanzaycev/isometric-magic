@@ -12,9 +12,23 @@ namespace IsometricMagic.Engine
         public const string MAIN = "main";
         public const string UI = "ui";
 
-        protected static readonly SceneManager SceneManager = SceneManager.GetInstance();
-        protected static readonly Camera Camera = Application.GetInstance().GetRenderer().GetCamera();
-        protected static readonly Application Application = Application.GetInstance();
+        protected static SceneManager SceneManager => SceneManager.GetInstance();
+        protected static Application Application => Application.GetInstance();
+
+        private static readonly Camera FallbackCamera = new(0, 0);
+        protected static Camera Camera
+        {
+            get
+            {
+                var renderer = Application.GetInstance().GetRenderer();
+                if (renderer == null)
+                {
+                    return FallbackCamera;
+                }
+
+                return renderer.GetCamera();
+            }
+        }
 
         private readonly string _name;
         public string Name => _name;

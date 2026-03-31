@@ -416,6 +416,11 @@ namespace IsometricMagic.Engine
         
         private static bool GetBool(string value, bool defaultValue)
         {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return defaultValue;
+            }
+
             return value.ToLower() switch
             {
                 "true" or "1" or "on" => true,

@@ -28,6 +28,7 @@ namespace IsometricMagic.Engine
                 if (_activeSelf == value) return;
                 _activeSelf = value;
                 var newHierarchy = CalculateActiveInHierarchy();
+                _activeInHierarchy = newHierarchy;
                 PropagateActiveChange(newHierarchy);
             }
         }
