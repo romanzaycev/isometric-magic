@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <PackageReference Include="ini-parser-netstandard" Version="2.5.2" />
+    <PackageReference Include="NLog" Version="5.4.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Silk.NET.OpenGL" Version="2.22.0" />
   </ItemGroup>

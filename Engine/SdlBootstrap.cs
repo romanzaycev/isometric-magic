@@ -1,5 +1,6 @@
 using static SDL2.SDL;
 using static SDL2.SDL_image;
+using static SDL2.SDL_ttf;
 
 namespace IsometricMagic.Engine
 {
@@ -59,6 +60,15 @@ namespace IsometricMagic.Engine
                 SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, resolvedOptions.RenderScaleQuality);
             }
 
+            if (TTF_WasInit() == 0)
+            {
+                var ttfResult = TTF_Init();
+                if (ttfResult < 0)
+                {
+                    throw new InvalidOperationException($"TTF_Init error: {SDL_GetError()}");
+                }
+            }
+
             _isInitialized = true;
         }
 
@@ -84,6 +94,10 @@ namespace IsometricMagic.Engine
             }
 
             IMG_Quit();
+            if (TTF_WasInit() != 0)
+            {
+                TTF_Quit();
+            }
             SDL_Quit();
             _isInitialized = false;
         }

@@ -2,22 +2,29 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using System.IO;
 using System.Runtime.InteropServices;
+using IsometricMagic.Engine.Diagnostics;
 using IsometricMagic.Engine.Graphics.Effects;
 using IsometricMagic.Engine.Graphics.Materials;
 using IsometricMagic.Engine.Graphics.OpenGL;
 using IsometricMagic.Engine.Graphics.Utilities;
+using SDL2;
 using Silk.NET.OpenGL;
 using static SDL2.SDL;
 using static SDL2.SDL_image;
+using static SDL2.SDL_ttf;
 
 namespace IsometricMagic.Engine.Graphics.SDL
 {
     public class SdlGlGraphics : IGraphics
     {
+        private static readonly DebugOverlayService DebugOverlay = DebugOverlayService.GetInstance();
+        private static readonly FrameStats FrameStats = FrameStats.GetInstance();
         private GraphicsParams _graphicsParams = null!;
         private IntPtr _sdlWindow;
         private IntPtr _glContext;
+        private IntPtr _debugFont = IntPtr.Zero;
         private GL _gl = null!;
         private GlRenderContext _renderContext = null!;
         private GlFullscreenQuad _fullscreenQuad = null!;
@@ -45,6 +52,7 @@ namespace IsometricMagic.Engine.Graphics.SDL
             InitWindow();
             InitGl();
             InitResources();
+            InitDebugFont();
         }
 
         public void Stop()
@@ -80,6 +88,12 @@ namespace IsometricMagic.Engine.Graphics.SDL
             if (_sdlWindow != IntPtr.Zero)
             {
                 SDL_DestroyWindow(_sdlWindow);
+            }
+
+            if (_debugFont != IntPtr.Zero)
+            {
+                TTF_CloseFont(_debugFont);
+                _debugFont = IntPtr.Zero;
             }
         }
 
@@ -121,6 +135,8 @@ namespace IsometricMagic.Engine.Graphics.SDL
             DrawPresent(finalTarget.TextureId);
 
             DrawLayer(scene.UiLayer, camera, false);
+            DebugOverlay.Update(Application.DeltaTime);
+            DrawDebugOverlay();
 
             SDL_GL_SwapWindow(_sdlWindow);
         }
@@ -417,6 +433,7 @@ namespace IsometricMagic.Engine.Graphics.SDL
                 {
                     if (IsCulled(sprite.Width, sprite.Height, screenSpritePosX, screenSpritePosY, cameraRect))
                     {
+                        FrameStats.AddSpriteCulled();
                         continue;
                     }
 
@@ -462,6 +479,8 @@ namespace IsometricMagic.Engine.Graphics.SDL
             material.Bind(_renderContext, sprite, albedo, normalMap);
 
             _gl.BindVertexArray(_spriteVao);
+            FrameStats.AddDrawCall();
+            FrameStats.AddSpriteDrawn();
             _gl.DrawArrays(PrimitiveType.Triangles, 0, 6);
             _gl.BindVertexArray(0);
 
@@ -787,6 +806,100 @@ namespace IsometricMagic.Engine.Graphics.SDL
         {
             return y > cameraRect.Bottom || x > cameraRect.Right || y + height < cameraRect.Top ||
                    x + width < cameraRect.Left;
+        }
+
+        private void InitDebugFont()
+        {
+            if (!DebugOverlay.Enabled)
+            {
+                return;
+            }
+
+            if (!File.Exists(DebugOverlay.FontPath))
+            {
+                return;
+            }
+
+            _debugFont = TTF_OpenFont(DebugOverlay.FontPath, DebugOverlay.FontSize);
+        }
+
+        private void DrawDebugOverlay()
+        {
+            if (!DebugOverlay.Visible || _debugFont == IntPtr.Zero)
+            {
+                return;
+            }
+
+            var x = DebugOverlay.PosX;
+            var y = DebugOverlay.PosY;
+            const int lineGap = 2;
+
+            foreach (var line in DebugOverlay.Lines)
+            {
+                var text = string.IsNullOrEmpty(line) ? " " : line;
+                if (!TryCreateTextTexture(text, out var texture, out var width, out var height))
+                {
+                    continue;
+                }
+
+                var sprite = new Sprite(width, height);
+                var vertices = BuildQuadVertices(x, y, x, y, width, height, 0d, true);
+                DrawSprite(vertices, _defaultMaterial, sprite, texture, null);
+                y += height + lineGap;
+
+                DeleteTexture(texture);
+            }
+        }
+
+        private bool TryCreateTextTexture(string text, out GlNativeTexture texture, out int width, out int height)
+        {
+            texture = null!;
+            width = 0;
+            height = 0;
+
+            SDL2.SDL.SDL_Color color;
+            color.r = 230;
+            color.g = 255;
+            color.b = 230;
+            color.a = 255;
+
+            var surface = TTF_RenderUTF8_Blended(_debugFont, text, color);
+            if (surface == IntPtr.Zero)
+            {
+                return false;
+            }
+
+            var targetFormat = BitConverter.IsLittleEndian ? SDL_PIXELFORMAT_ABGR8888 : SDL_PIXELFORMAT_RGBA8888;
+            var converted = SDL_ConvertSurfaceFormat(surface, targetFormat, 0);
+            SDL_FreeSurface(surface);
+
+            if (converted == IntPtr.Zero)
+            {
+                return false;
+            }
+
+            var surfaceInfo = Marshal.PtrToStructure<SDL_Surface>(converted);
+            width = surfaceInfo.w;
+            height = surfaceInfo.h;
+            var pitch = surfaceInfo.pitch;
+
+            var data = new byte[width * height * 4];
+            SDL_LockSurface(converted);
+            unsafe
+            {
+                var src = (byte*) surfaceInfo.pixels;
+                for (var rowIndex = 0; rowIndex < height; rowIndex++)
+                {
+                    var row = src + (rowIndex * pitch);
+                    Marshal.Copy((IntPtr) row, data, rowIndex * width * 4, width * 4);
+                }
+            }
+            SDL_UnlockSurface(converted);
+            SDL_FreeSurface(converted);
+
+            var textureId = CreateTextureFromData(width, height, data);
+            texture = new GlNativeTexture(textureId, 0, false, width, height);
+            return true;
         }
 
         private const string PresentVertexSource = @"#version 330 core

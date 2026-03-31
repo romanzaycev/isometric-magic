@@ -1,9 +1,11 @@
 using Silk.NET.OpenGL;
+using IsometricMagic.Engine.Diagnostics;
 
 namespace IsometricMagic.Engine.Graphics.OpenGL
 {
     public sealed class GlFullscreenQuad
     {
+        private static readonly FrameStats FrameStats = FrameStats.GetInstance();
         private readonly GL _gl;
         public uint Vao { get; }
         public uint Vbo { get; }
@@ -50,6 +52,7 @@ namespace IsometricMagic.Engine.Graphics.OpenGL
         public void Draw()
         {
             _gl.BindVertexArray(Vao);
+            FrameStats.AddDrawCall();
             _gl.DrawArrays(PrimitiveType.Triangles, 0, 6);
             _gl.BindVertexArray(0);
         }

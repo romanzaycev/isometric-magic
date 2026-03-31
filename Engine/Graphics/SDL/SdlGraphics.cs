@@ -1,12 +1,18 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using System.IO;
+using IsometricMagic.Engine.Diagnostics;
+using SDL2;
 using static SDL2.SDL;
 using static SDL2.SDL_image;
+using static SDL2.SDL_ttf;
 
 namespace IsometricMagic.Engine.Graphics.SDL
 {
     public class SdlGraphics : IGraphics
     {
+        private static readonly DebugOverlayService DebugOverlay = DebugOverlayService.GetInstance();
+        private static readonly FrameStats FrameStats = FrameStats.GetInstance();
         private static int SDL_TEXTUREACCESS_STATIC = 0;
         // private static int SDL_TEXTUREACCESS_STREAMING = 1;
         private static int SDL_TEXTUREACCESS_TARGET = 2;
@@ -14,12 +20,14 @@ namespace IsometricMagic.Engine.Graphics.SDL
         private GraphicsParams _graphicsParams = null!;
         private IntPtr _sdlWindow;
         private IntPtr _sdlRenderer;
+        private IntPtr _debugFont = IntPtr.Zero;
 
         public void Initialize(GraphicsParams graphicsParams)
         {
             _graphicsParams = graphicsParams;
             InitWindow();
             InitRenderer();
+            InitDebugFont();
         }
 
         public void Stop()
@@ -32,6 +40,12 @@ namespace IsometricMagic.Engine.Graphics.SDL
             if (_sdlWindow != IntPtr.Zero)
             {
                 SDL_DestroyWindow(_sdlWindow);
+            }
+
+            if (_debugFont != IntPtr.Zero)
+            {
+                TTF_CloseFont(_debugFont);
+                _debugFont = IntPtr.Zero;
             }
         }
 
@@ -59,6 +73,8 @@ namespace IsometricMagic.Engine.Graphics.SDL
             SDL_RenderClear(_sdlRenderer);
 
             DrawSprites(scene, camera);
+            DebugOverlay.Update(Application.DeltaTime);
+            DrawDebugOverlay();
 
             SDL_RenderPresent(_sdlRenderer);
         }
@@ -254,6 +270,7 @@ namespace IsometricMagic.Engine.Graphics.SDL
                 {
                     if (IsCulled(sprite.Width, sprite.Height, spritePosX, spritePosY, cameraRect))
                     {
+                        FrameStats.AddSpriteCulled();
                         continue;
                     }
 
@@ -274,6 +291,8 @@ namespace IsometricMagic.Engine.Graphics.SDL
 
                 if (sprite.Transformation.Rotation.Angle == 0f)
                 {
+                    FrameStats.AddDrawCall();
+                    FrameStats.AddSpriteDrawn();
                     SDL_RenderCopy(
                         _sdlRenderer,
                         nativeTexture,
@@ -283,6 +302,8 @@ namespace IsometricMagic.Engine.Graphics.SDL
                 }
                 else
                 {
+                    FrameStats.AddDrawCall();
+                    FrameStats.AddSpriteDrawn();
                     var rotation = spriteTransformation.Rotation;
 
                     SDL_Point pivotPoint;
@@ -308,6 +329,105 @@ namespace IsometricMagic.Engine.Graphics.SDL
                         SDL_RendererFlip.SDL_FLIP_NONE
                     );
                 }
+            }
+        }
+
+        private void InitDebugFont()
+        {
+            if (!DebugOverlay.Enabled)
+            {
+                return;
+            }
+
+            if (!File.Exists(DebugOverlay.FontPath))
+            {
+                return;
+            }
+
+            _debugFont = TTF_OpenFont(DebugOverlay.FontPath, DebugOverlay.FontSize);
+        }
+
+        private void DrawDebugOverlay()
+        {
+            if (!DebugOverlay.Visible || _debugFont == IntPtr.Zero)
+            {
+                return;
+            }
+
+            var lines = DebugOverlay.Lines;
+            if (lines.Count == 0)
+            {
+                return;
+            }
+
+            const int padding = 6;
+            const int lineGap = 2;
+
+            var maxWidth = 0;
+            var totalHeight = 0;
+
+            foreach (var line in lines)
+            {
+                var text = string.IsNullOrEmpty(line) ? " " : line;
+                TTF_SizeUTF8(_debugFont, text, out var textWidth, out var textHeight);
+                if (textWidth > maxWidth)
+                {
+                    maxWidth = textWidth;
+                }
+
+                totalHeight += textHeight + lineGap;
+            }
+
+            totalHeight -= lineGap;
+
+            SDL_SetRenderDrawBlendMode(_sdlRenderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(_sdlRenderer, 0, 0, 0, 165);
+
+            SDL_Rect backgroundRect;
+            backgroundRect.x = DebugOverlay.PosX - padding;
+            backgroundRect.y = DebugOverlay.PosY - padding;
+            backgroundRect.w = maxWidth + padding * 2;
+            backgroundRect.h = totalHeight + padding * 2;
+            SDL_RenderFillRect(_sdlRenderer, ref backgroundRect);
+
+            SDL2.SDL.SDL_Color color;
+            color.r = 230;
+            color.g = 255;
+            color.b = 230;
+            color.a = 255;
+
+            var y = DebugOverlay.PosY;
+            foreach (var line in lines)
+            {
+                var text = string.IsNullOrEmpty(line) ? " " : line;
+                var surface = TTF_RenderUTF8_Blended(_debugFont, text, color);
+                if (surface == IntPtr.Zero)
+                {
+                    continue;
+                }
+
+                var texture = SDL_CreateTextureFromSurface(_sdlRenderer, surface);
+                if (texture == IntPtr.Zero)
+                {
+                    SDL_FreeSurface(surface);
+                    continue;
+                }
+
+                SDL_QueryTexture(texture, out _, out _, out var textWidth, out var textHeight);
+
+                SDL_Rect dst;
+                dst.x = DebugOverlay.PosX;
+                dst.y = y;
+                dst.w = textWidth;
+                dst.h = textHeight;
+
+                SDL_RenderCopy(_sdlRenderer, texture, IntPtr.Zero, ref dst);
+                FrameStats.AddDrawCall();
+
+                y += textHeight + lineGap;
+
+                SDL_DestroyTexture(texture);
+                SDL_FreeSurface(surface);
             }
         }
 

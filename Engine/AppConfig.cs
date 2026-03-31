@@ -1,3 +1,4 @@
+using System;
 using IniParser;
 using IniParser.Model;
 using IsometricMagic.Engine.Graphics;
@@ -7,6 +8,9 @@ namespace IsometricMagic.Engine
     public class AppConfig
     {
         private readonly IniData _data;
+
+        private const string DefaultLogLayout =
+            "${longdate}|${uppercase:${level}}|${logger}|${message}${onexception:inner= ${exception:format=tostring}}";
 
         private int _windowWidth = 0;
         
@@ -102,6 +106,298 @@ namespace IsometricMagic.Engine
             }
         }
 
+        private bool _loggingEnabledFetched = false;
+        private bool _loggingEnabled;
+
+        public bool LoggingEnabled
+        {
+            get
+            {
+                if (!_loggingEnabledFetched)
+                {
+                    _loggingEnabled = GetBool(GetValue("Logging", "Enabled"), true);
+                    _loggingEnabledFetched = true;
+                }
+
+                return _loggingEnabled;
+            }
+        }
+
+        private bool _loggingAllEnabledFetched = false;
+        private bool _loggingAllEnabled;
+
+        public bool LoggingAllEnabled
+        {
+            get
+            {
+                if (!_loggingAllEnabledFetched)
+                {
+                    _loggingAllEnabled = GetBool(GetValue("Logging", "AllEnabled"), true);
+                    _loggingAllEnabledFetched = true;
+                }
+
+                return _loggingAllEnabled;
+            }
+        }
+
+        private bool _loggingWarnEnabledFetched = false;
+        private bool _loggingWarnEnabled;
+
+        public bool LoggingWarnEnabled
+        {
+            get
+            {
+                if (!_loggingWarnEnabledFetched)
+                {
+                    _loggingWarnEnabled = GetBool(GetValue("Logging", "WarnEnabled"), true);
+                    _loggingWarnEnabledFetched = true;
+                }
+
+                return _loggingWarnEnabled;
+            }
+        }
+
+        private bool _loggingErrorEnabledFetched = false;
+        private bool _loggingErrorEnabled;
+
+        public bool LoggingErrorEnabled
+        {
+            get
+            {
+                if (!_loggingErrorEnabledFetched)
+                {
+                    _loggingErrorEnabled = GetBool(GetValue("Logging", "ErrorEnabled"), true);
+                    _loggingErrorEnabledFetched = true;
+                }
+
+                return _loggingErrorEnabled;
+            }
+        }
+
+        private bool _logDateFormatFetched = false;
+        private string _logDateFormat = string.Empty;
+
+        public string LoggingDateFormat
+        {
+            get
+            {
+                if (!_logDateFormatFetched)
+                {
+                    _logDateFormat = GetString(GetValue("Logging", "DateFormat"), "yyyyMMdd_HHmm");
+                    _logDateFormatFetched = true;
+                }
+
+                return _logDateFormat;
+            }
+        }
+
+        private bool _logLayoutFetched = false;
+        private string _logLayout = string.Empty;
+
+        public string LoggingLayout
+        {
+            get
+            {
+                if (!_logLayoutFetched)
+                {
+                    _logLayout = GetString(GetValue("Logging", "Layout"), DefaultLogLayout);
+                    _logLayoutFetched = true;
+                }
+
+                return _logLayout;
+            }
+        }
+
+        private bool _logAllPathFetched = false;
+        private string _logAllPath = string.Empty;
+
+        public string LoggingAllPath
+        {
+            get
+            {
+                if (!_logAllPathFetched)
+                {
+                    _logAllPath = GetString(GetValue("Logging", "AllPath"), "logs/{date}_all.log");
+                    _logAllPathFetched = true;
+                }
+
+                return _logAllPath;
+            }
+        }
+
+        private bool _logWarnPathFetched = false;
+        private string _logWarnPath = string.Empty;
+
+        public string LoggingWarnPath
+        {
+            get
+            {
+                if (!_logWarnPathFetched)
+                {
+                    _logWarnPath = GetString(GetValue("Logging", "WarnPath"), "logs/{date}_{level}.log");
+                    _logWarnPathFetched = true;
+                }
+
+                return _logWarnPath;
+            }
+        }
+
+        private bool _logErrorPathFetched = false;
+        private string _logErrorPath = string.Empty;
+
+        public string LoggingErrorPath
+        {
+            get
+            {
+                if (!_logErrorPathFetched)
+                {
+                    _logErrorPath = GetString(GetValue("Logging", "ErrorPath"), "logs/{date}_{level}.log");
+                    _logErrorPathFetched = true;
+                }
+
+                return _logErrorPath;
+            }
+        }
+
+        private bool _debugOverlayEnabledFetched = false;
+        private bool _debugOverlayEnabled;
+
+        public bool DebugOverlayEnabled
+        {
+            get
+            {
+                if (!_debugOverlayEnabledFetched)
+                {
+                    _debugOverlayEnabled = GetBool(GetValue("DebugOverlay", "Enabled"), true);
+                    _debugOverlayEnabledFetched = true;
+                }
+
+                return _debugOverlayEnabled;
+            }
+        }
+
+        private bool _debugOverlayEnabledByDefaultFetched = false;
+        private bool _debugOverlayEnabledByDefault;
+
+        public bool DebugOverlayEnabledByDefault
+        {
+            get
+            {
+                if (!_debugOverlayEnabledByDefaultFetched)
+                {
+                    _debugOverlayEnabledByDefault = GetBool(GetValue("DebugOverlay", "EnabledByDefault"), false);
+                    _debugOverlayEnabledByDefaultFetched = true;
+                }
+
+                return _debugOverlayEnabledByDefault;
+            }
+        }
+
+        private bool _debugOverlayToggleKeyFetched = false;
+        private Key _debugOverlayToggleKey;
+
+        public Key DebugOverlayToggleKey
+        {
+            get
+            {
+                if (!_debugOverlayToggleKeyFetched)
+                {
+                    _debugOverlayToggleKey = GetKey(GetValue("DebugOverlay", "ToggleKey"), Key.F3);
+                    _debugOverlayToggleKeyFetched = true;
+                }
+
+                return _debugOverlayToggleKey;
+            }
+        }
+
+        private bool _debugOverlayFontPathFetched = false;
+        private string _debugOverlayFontPath = string.Empty;
+
+        public string DebugOverlayFontPath
+        {
+            get
+            {
+                if (!_debugOverlayFontPathFetched)
+                {
+                    _debugOverlayFontPath = GetString(
+                        GetValue("DebugOverlay", "FontPath"),
+                        "./resources/engine/vt323-regular.ttf"
+                    );
+                    _debugOverlayFontPathFetched = true;
+                }
+
+                return _debugOverlayFontPath;
+            }
+        }
+
+        private bool _debugOverlayFontSizeFetched = false;
+        private int _debugOverlayFontSize;
+
+        public int DebugOverlayFontSize
+        {
+            get
+            {
+                if (!_debugOverlayFontSizeFetched)
+                {
+                    _debugOverlayFontSize = GetInt(GetValue("DebugOverlay", "FontSize"), 20);
+                    _debugOverlayFontSizeFetched = true;
+                }
+
+                return _debugOverlayFontSize;
+            }
+        }
+
+        private bool _debugOverlayRefreshHzFetched = false;
+        private int _debugOverlayRefreshHz;
+
+        public int DebugOverlayRefreshHz
+        {
+            get
+            {
+                if (!_debugOverlayRefreshHzFetched)
+                {
+                    _debugOverlayRefreshHz = Math.Max(1, GetInt(GetValue("DebugOverlay", "RefreshHz"), 4));
+                    _debugOverlayRefreshHzFetched = true;
+                }
+
+                return _debugOverlayRefreshHz;
+            }
+        }
+
+        private bool _debugOverlayPosXFetched = false;
+        private int _debugOverlayPosX;
+
+        public int DebugOverlayPosX
+        {
+            get
+            {
+                if (!_debugOverlayPosXFetched)
+                {
+                    _debugOverlayPosX = GetInt(GetValue("DebugOverlay", "PosX"), 12);
+                    _debugOverlayPosXFetched = true;
+                }
+
+                return _debugOverlayPosX;
+            }
+        }
+
+        private bool _debugOverlayPosYFetched = false;
+        private int _debugOverlayPosY;
+
+        public int DebugOverlayPosY
+        {
+            get
+            {
+                if (!_debugOverlayPosYFetched)
+                {
+                    _debugOverlayPosY = GetInt(GetValue("DebugOverlay", "PosY"), 12);
+                    _debugOverlayPosYFetched = true;
+                }
+
+                return _debugOverlayPosY;
+            }
+        }
+
         public AppConfig(string iniFile)
         {
             var parser = new FileIniDataParser();
@@ -110,7 +406,12 @@ namespace IsometricMagic.Engine
 
         private static int GetInt(string value, int defaultValue)
         {
-            return value == string.Empty ? defaultValue : int.Parse(value);
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return defaultValue;
+            }
+
+            return int.TryParse(value, out var parsed) ? parsed : defaultValue;
         }
         
         private static bool GetBool(string value, bool defaultValue)
@@ -121,6 +422,33 @@ namespace IsometricMagic.Engine
                 "false" or "0" or "off" => false,
                 _ => defaultValue
             };
+        }
+
+        private string GetValue(string section, string key)
+        {
+            if (!_data.Sections.ContainsSection(section))
+            {
+                return string.Empty;
+            }
+
+            return _data[section][key] ?? string.Empty;
+        }
+
+        private static string GetString(string value, string defaultValue)
+        {
+            return string.IsNullOrWhiteSpace(value) ? defaultValue : value;
+        }
+
+        private static Key GetKey(string value, Key defaultValue)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return defaultValue;
+            }
+
+            return Enum.TryParse<Key>(value, true, out var parsed)
+                ? parsed
+                : defaultValue;
         }
 
         private static GraphicsBackend GetGraphicsBackend(string value, GraphicsBackend defaultValue)

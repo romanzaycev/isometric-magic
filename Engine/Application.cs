@@ -1,14 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
+using IsometricMagic.Engine.Diagnostics;
 using IsometricMagic.Engine.Graphics;
+using NLog;
 using static SDL2.SDL;
 
 namespace IsometricMagic.Engine
 {
     public class Application
     {
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private static readonly Application Instance = new();
         private static readonly SceneManager SceneManager = SceneManager.GetInstance();
+        private static readonly FrameStats FrameStats = FrameStats.GetInstance();
+        private static readonly DebugOverlayService DebugOverlay = DebugOverlayService.GetInstance();
         private AppConfig _config = null!;
         private bool _isInitialized;
         private Renderer _renderer = null!;
@@ -44,6 +49,9 @@ namespace IsometricMagic.Engine
 
             _config = config;
             _graphics = graphics;
+            FrameStats.SetBackend(_config.GraphicsBackend);
+            FrameStats.SetVSync(_config.VSync);
+            DebugOverlay.Initialize(_config);
             
             var graphicsParams = new GraphicsParams(_config.WindowWidth, _config.WindowHeight)
                 .SetFullscreen(_config.IsFullscreen)
@@ -63,6 +71,8 @@ namespace IsometricMagic.Engine
             _dtLast = 0;
 
             RepaintWindow();
+            Logger.Info("Application initialized. Backend={Backend}, Resolution={Width}x{Height}, VSync={VSync}",
+                _config.GraphicsBackend, _config.WindowWidth, _config.WindowHeight, _config.VSync);
         }
 
         public void Stop()
@@ -72,6 +82,7 @@ namespace IsometricMagic.Engine
             SceneManager.GetCurrent().Unload();
             TextureHolder.GetInstance().DestroyAll();
             _graphics.Stop();
+            Logger.Info("Application stopped");
         }
 
         public void Update()
@@ -86,6 +97,7 @@ namespace IsometricMagic.Engine
 
             var scene = SceneManager.GetCurrent();
             scene.InternalUpdate();
+            FrameStats.SetSceneName(scene.Name);
             scene.CollectCameraInfluences(_cameraInfluences);
             _cameraComposer.Apply(_renderer.GetCamera(), _deltaTime, _cameraInfluences);
             _renderer.DrawAll();
@@ -108,6 +120,7 @@ namespace IsometricMagic.Engine
         public void StartTick()
         {
             _startTick = SDL_GetPerformanceCounter();
+            FrameStats.BeginFrame();
         }
 
         public void EndTick()
@@ -140,6 +153,8 @@ namespace IsometricMagic.Engine
                     SDL_Delay(1);
                 }
             }
+
+            FrameStats.EndFrame(_deltaTime);
         }
 
         public AppConfig GetConfig()
@@ -158,6 +173,7 @@ namespace IsometricMagic.Engine
             _graphics.RepaintWindow(out var w, out var h);
             _viewportWidth = w;
             _viewportHeight = h;
+            FrameStats.SetViewport(w, h);
             _renderer.HandleWindowResized(w, h);
         }
 
