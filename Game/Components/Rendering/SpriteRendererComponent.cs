@@ -124,7 +124,7 @@ namespace IsometricMagic.Game.Components.Rendering
             {
                 if (Entity != null)
                 {
-                    _sprite.Position = Entity.Transform.WorldPosition;
+                    _sprite.Position = Entity.Transform.CanvasPosition;
                 }
                 return;
             }

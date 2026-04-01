@@ -128,7 +128,7 @@ namespace IsometricMagic.Engine.SceneGraph
             }
         }
 
-        public void SetParent(Entity? newParent, bool worldPositionStays = true)
+        public void SetParent(Entity? newParent, bool canvasPositionStays = true)
         {
             if (_parent == newParent) return;
 
@@ -154,7 +154,7 @@ namespace IsometricMagic.Engine.SceneGraph
                 SetSceneRecursive(null);
             }
 
-            Transform.SetParent(newParent, worldPositionStays);
+            Transform.SetParent(newParent, canvasPositionStays);
 
             if (hadScene != Scene || _activeSelf)
             {

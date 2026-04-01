@@ -12,7 +12,7 @@ namespace IsometricMagic.Engine.Spatial
         private Entity? _parent;
         public Entity? Parent => _parent;
 
-        public Vector2 WorldPosition
+        public Vector2 CanvasPosition
         {
             get
             {
@@ -21,18 +21,18 @@ namespace IsometricMagic.Engine.Spatial
                     return LocalPosition;
                 }
 
-                var parentRot = _parent.Transform.WorldRotation;
+                var parentRot = _parent.Transform.CanvasRotation;
                 if (parentRot == 0.0)
                 {
-                    return _parent.Transform.WorldPosition + LocalPosition;
+                    return _parent.Transform.CanvasPosition + LocalPosition;
                 }
 
                 var rotated = RotateVector(LocalPosition, parentRot);
-                return _parent.Transform.WorldPosition + rotated;
+                return _parent.Transform.CanvasPosition + rotated;
             }
         }
 
-        public double WorldRotation
+        public double CanvasRotation
         {
             get
             {
@@ -41,7 +41,7 @@ namespace IsometricMagic.Engine.Spatial
                     return LocalRotation;
                 }
 
-                return _parent.Transform.WorldRotation + LocalRotation;
+                return _parent.Transform.CanvasRotation + LocalRotation;
             }
         }
 
@@ -60,39 +60,39 @@ namespace IsometricMagic.Engine.Spatial
             );
         }
 
-        internal void SetParent(Entity? parent, bool worldPositionStays)
+        internal void SetParent(Entity? parent, bool canvasPositionStays)
         {
             if (_parent == parent) return;
 
-            var oldWorldPos = worldPositionStays ? WorldPosition : LocalPosition;
-            var oldWorldRot = worldPositionStays ? WorldRotation : LocalRotation;
+            var oldCanvasPos = canvasPositionStays ? CanvasPosition : LocalPosition;
+            var oldCanvasRot = canvasPositionStays ? CanvasRotation : LocalRotation;
 
             _parent = parent;
 
-            if (worldPositionStays && parent != null)
+            if (canvasPositionStays && parent != null)
             {
                 var parentTransform = parent.Transform;
-                var parentRot = parentTransform?.WorldRotation ?? 0.0;
+                var parentRot = parentTransform?.CanvasRotation ?? 0.0;
                 if (parentRot == 0.0)
                 {
                     LocalPosition = parentTransform != null
-                        ? oldWorldPos - parentTransform.WorldPosition
-                        : oldWorldPos;
+                        ? oldCanvasPos - parentTransform.CanvasPosition
+                        : oldCanvasPos;
                 }
                 else
                 {
                     var invRot = -parentRot;
                     var translated = parentTransform != null
-                        ? oldWorldPos - parentTransform.WorldPosition
-                        : oldWorldPos;
+                        ? oldCanvasPos - parentTransform.CanvasPosition
+                        : oldCanvasPos;
                     LocalPosition = RotateVector(translated, invRot);
                 }
-                LocalRotation = MathHelper.NormalizeNor(oldWorldRot - parentRot);
+                LocalRotation = MathHelper.NormalizeNor(oldCanvasRot - parentRot);
             }
             else if (parent != null)
             {
-                LocalPosition = oldWorldPos;
-                LocalRotation = oldWorldRot;
+                LocalPosition = oldCanvasPos;
+                LocalRotation = oldCanvasRot;
             }
         }
     }

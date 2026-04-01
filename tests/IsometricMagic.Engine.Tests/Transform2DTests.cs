@@ -6,29 +6,29 @@ namespace IsometricMagic.Engine.Tests;
 public sealed class Transform2DTests
 {
     [Fact]
-    public void WorldPosition_WithoutParent_EqualsLocalPosition()
+    public void CanvasPosition_WithoutParent_EqualsLocalPosition()
     {
         var entity = new Entity("e");
         entity.Transform.LocalPosition = new Vector2(3f, -4f);
 
-        Assert.Equal(new Vector2(3f, -4f), entity.Transform.WorldPosition);
+        Assert.Equal(new Vector2(3f, -4f), entity.Transform.CanvasPosition);
     }
 
     [Fact]
-    public void WorldPosition_WithParentNoRotation_AddsParentTranslation()
+    public void CanvasPosition_WithParentNoRotation_AddsParentTranslation()
     {
         var parent = new Entity("parent");
         parent.Transform.LocalPosition = new Vector2(10f, 20f);
 
         var child = new Entity("child");
         child.Transform.LocalPosition = new Vector2(2f, -3f);
-        child.SetParent(parent, worldPositionStays: false);
+        child.SetParent(parent, canvasPositionStays: false);
 
-        Assert.Equal(new Vector2(12f, 17f), child.Transform.WorldPosition);
+        Assert.Equal(new Vector2(12f, 17f), child.Transform.CanvasPosition);
     }
 
     [Fact]
-    public void WorldPosition_WithParentRotation_RotatesThenTranslates()
+    public void CanvasPosition_WithParentRotation_RotatesThenTranslates()
     {
         var parent = new Entity("parent");
         parent.Transform.LocalPosition = new Vector2(5f, 5f);
@@ -36,28 +36,28 @@ public sealed class Transform2DTests
 
         var child = new Entity("child");
         child.Transform.LocalPosition = new Vector2(1f, 0f);
-        child.SetParent(parent, worldPositionStays: false);
+        child.SetParent(parent, canvasPositionStays: false);
 
-        var world = child.Transform.WorldPosition;
-        Assert.InRange(world.X, 4.999f, 5.001f);
-        Assert.InRange(world.Y, 5.999f, 6.001f);
+        var canvas = child.Transform.CanvasPosition;
+        Assert.InRange(canvas.X, 4.999f, 5.001f);
+        Assert.InRange(canvas.Y, 5.999f, 6.001f);
     }
 
     [Fact]
-    public void WorldRotation_WithParent_AddsLocalAndParent()
+    public void CanvasRotation_WithParent_AddsLocalAndParent()
     {
         var parent = new Entity("parent");
         parent.Transform.LocalRotation = 0.2d;
 
         var child = new Entity("child");
         child.Transform.LocalRotation = 0.35d;
-        child.SetParent(parent, worldPositionStays: false);
+        child.SetParent(parent, canvasPositionStays: false);
 
-        Assert.Equal(0.55d, child.Transform.WorldRotation, 10);
+        Assert.Equal(0.55d, child.Transform.CanvasRotation, 10);
     }
 
     [Fact]
-    public void SetParent_WithWorldPositionStays_PreservesWorldTransform()
+    public void SetParent_WithCanvasPositionStays_PreservesCanvasTransform()
     {
         var child = new Entity("child");
         child.Transform.LocalPosition = new Vector2(12f, 8f);
@@ -67,17 +67,17 @@ public sealed class Transform2DTests
         parent.Transform.LocalPosition = new Vector2(10f, 5f);
         parent.Transform.LocalRotation = 0.25d;
 
-        var worldPosBefore = child.Transform.WorldPosition;
-        var worldRotBefore = child.Transform.WorldRotation;
+        var canvasPosBefore = child.Transform.CanvasPosition;
+        var canvasRotBefore = child.Transform.CanvasRotation;
 
-        child.SetParent(parent, worldPositionStays: true);
+        child.SetParent(parent, canvasPositionStays: true);
 
-        AssertVector2Near(worldPosBefore, child.Transform.WorldPosition);
-        Assert.Equal(worldRotBefore, child.Transform.WorldRotation, 9);
+        AssertVector2Near(canvasPosBefore, child.Transform.CanvasPosition);
+        Assert.Equal(canvasRotBefore, child.Transform.CanvasRotation, 9);
     }
 
     [Fact]
-    public void SetParent_WithWorldPositionStaysFalse_PreservesLocalTransform()
+    public void SetParent_WithCanvasPositionStaysFalse_PreservesLocalTransform()
     {
         var child = new Entity("child");
         child.Transform.LocalPosition = new Vector2(2f, 3f);
@@ -87,7 +87,7 @@ public sealed class Transform2DTests
         parent.Transform.LocalPosition = new Vector2(10f, 11f);
         parent.Transform.LocalRotation = 0.1d;
 
-        child.SetParent(parent, worldPositionStays: false);
+        child.SetParent(parent, canvasPositionStays: false);
 
         Assert.Equal(new Vector2(2f, 3f), child.Transform.LocalPosition);
         Assert.Equal(0.4d, child.Transform.LocalRotation, 10);

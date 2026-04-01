@@ -2,7 +2,7 @@ using IsometricMagic.Engine;
 
 namespace IsometricMagic.Engine.Tests;
 
-public sealed class EcsLifecycleTests
+public sealed class SceneGraphLifecycleTests
 {
     [Fact]
     public void AddComponent_AlreadyOwned_Throws()
@@ -128,9 +128,9 @@ public sealed class EcsLifecycleTests
         var parent = scene.CreateEntity("parent");
         var child = new Entity("child");
         var grandChild = new Entity("grandChild");
-        grandChild.SetParent(child, worldPositionStays: false);
+        grandChild.SetParent(child, canvasPositionStays: false);
 
-        child.SetParent(parent, worldPositionStays: false);
+        child.SetParent(parent, canvasPositionStays: false);
 
         Assert.Same(scene, child.Scene);
         Assert.Same(scene, grandChild.Scene);

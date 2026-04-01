@@ -36,7 +36,7 @@ namespace IsometricMagic.Engine.Particles
     ///
     /// Coordinate space note:
     /// Particles are in canvas space. If <see cref="UseEntityTransform"/> is true,
-    /// the emitter position is based on the owning entity's world position.
+    /// the emitter position is based on the owning entity's canvas position.
     /// </remarks>
     public sealed class ParticleSystemComponent : Component
     {
@@ -190,7 +190,7 @@ namespace IsometricMagic.Engine.Particles
         public FloatCurve SizeOverLife { get; } = new(1f);
 
         /// <summary>
-        /// If true, the emitter position follows the owning entity's world position.
+        /// If true, the emitter position follows the owning entity's canvas position.
         /// If false, <see cref="Position"/> is used directly.
         /// </summary>
         public bool UseEntityTransform { get; set; } = true;
@@ -494,7 +494,7 @@ namespace IsometricMagic.Engine.Particles
             var basePosition = Position;
             if (UseEntityTransform && Entity != null)
             {
-                basePosition = Entity.Transform.WorldPosition;
+                basePosition = Entity.Transform.CanvasPosition;
             }
 
             return basePosition + Offset;

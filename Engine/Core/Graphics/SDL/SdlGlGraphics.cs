@@ -431,8 +431,8 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 spritePosX += offsetX;
                 spritePosY += offsetY;
 
-                var worldSpritePosX = spritePosX;
-                var worldSpritePosY = spritePosY;
+                var canvasSpritePosX = spritePosX;
+                var canvasSpritePosY = spritePosY;
                 var screenSpritePosX = spritePosX;
                 var screenSpritePosY = spritePosY;
 
@@ -449,7 +449,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 }
 
                 var vertices = BuildQuadVertices(
-                    worldSpritePosX, worldSpritePosY,
+                    canvasSpritePosX, canvasSpritePosY,
                     screenSpritePosX, screenSpritePosY,
                     sprite.Width, sprite.Height,
                     sprite.Transformation.Rotation.Angle,
@@ -460,7 +460,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
                 if (outlineEnabled && outline.Layering == OutlineLayering.Under)
                 {
-                    DrawOutline(sprite, albedo, worldSpritePosX, worldSpritePosY, screenSpritePosX, screenSpritePosY);
+                    DrawOutline(sprite, albedo, canvasSpritePosX, canvasSpritePosY, screenSpritePosX, screenSpritePosY);
                 }
 
                 var material = ResolveMaterial(sprite);
@@ -474,7 +474,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
                 if (outlineEnabled && outline.Layering == OutlineLayering.Over)
                 {
-                    DrawOutline(sprite, albedo, worldSpritePosX, worldSpritePosY, screenSpritePosX, screenSpritePosY);
+                    DrawOutline(sprite, albedo, canvasSpritePosX, canvasSpritePosY, screenSpritePosX, screenSpritePosY);
                 }
             }
         }

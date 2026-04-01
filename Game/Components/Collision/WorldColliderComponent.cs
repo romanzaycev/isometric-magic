@@ -86,7 +86,7 @@ namespace IsometricMagic.Game.Components.Collision
 
             if (Entity != null)
             {
-                return Entity.Transform.WorldPosition + Offset;
+                return Entity.Transform.CanvasPosition + Offset;
             }
 
             return Offset;
