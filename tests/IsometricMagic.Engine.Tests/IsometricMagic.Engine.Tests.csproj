@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../isometric-magic.csproj" />
+    <ProjectReference Include="../../Engine/IsometricMagic.Engine.csproj" />
   </ItemGroup>
 
   <ItemGroup>

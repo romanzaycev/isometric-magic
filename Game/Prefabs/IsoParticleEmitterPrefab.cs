@@ -72,20 +72,19 @@ namespace IsometricMagic.Game.Prefabs
                 WorldPosY = (int) _spec.WorldPosition.Y
             });
 
-            var textureHolder = TextureHolder.GetInstance();
             var lease = new SharedTextureLeaseComponent();
             var visuals = new ParticleVisual[_spec.Visuals.Length];
 
             for (var i = 0; i < _spec.Visuals.Length; i++)
             {
                 var visualSpec = _spec.Visuals[i];
-                var texture = textureHolder.AcquireSharedTexture(visualSpec.TexturePath, visualSpec.Width, visualSpec.Height);
+                var texture = Texture.AcquireShared(visualSpec.TexturePath, visualSpec.Width, visualSpec.Height);
                 lease.Add(texture);
 
                 Texture? normalMap = null;
                 if (!string.IsNullOrWhiteSpace(visualSpec.NormalMapPath))
                 {
-                    normalMap = textureHolder.AcquireSharedTexture(
+                    normalMap = Texture.AcquireShared(
                         visualSpec.NormalMapPath!,
                         visualSpec.Width,
                         visualSpec.Height

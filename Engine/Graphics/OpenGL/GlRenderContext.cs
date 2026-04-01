@@ -1,4 +1,6 @@
 using Silk.NET.OpenGL;
+using IsometricMagic.Engine.Rendering;
+using IsometricMagic.Engine.Scenes;
 
 namespace IsometricMagic.Engine.Graphics.OpenGL
 {

@@ -1,6 +1,6 @@
 using System;
 using System.Numerics;
-using IsometricMagic.Engine;
+using EngineTexture = IsometricMagic.Engine.Assets.Texture;
 using IsometricMagic.Engine.Graphics.Lighting;
 using IsometricMagic.Engine.Graphics.OpenGL;
 using Silk.NET.OpenGL;
@@ -15,14 +15,14 @@ namespace IsometricMagic.Engine.Graphics.Materials
         public Vector3 EmissionColor = new(1f, 1f, 1f);
         public float EmissionIntensity = 0f;
 
-        private Texture? _emissionMapTexture;
+        private EngineTexture? _emissionMapTexture;
         private string? _emissionMapPath;
-        private Texture? _emissionMapFromPath;
+        private EngineTexture? _emissionMapFromPath;
         private string? _emissionMapLoadedPath;
 
         private const int MAX_LIGHTS = 8;
 
-        public Texture? EmissionMapTexture
+        public EngineTexture? EmissionMapTexture
         {
             get => _emissionMapTexture;
             set
@@ -149,7 +149,7 @@ namespace IsometricMagic.Engine.Graphics.Materials
                 !string.Equals(_emissionMapLoadedPath, path, StringComparison.Ordinal))
             {
                 ReleasePathEmissionMap();
-                var tex = new Texture(1, 1);
+                var tex = new EngineTexture(1, 1);
                 tex.LoadImage(path);
                 _emissionMapFromPath = tex;
                 _emissionMapLoadedPath = path;

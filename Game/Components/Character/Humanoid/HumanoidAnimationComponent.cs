@@ -179,7 +179,7 @@ namespace IsometricMagic.Game.Components.Character.Humanoid
             {
                 if (sprite.Texture != null)
                 {
-                    TextureHolder.GetInstance().Remove(sprite.Texture);
+                    sprite.Texture.Destroy();
                 }
                 TargetLayer?.Remove(sprite);
             }

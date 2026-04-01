@@ -60,7 +60,7 @@ namespace IsometricMagic.Game.Scenes
                 X = Application.ViewportWidth - 40,
                 Y = Application.ViewportHeight - 40
             };
-            _currLoadingCircleAngle += LoadingCircleSpeed * Application.DeltaTime;
+            _currLoadingCircleAngle += LoadingCircleSpeed * Time.DeltaTime;
             _loadingCircle.Transformation.Rotation.Angle += _currLoadingCircleAngle;
             _currLoadingCircleAngle = 0;
         }

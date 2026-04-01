@@ -173,7 +173,7 @@ namespace IsometricMagic.Game.Components.Rendering
 
             if (_texture != null)
             {
-                TextureHolder.GetInstance().Remove(_texture);
+                _texture.Destroy();
             }
 
             _sprite = null;
@@ -189,7 +189,7 @@ namespace IsometricMagic.Game.Components.Rendering
 
             if (_texture != null)
             {
-                TextureHolder.GetInstance().Remove(_texture);
+                _texture.Destroy();
             }
 
             _texture = new Texture(Width, Height);

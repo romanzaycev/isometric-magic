@@ -1,4 +1,4 @@
-using IsometricMagic.Engine;
+using IsometricMagic.Engine.App;
 using IsometricMagic.Game.Scenes;
 
 namespace IsometricMagic

@@ -5,7 +5,7 @@ namespace IsometricMagic.Game.Controllers.Character
 {
     public class Mouse : Component
     {
-        private static readonly Engine.Camera Camera = Application.GetInstance().GetRenderer().GetCamera();
+        private static readonly Camera Camera = Application.GetInstance().GetRenderer().GetCamera();
         private bool _isDrag;
         private int _startMouseX;
         private int _startMouseY;

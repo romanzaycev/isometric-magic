@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using IsometricMagic.Engine.App;
+using IsometricMagic.Engine.Inputs;
 
 namespace IsometricMagic.Engine.Diagnostics
 {

@@ -195,7 +195,7 @@ namespace IsometricMagic.Game.Components.Collision
 
             if (_debugTexture != null)
             {
-                TextureHolder.GetInstance().Remove(_debugTexture);
+                _debugTexture.Destroy();
                 _debugTexture = null;
             }
         }

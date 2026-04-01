@@ -15,12 +15,16 @@
       <Optimize>true</Optimize>
     </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="ini-parser-netstandard" Version="2.5.2" />
-    <PackageReference Include="NLog" Version="5.4.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Silk.NET.OpenGL" Version="2.22.0" />
-  </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="Engine/IsometricMagic.Engine.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Engine\**\*.cs" />
+      <Compile Remove="sdl2-cs\**\*.cs" />
+      <Compile Remove="tests\**\*.cs" />
+      <None Remove="tests\**\*" />
+    </ItemGroup>
 
     <ItemGroup>
         <None Update="config.ini">
@@ -32,11 +36,6 @@
         <Content Include="resources\**\*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Compile Remove="tests\**\*.cs" />
-        <None Remove="tests\**\*" />
     </ItemGroup>
 
 </Project>

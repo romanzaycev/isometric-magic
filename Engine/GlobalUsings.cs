@@ -1,0 +1,15 @@
+global using IsometricMagic.Engine;
+global using IsometricMagic.Engine.App;
+global using IsometricMagic.Engine.Assets;
+global using IsometricMagic.Engine.Core.Assets;
+global using IsometricMagic.Engine.Core.Graphics;
+global using IsometricMagic.Engine.Core.Platform.Sdl;
+global using IsometricMagic.Engine.Core.Rendering;
+global using IsometricMagic.Engine.Diagnostics;
+global using IsometricMagic.Engine.Graphics;
+global using IsometricMagic.Engine.Graphics.OpenGL;
+global using IsometricMagic.Engine.Inputs;
+global using IsometricMagic.Engine.Rendering;
+global using IsometricMagic.Engine.SceneGraph;
+global using IsometricMagic.Engine.Scenes;
+global using IsometricMagic.Engine.Spatial;

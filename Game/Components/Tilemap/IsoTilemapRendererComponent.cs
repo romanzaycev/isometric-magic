@@ -215,7 +215,7 @@ namespace IsometricMagic.Game.Components.Tilemap
             {
                 if (sprite != null && sprite.Texture != null)
                 {
-                    TextureHolder.GetInstance().Remove(sprite.Texture);
+                    sprite.Texture.Destroy();
                 }
             }
         }

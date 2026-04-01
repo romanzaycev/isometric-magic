@@ -1,10 +1,38 @@
-# Isometric Magic Game Project Guidelines 
+# Isometric Magic Game Project Guidelines
+
+## Architectural Scheme (Current)
+
+The repository is split into two runtime layers with a hard assembly boundary:
+
+- `Engine/IsometricMagic.Engine.csproj` - engine library with public API + internal implementation details.
+- `isometric-magic.csproj` - game executable that references only the engine library.
+
+This split is not cosmetic. It is the primary encapsulation mechanism: engine internals are hidden from game code via `internal` and must stay hidden.
+
+### Layering Rules
+
+- Public engine API lives in non-`Core` namespaces and is intended for game-side usage and extension.
+- Engine implementation details live under `IsometricMagic.Engine.Core.*` and are strictly non-exported (`internal`).
+- Game code must depend on public API only and must not reference engine internals.
+- Directory structure mirrors namespaces. Moving code between layers requires explicit architectural intent.
+
+### Public vs Internal Contract
+
+- Public layer: gameplay-facing abstractions (scene graph, rendering-facing API, assets-facing API, diagnostics/log facade, timing facade).
+- Internal layer (`Core`): platform/bootstrap wiring, backend internals, resource holders, low-level runtime orchestration.
+- If a feature needs to be configurable by game code, expose a minimal public facade instead of promoting internal classes.
+
+### Extension Model
+
+- The game can extend rendering behavior through the engine's supported public extension points (materials/effects).
+- Backend replacement from game code is intentionally unsupported.
+- Runtime timing is exposed through `Time.DeltaTime` (read-only for game code; engine-owned updates).
 
 ## Project Structure
-- `Engine/` - Core engine classes (graphics, input, scenes, camera)
-- `Game/` - Game-specific code (characters, maps, animations, controllers)
-- `resources/` - Game assets (textures, configs)
-- Root level: `Program.cs`, project file, `config.ini`
+- `Engine/` - engine library source and architecture layers (`Core` internal + public API namespaces)
+- `Game/` - game-specific code using engine public API
+- `resources/` - game assets (textures, configs)
+- Root level: `Program.cs`, project files, `config.ini`
 
 ## Naming Conventions
 - **Classes/Structs/Enums**: PascalCase (e.g., `SceneManager`, `CharacterState`)
