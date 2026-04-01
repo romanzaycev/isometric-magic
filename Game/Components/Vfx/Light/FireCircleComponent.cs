@@ -2,15 +2,13 @@ using System.Numerics;
 using IsometricMagic.Engine;
 using IsometricMagic.Engine.Graphics.Materials;
 using IsometricMagic.Game.Animation;
-using IsometricMagic.Game.Components.Spatial;
+using IsometricMagic.Game.Model;
 using IsometricMagic.Game.Rendering;
 
 namespace IsometricMagic.Game.Components.Vfx.Light;
 
 public class FireCircleComponent : Component
 {
-    private WorldPositionComponent? _worldPosition;
-
     public int LayerBase { get; set; }
     public int Bias { get; set; } = IsoSort.BiasVfx;
     public SceneLayer? TargetLayer { get; set; }
@@ -22,8 +20,6 @@ public class FireCircleComponent : Component
     {
         if (TargetLayer == null) return;
 
-        _worldPosition = Entity?.GetComponent<WorldPositionComponent>();
-        
         const int totalFrames = 61;
         const string animationPath = "./resources/data/textures/vfx/fire_circle_01/fire_circle_{0}.png";
         
@@ -58,22 +54,22 @@ public class FireCircleComponent : Component
         {
             _sequence.Update(dt);
             
-            if (_worldPosition != null)
+            if (Entity != null)
             {
-                _sequence.CurrentSprite.Position = new Vector2(_worldPosition.WorldPosX, _worldPosition.WorldPosY);
+                _sequence.CurrentSprite.Position = Entity.Transform.CanvasPosition;
             }
         }
     }
     
     protected override void LateUpdate(float dt)
     {
-        if (_sequence == null || _worldPosition == null) return;
+        if (_sequence == null || Entity == null) return;
 
         var sprite = _sequence?.CurrentSprite;
         if (sprite == null) return;
 
-        var pos = new Vector2(_worldPosition.WorldPosX, _worldPosition.WorldPosY);
-        var sorting = IsoSort.FromCanvas(pos, LayerBase, Bias);
+        var canvasPos = CanvasPosition.FromVector2(Entity.Transform.CanvasPosition);
+        var sorting = IsoSort.FromCanvas(canvasPos, LayerBase, Bias);
         
         if (sprite.Sorting != sorting)
         {

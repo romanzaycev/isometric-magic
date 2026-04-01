@@ -1,5 +1,3 @@
-using System.Numerics;
-
 namespace IsometricMagic.Game.Model
 {
     public class IsoWorldPositionConverter
@@ -28,40 +26,28 @@ namespace IsometricMagic.Game.Model
             WorldHeight = mapHeight * tileWidth / _scaleFactor;
         }
 
-        public Vector2 GetCanvasPosition(WorldObject worldObject)
+        public CanvasPosition ToCanvas(IsoWorldPosition worldPos)
         {
-            return GetCanvasPosition(worldObject.WorldPosX, worldObject.WorldPosY);
-        }
-
-        public Vector2 GetCanvasPosition(Vector2 worldPos)
-        {
-            return GetCanvasPosition(worldPos.X, worldPos.Y);
-        }
-
-        public Vector2 GetCanvasPosition(float worldX, float worldY)
-        {
-            return new Vector2(
-                worldY + worldX,
-                _originY + (worldY / _scaleFactor - worldX / _scaleFactor)
+            return new CanvasPosition(
+                worldPos.Y + worldPos.X,
+                _originY + (worldPos.Y / _scaleFactor - worldPos.X / _scaleFactor)
             );
         }
 
-        public Vector2 GetCanvasPosition(int worldX, int worldY)
+        public CanvasPosition ToIsoTileCanvas(int tileX, int tileY)
         {
-            return GetCanvasPosition((float)worldX, (float)worldY);
+            return ToCanvas(new IsoWorldPosition(
+                tileX * _tileWidth / (float)_scaleFactor,
+                tileY * _tileWidth / (float)_scaleFactor
+            ));
         }
 
-        public Vector2 GetTilePosition(int tileX, int tileY)
+        public IsoWorldPosition ToIsoWorld(CanvasPosition canvasPos)
         {
-            return GetCanvasPosition(tileX * _tileWidth / _scaleFactor, tileY * _tileWidth / _scaleFactor);
-        }
+            var cYOffsets = canvasPos.Y - _originY;
+            var cXScaled = canvasPos.X / _scaleFactor;
 
-        public Vector2 GetWorldPosition(int canvasX, int canvasY)
-        {
-            var cYOffsets = canvasY - _originY;
-            var cXScaled = canvasX / _scaleFactor;
-            
-            return new Vector2(
+            return new IsoWorldPosition(
                 cXScaled - cYOffsets - _tileFactor,
                 cXScaled + cYOffsets + _tileFactor
             );

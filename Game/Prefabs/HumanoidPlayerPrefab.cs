@@ -1,4 +1,3 @@
-using System.Numerics;
 using IsometricMagic.Engine;
 using IsometricMagic.Game.Components.Actor;
 using IsometricMagic.Game.Components.Camera;
@@ -6,13 +5,13 @@ using IsometricMagic.Game.Components.Character.Humanoid;
 using IsometricMagic.Game.Components.Collision;
 using IsometricMagic.Game.Components.Spatial;
 using IsometricMagic.Game.Controllers.Character;
+using IsometricMagic.Game.Model;
 
 namespace IsometricMagic.Game.Prefabs
 {
     public readonly record struct HumanoidPlayerPrefabSpec(
         string EntityName,
-        int WorldPosX,
-        int WorldPosY,
+        IsoWorldPosition StartPosition,
         int WorldLayerBase,
         int AnimationSorting = 0,
         float ColliderRadius = 20f,
@@ -20,10 +19,7 @@ namespace IsometricMagic.Game.Prefabs
         int CameraMinX = -200,
         int CameraMinY = -200,
         int CameraCenterYOffset = -100
-    )
-    {
-        public Vector2 WorldPosition => new(WorldPosX, WorldPosY);
-    }
+    );
 
     public sealed class HumanoidPlayerPrefab
     {
@@ -38,10 +34,9 @@ namespace IsometricMagic.Game.Prefabs
         {
             var entity = scene.CreateEntity(_spec.EntityName, parent);
 
-            entity.AddComponent(new WorldPositionComponent
+            entity.AddComponent(new IsoWorldPositionComponent
             {
-                WorldPosX = _spec.WorldPosX,
-                WorldPosY = _spec.WorldPosY
+                Position = _spec.StartPosition
             });
 
             entity.AddComponent(new WorldColliderComponent

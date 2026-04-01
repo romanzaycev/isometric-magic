@@ -9,7 +9,7 @@ namespace IsometricMagic.Game.Components.Character.Humanoid
     {
         public int LayerBase { get; set; }
 
-        private WorldPositionComponent? _positionComponent;
+        private IsoWorldPositionComponent? _positionComponent;
         private HumanoidAnimationComponent? _animationComponent;
         private IsoWorldPositionConverter? _converter;
         private bool _converterResolved;
@@ -22,7 +22,7 @@ namespace IsometricMagic.Game.Components.Character.Humanoid
 
         protected override void Awake()
         {
-            _positionComponent = Entity?.GetComponent<WorldPositionComponent>();
+            _positionComponent = Entity?.GetComponent<IsoWorldPositionComponent>();
             _animationComponent = Entity?.GetComponent<HumanoidAnimationComponent>();
         }
 
@@ -34,9 +34,9 @@ namespace IsometricMagic.Game.Components.Character.Humanoid
             var sprite = _animationComponent.GetCurrentSprite();
             if (sprite == null) return;
 
-            var pos = _converter.GetCanvasPosition(_positionComponent.WorldPosX, _positionComponent.WorldPosY);
-            sprite.Position = pos;
-            var sorting = IsoSort.FromCanvas(pos, LayerBase, IsoSort.BiasActor);
+            var canvasPos = _converter.ToCanvas(_positionComponent.Position);
+            sprite.Position = canvasPos.ToVector2();
+            var sorting = IsoSort.FromCanvas(canvasPos, LayerBase, IsoSort.BiasActor);
             if (sprite.Sorting != sorting)
             {
                 sprite.Sorting = sorting;

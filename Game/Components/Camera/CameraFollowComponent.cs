@@ -13,7 +13,7 @@ namespace IsometricMagic.Game.Components.Camera
         public int MinY { get; set; } = -200;
         public int CenterYOffset { get; set; } = -100;
 
-        private WorldPositionComponent? _positionComponent;
+        private IsoWorldPositionComponent? _positionComponent;
         private MotorComponent? _motorComponent;
         private IsoWorldPositionConverter? _converter;
         private bool _converterResolved;
@@ -33,7 +33,7 @@ namespace IsometricMagic.Game.Components.Camera
 
         protected override void Awake()
         {
-            _positionComponent = Entity?.GetComponent<WorldPositionComponent>();
+            _positionComponent = Entity?.GetComponent<IsoWorldPositionComponent>();
             _motorComponent = Entity?.GetComponent<MotorComponent>();
         }
 
@@ -42,9 +42,9 @@ namespace IsometricMagic.Game.Components.Camera
             EnsureConverter();
             if (_positionComponent == null || _converter == null) return;
             
-            var worldPos = _motorComponent?.PreciseWorldPosition ?? new Vector2(_positionComponent.WorldPosX, _positionComponent.WorldPosY);
-            var pos = _converter.GetCanvasPosition(worldPos.X, worldPos.Y);
-            _targetCenter = new Vector2(pos.X, pos.Y + CenterYOffset);
+            var worldPos = _motorComponent?.PreciseWorldPosition ?? _positionComponent.Position;
+            var canvasPos = _converter.ToCanvas(worldPos);
+            _targetCenter = new Vector2(canvasPos.X, canvasPos.Y + CenterYOffset);
             _hasTarget = true;
         }
 

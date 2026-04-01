@@ -3,6 +3,7 @@ using System.Numerics;
 using IsometricMagic.Engine;
 using IsometricMagic.Engine.Graphics.Effects;
 using IsometricMagic.Engine.Graphics.Lighting;
+using IsometricMagic.Game.Model;
 using IsometricMagic.Game.Prefabs;
 using IsometricMagic.Game.Scenes.IsoTestPrefabs;
 
@@ -30,8 +31,7 @@ namespace IsometricMagic.Game.Scenes
 
             var playerPrefab = new HumanoidPlayerPrefab(new HumanoidPlayerPrefabSpec(
                 EntityName: "Player",
-                WorldPosX: 470,
-                WorldPosY: 470,
+                StartPosition: new IsoWorldPosition(470f, 470f),
                 WorldLayerBase: mapInstance.WorldLayerBase
             ));
             playerPrefab.Instantiate(this);
@@ -39,7 +39,7 @@ namespace IsometricMagic.Game.Scenes
 
             var stonePrefab = new StoneWithMagicPrefab(new StoneWithMagicPrefabSpec(
                 StoneEntityName: "stone0",
-                WorldPosition: new Vector2(410, 410),
+                WorldPosition: new IsoWorldPosition(410f, 410f),
                 WorldLayerBase: mapInstance.WorldLayerBase,
                 EmissionColor: new Vector3(0.37f, 0.81f, 0.51f)
             ));
@@ -48,7 +48,7 @@ namespace IsometricMagic.Game.Scenes
 
             var movingLightPrefab = new MovingLightPrefab(new MovingLightPrefabSpec(
                 EntityName: "MovingLight",
-                OrbitCenterCanvas: mapInstance.Converter.GetCanvasPosition(new Vector2(600, 600)),
+                OrbitCenterCanvas: mapInstance.Converter.ToCanvas(new IsoWorldPosition(600f, 600f)),
                 OrbitRadius: 300f,
                 OrbitSpeed: 0.8f,
                 LayerBase: mapInstance.WorldLayerBase + mapInstance.LayerStride
@@ -58,7 +58,7 @@ namespace IsometricMagic.Game.Scenes
 
             Lighting.AmbientIntensity = 0.45f;
             Lighting.Add(
-                new Light2D(mapInstance.Converter.GetCanvasPosition(new Vector2(410, 410)))
+                new Light2D(mapInstance.Converter.ToCanvas(new IsoWorldPosition(410f, 410f)).ToVector2())
                 {
                     Intensity = 5f,
                     Radius = 512f,

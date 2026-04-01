@@ -5,6 +5,7 @@ using IsometricMagic.Engine.Graphics.Materials;
 using IsometricMagic.Engine.Particles;
 using IsometricMagic.Game.Components.Particles;
 using IsometricMagic.Game.Components.Spatial;
+using IsometricMagic.Game.Model;
 
 namespace IsometricMagic.Game.Prefabs
 {
@@ -21,7 +22,7 @@ namespace IsometricMagic.Game.Prefabs
     public sealed record IsoParticleEmitterPrefabSpec
     {
         public string EntityName { get; init; } = "IsoParticleEmitter";
-        public Vector2 WorldPosition { get; init; } = Vector2.Zero;
+        public IsoWorldPosition WorldPosition { get; init; } = new IsoWorldPosition(0f, 0f);
         public ParticleVisualSpec[] Visuals { get; init; } = Array.Empty<ParticleVisualSpec>();
 
         public int Capacity { get; init; } = 256;
@@ -66,10 +67,9 @@ namespace IsometricMagic.Game.Prefabs
         public Entity Instantiate(Scene scene, Entity? parent = null)
         {
             var entity = scene.CreateEntity(_spec.EntityName, parent);
-            entity.AddComponent(new WorldPositionComponent
+            entity.AddComponent(new IsoWorldPositionComponent
             {
-                WorldPosX = (int) _spec.WorldPosition.X,
-                WorldPosY = (int) _spec.WorldPosition.Y
+                Position = _spec.WorldPosition
             });
 
             var lease = new SharedTextureLeaseComponent();

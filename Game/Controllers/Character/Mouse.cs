@@ -1,5 +1,6 @@
 using IsometricMagic.Engine;
 using IsometricMagic.Game.Components.Actor;
+using IsometricMagic.Game.Model;
 
 namespace IsometricMagic.Game.Controllers.Character
 {
@@ -35,7 +36,7 @@ namespace IsometricMagic.Game.Controllers.Character
 
             if (_isDrag)
             {
-                var canvasMousePos = Camera.GetCanvasPosition(_startMouseX, _startMouseY);
+                var canvasMousePos = CanvasPosition.FromVector2(Camera.GetCanvasPosition(_startMouseX, _startMouseY));
                 var positionConverter = _motor.Converter;
                 var position = _motor.PositionComponent;
                 if (positionConverter == null || position == null)
@@ -44,10 +45,10 @@ namespace IsometricMagic.Game.Controllers.Character
                     return;
                 }
 
-                var mouseWorldPos = positionConverter.GetWorldPosition((int)canvasMousePos.X, (int)canvasMousePos.Y);
+                var mouseWorldPos = positionConverter.ToIsoWorld(canvasMousePos);
 
-                var moveX = (int)(mouseWorldPos.X - position.WorldPosX);
-                var moveY = (int)(mouseWorldPos.Y - position.WorldPosY);
+                var moveX = (int)(mouseWorldPos.X - position.X);
+                var moveY = (int)(mouseWorldPos.Y - position.Y);
                 _motor.TryMove(moveX, moveY);
             }
             else

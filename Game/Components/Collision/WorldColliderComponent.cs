@@ -15,7 +15,7 @@ namespace IsometricMagic.Game.Components.Collision
         public Vector4 DebugColor { get; set; } = new(1f, 0f, 0f, 0.5f);
         public int DebugSorting { get; set; } = 1_900_000_000;
 
-        private WorldPositionComponent? _worldPosition;
+        private IsoWorldPositionComponent? _worldPosition;
         private CollisionWorldComponent? _collisionWorld;
         private Vector2 _lastCenter;
         private bool _hasLastCenter;
@@ -23,16 +23,16 @@ namespace IsometricMagic.Game.Components.Collision
         private bool _converterResolved;
         private Sprite? _debugSprite;
         private Texture? _debugTexture;
+        private bool _isRegistered;
 
         protected override void Awake()
         {
-            _worldPosition = Entity?.GetComponent<WorldPositionComponent>();
             _collisionWorld = Scene?.FindComponent<CollisionWorldComponent>();
         }
 
         protected override void OnEnable()
         {
-            _collisionWorld?.Register(this);
+            TryRegister();
             if (DebugDraw)
             {
                 CreateDebugSprite();
@@ -41,7 +41,7 @@ namespace IsometricMagic.Game.Components.Collision
 
         protected override void OnDisable()
         {
-            _collisionWorld?.Unregister(this);
+            UnregisterIfNeeded();
             if (_debugSprite != null)
             {
                 _debugSprite.Visible = false;
@@ -51,6 +51,10 @@ namespace IsometricMagic.Game.Components.Collision
         protected override void LateUpdate(float dt)
         {
             if (_collisionWorld == null) return;
+            ResolveWorldPositionComponent();
+            if (_worldPosition == null) return;
+
+            TryRegister();
 
             var center = GetWorldCenter();
             var positionChanged = !_hasLastCenter || Vector2.DistanceSquared(center, _lastCenter) > 0.01f;
@@ -71,25 +75,21 @@ namespace IsometricMagic.Game.Components.Collision
 
         protected override void OnDestroy()
         {
-            _collisionWorld?.Unregister(this);
+            UnregisterIfNeeded();
             DestroyDebugSprite();
         }
 
-        public Vector2 GetWorldCenter(int? worldX = null, int? worldY = null)
+        public Vector2 GetWorldCenter(float? worldX = null, float? worldY = null)
         {
-            if (_worldPosition != null)
+            ResolveWorldPositionComponent();
+            if (_worldPosition == null)
             {
-                var x = worldX ?? _worldPosition.WorldPosX;
-                var y = worldY ?? _worldPosition.WorldPosY;
-                return new Vector2(x, y) + Offset;
+                throw new InvalidOperationException("WorldColliderComponent requires IsoWorldPositionComponent.");
             }
 
-            if (Entity != null)
-            {
-                return Entity.Transform.CanvasPosition + Offset;
-            }
-
-            return Offset;
+            var x = worldX ?? _worldPosition.X;
+            var y = worldY ?? _worldPosition.Y;
+            return new Vector2(x, y) + Offset;
         }
 
         private void CreateDebugSprite()
@@ -123,7 +123,7 @@ namespace IsometricMagic.Game.Components.Collision
             EnsureConverter();
             var center = GetWorldCenter();
             var canvasPos = _converter != null
-                ? _converter.GetCanvasPosition(center)
+                ? _converter.ToCanvas(IsoWorldPosition.FromVector2(center)).ToVector2()
                 : center;
 
             _debugSprite.Position = canvasPos;
@@ -138,9 +138,9 @@ namespace IsometricMagic.Game.Components.Collision
                 return;
             }
 
-            var centerCanvas = _converter.GetCanvasPosition(center);
-            var axisX = _converter.GetCanvasPosition(center + new Vector2(1f, 0f)) - centerCanvas;
-            var axisY = _converter.GetCanvasPosition(center + new Vector2(0f, 1f)) - centerCanvas;
+            var centerCanvas = _converter.ToCanvas(IsoWorldPosition.FromVector2(center)).ToVector2();
+            var axisX = _converter.ToCanvas(IsoWorldPosition.FromVector2(center + new Vector2(1f, 0f))).ToVector2() - centerCanvas;
+            var axisY = _converter.ToCanvas(IsoWorldPosition.FromVector2(center + new Vector2(0f, 1f))).ToVector2() - centerCanvas;
 
             var q11 = axisX.X * axisX.X + axisY.X * axisY.X;
             var q12 = axisX.X * axisX.Y + axisY.X * axisY.Y;
@@ -206,6 +206,29 @@ namespace IsometricMagic.Game.Components.Collision
             _converterResolved = true;
             var provider = Scene?.FindComponent<WorldPositionConverterProviderComponent>();
             _converter = provider?.Converter;
+        }
+
+        private void ResolveWorldPositionComponent()
+        {
+            if (_worldPosition != null) return;
+            _worldPosition = Entity?.GetComponent<IsoWorldPositionComponent>();
+        }
+
+        private void TryRegister()
+        {
+            if (_isRegistered || _collisionWorld == null) return;
+            ResolveWorldPositionComponent();
+            if (_worldPosition == null) return;
+
+            _collisionWorld.Register(this);
+            _isRegistered = true;
+        }
+
+        private void UnregisterIfNeeded()
+        {
+            if (!_isRegistered) return;
+            _collisionWorld?.Unregister(this);
+            _isRegistered = false;
         }
     }
 }

@@ -9,8 +9,7 @@ namespace IsometricMagic.Game.Components.Rendering
 {
     public enum SpritePositionMode
     {
-        CanvasFromWorldPositionComponent,
-        IsoWorldFromWorldPositionComponent,
+        CanvasFromIsoWorldPositionComponent,
         CanvasFromEntityTransform
     }
 
@@ -36,9 +35,9 @@ namespace IsometricMagic.Game.Components.Rendering
         public OriginPoint OriginPoint { get; set; } = OriginPoint.LeftTop;
         public int Sorting { get; set; } = 0;
         public IMaterial? Material { get; set; }
-        public SpritePositionMode PositionMode { get; set; } = SpritePositionMode.CanvasFromWorldPositionComponent;
+        public SpritePositionMode PositionMode { get; set; } = SpritePositionMode.CanvasFromEntityTransform;
 
-        private WorldPositionComponent? _worldPosition;
+        private IsoWorldPositionComponent? _worldPosition;
         private IsoWorldPositionConverter? _converter;
         private Sprite? _sprite;
         private Texture? _texture;
@@ -54,7 +53,7 @@ namespace IsometricMagic.Game.Components.Rendering
 
         protected override void Awake()
         {
-            _worldPosition = Entity?.GetComponent<WorldPositionComponent>();
+            _worldPosition = Entity?.GetComponent<IsoWorldPositionComponent>();
             if (TargetLayer == null)
             {
                 TargetLayer = Scene?.MainLayer;
@@ -134,13 +133,7 @@ namespace IsometricMagic.Game.Components.Rendering
                 return;
             }
 
-            if (PositionMode == SpritePositionMode.CanvasFromWorldPositionComponent)
-            {
-                _sprite.Position = new Vector2(_worldPosition.WorldPosX, _worldPosition.WorldPosY);
-                return;
-            }
-
-            if (PositionMode == SpritePositionMode.IsoWorldFromWorldPositionComponent)
+            if (PositionMode == SpritePositionMode.CanvasFromIsoWorldPositionComponent)
             {
                 EnsureConverter();
                 if (_converter == null)
@@ -148,7 +141,8 @@ namespace IsometricMagic.Game.Components.Rendering
                     return;
                 }
 
-                _sprite.Position = _converter.GetCanvasPosition(_worldPosition.WorldPosX, _worldPosition.WorldPosY);
+                var canvasPos = _converter.ToCanvas(_worldPosition.Position);
+                _sprite.Position = canvasPos.ToVector2();
             }
         }
 

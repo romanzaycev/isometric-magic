@@ -18,26 +18,26 @@ namespace IsometricMagic.Game.Components.Actor
 
         public int MaxMove { get; set; } = 5;
         public IsoWorldPositionConverter? Converter => _converter;
-        public WorldPositionComponent? PositionComponent => _positionComponent;
-        public Vector2 PreciseWorldPosition
+        public IsoWorldPositionComponent? PositionComponent => _positionComponent;
+        public IsoWorldPosition PreciseWorldPosition
         {
             get
             {
                 if (_floatPositionReady)
                 {
-                    return _floatPosition;
+                    return new IsoWorldPosition(_floatPosition.X, _floatPosition.Y);
                 }
 
                 if (_positionComponent != null)
                 {
-                    return new Vector2(_positionComponent.WorldPosX, _positionComponent.WorldPosY);
+                    return _positionComponent.Position;
                 }
 
-                return Vector2.Zero;
+                return new IsoWorldPosition(0f, 0f);
             }
         }
 
-        private WorldPositionComponent? _positionComponent;
+        private IsoWorldPositionComponent? _positionComponent;
         private IsoWorldPositionConverter? _converter;
         private bool _converterResolved;
         private CollisionWorldComponent? _collisionWorld;
@@ -57,7 +57,7 @@ namespace IsometricMagic.Game.Components.Actor
 
         protected override void Awake()
         {
-            _positionComponent = Entity?.GetComponent<WorldPositionComponent>();
+            _positionComponent = Entity?.GetComponent<IsoWorldPositionComponent>();
             _collisionWorld = Scene?.FindComponent<CollisionWorldComponent>();
             _collider = Entity?.GetComponent<WorldColliderComponent>();
         }
@@ -120,8 +120,8 @@ namespace IsometricMagic.Game.Components.Actor
         {
             if (_converter == null || _positionComponent == null) return;
 
-            var currentX = _positionComponent.WorldPosX;
-            var currentY = _positionComponent.WorldPosY;
+            var currentX = (int)MathF.Round(_positionComponent.X);
+            var currentY = (int)MathF.Round(_positionComponent.Y);
 
             var moved = false;
             var usedCollision = _collisionWorld != null && _collider != null;
@@ -139,11 +139,11 @@ namespace IsometricMagic.Game.Components.Actor
             if (moved)
             {
                 _state = LocomotionState.Running;
-                var actualX = _positionComponent.WorldPosX - currentX;
-                var actualY = _positionComponent.WorldPosY - currentY;
+                var actualX = _positionComponent.X - currentX;
+                var actualY = _positionComponent.Y - currentY;
                 if (!usedCollision)
                 {
-                    _floatPosition = new Vector2(_positionComponent.WorldPosX, _positionComponent.WorldPosY);
+                    _floatPosition = new Vector2(_positionComponent.X, _positionComponent.Y);
                     _floatPositionReady = true;
                     _lastMoveDelta = new Vector2(actualX, actualY);
                 }
@@ -163,7 +163,7 @@ namespace IsometricMagic.Game.Components.Actor
                 }
                 else if (actualX != 0 || actualY != 0)
                 {
-                    _direction = GetDirection(actualX, actualY);
+                    _direction = GetDirection((int)MathF.Round(actualX), (int)MathF.Round(actualY));
                 }
             }
             else
@@ -191,15 +191,15 @@ namespace IsometricMagic.Game.Components.Actor
             }
 
             var moved = false;
-            if (applyX && _positionComponent.WorldPosX != targetX)
+            if (applyX && _positionComponent.X != targetX)
             {
-                _positionComponent.WorldPosX = targetX;
+                _positionComponent.X = targetX;
                 moved = true;
             }
 
-            if (applyY && _positionComponent.WorldPosY != targetY)
+            if (applyY && _positionComponent.Y != targetY)
             {
-                _positionComponent.WorldPosY = targetY;
+                _positionComponent.Y = targetY;
                 moved = true;
             }
 
@@ -300,9 +300,9 @@ namespace IsometricMagic.Game.Components.Actor
             if (targetX >= IsoWorldPositionConverter.WORLD_BORDER_THRESHOLD &&
                 targetX <= _converter.WorldWidth - IsoWorldPositionConverter.WORLD_BORDER_THRESHOLD)
             {
-                if (_positionComponent.WorldPosX != targetX)
+                if (_positionComponent.X != targetX)
                 {
-                    _positionComponent.WorldPosX = targetX;
+                    _positionComponent.X = targetX;
                     moved = true;
                 }
             }
@@ -310,9 +310,9 @@ namespace IsometricMagic.Game.Components.Actor
             if (targetY >= IsoWorldPositionConverter.WORLD_BORDER_THRESHOLD &&
                 targetY <= _converter.WorldHeight - IsoWorldPositionConverter.WORLD_BORDER_THRESHOLD)
             {
-                if (_positionComponent.WorldPosY != targetY)
+                if (_positionComponent.Y != targetY)
                 {
-                    _positionComponent.WorldPosY = targetY;
+                    _positionComponent.Y = targetY;
                     moved = true;
                 }
             }
@@ -362,20 +362,20 @@ namespace IsometricMagic.Game.Components.Actor
             var intY = (int)MathF.Round(_floatPosition.Y);
             var moved = false;
 
-            if (_positionComponent.WorldPosX != intX)
+            if (_positionComponent.X != intX)
             {
-                _positionComponent.WorldPosX = intX;
+                _positionComponent.X = intX;
                 moved = true;
             }
 
-            if (_positionComponent.WorldPosY != intY)
+            if (_positionComponent.Y != intY)
             {
-                _positionComponent.WorldPosY = intY;
+                _positionComponent.Y = intY;
                 moved = true;
             }
 
-            _lastIntX = _positionComponent.WorldPosX;
-            _lastIntY = _positionComponent.WorldPosY;
+            _lastIntX = (int)MathF.Round(_positionComponent.X);
+            _lastIntY = (int)MathF.Round(_positionComponent.Y);
             _hasLastInt = true;
             return moved;
         }

@@ -34,6 +34,15 @@ This split is not cosmetic. It is the primary encapsulation mechanism: engine in
 - `resources/` - game assets (textures, configs)
 - Root level: `Program.cs`, project files, `config.ini`
 
+## Coordinate Semantics (Game)
+- `IsoWorldPosition` and `CanvasPosition` are distinct value types in `Game/Model` and must not be mixed implicitly.
+- `IsoWorldPositionComponent` stores only isometric world-space coordinates (world units, `float`).
+- Conversion between spaces is centralized in `IsoWorldPositionConverter` via typed methods only:
+  - `ToCanvas(IsoWorldPosition)`
+  - `ToIsoWorld(CanvasPosition)`
+  - `ToIsoTileCanvas(int tileX, int tileY)`
+- On engine boundaries, use explicit bridging (`ToVector2()` / `FromVector2(...)`) to prevent semantic drift.
+
 ## Naming Conventions
 - **Classes/Structs/Enums**: PascalCase (e.g., `SceneManager`, `CharacterState`)
 - **Interfaces**: PascalCase with `I` prefix (e.g., `IGraphics`, `ICameraController`)

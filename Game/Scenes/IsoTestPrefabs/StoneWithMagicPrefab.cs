@@ -5,6 +5,7 @@ using IsometricMagic.Engine.Particles;
 using IsometricMagic.Game.Components.Collision;
 using IsometricMagic.Game.Components.Rendering;
 using IsometricMagic.Game.Components.Spatial;
+using IsometricMagic.Game.Model;
 using IsometricMagic.Game.Prefabs;
 using IsometricMagic.Game.Rendering;
 
@@ -12,7 +13,7 @@ namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
 {
     internal readonly record struct StoneWithMagicPrefabSpec(
         string StoneEntityName,
-        Vector2 WorldPosition,
+        IsoWorldPosition WorldPosition,
         int WorldLayerBase,
         float ColliderRadius = 60f,
         Vector3 EmissionColor = default,
@@ -85,10 +86,9 @@ namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
             var emissionColor = _spec.EmissionColor == default ? new Vector3(0.37f, 0.81f, 0.51f) : _spec.EmissionColor;
 
             var stone = scene.CreateEntity(_spec.StoneEntityName, parent);
-            stone.AddComponent(new WorldPositionComponent
+            stone.AddComponent(new IsoWorldPositionComponent
             {
-                WorldPosX = (int) _spec.WorldPosition.X,
-                WorldPosY = (int) _spec.WorldPosition.Y
+                Position = _spec.WorldPosition
             });
 
             var stoneMaterial = new EmissiveNormalMappedLitSpriteMaterial
@@ -104,7 +104,7 @@ namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
                 Width = 256,
                 Height = 256,
                 OriginPoint = OriginPoint.BottomCenter,
-                PositionMode = SpritePositionMode.IsoWorldFromWorldPositionComponent,
+                PositionMode = SpritePositionMode.CanvasFromIsoWorldPositionComponent,
                 Sorting = 0,
                 Material = stoneMaterial,
                 TargetLayer = scene.MainLayer

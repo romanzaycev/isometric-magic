@@ -1,5 +1,5 @@
 using System;
-using System.Numerics;
+using IsometricMagic.Game.Model;
 
 namespace IsometricMagic.Game.Rendering
 {
@@ -12,7 +12,7 @@ namespace IsometricMagic.Game.Rendering
         public const int BiasActor = 5000;
         public const int BiasVfx = 10000;
 
-        public static int FromCanvas(Vector2 canvasPos, int layerBase, int bias)
+        public static int FromCanvas(CanvasPosition canvasPos, int layerBase, int bias)
         {
             var x = (int) MathF.Round(canvasPos.X);
             var y = (int) MathF.Round(canvasPos.Y);

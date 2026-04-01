@@ -2,20 +2,18 @@ using System.Diagnostics;
 using System.Numerics;
 using IsometricMagic.Engine;
 using IsometricMagic.Engine.Graphics.Lighting;
-using IsometricMagic.Game.Components.Spatial;
+using IsometricMagic.Game.Model;
 
 namespace IsometricMagic.Game.Components.Vfx.Light
 {
     public class OrbitLightComponent : Component
     {
         private Light2D? _light;
-        private Vector2 _center;
+        private CanvasPosition _center;
         private float _radius = 300f;
         private float _speed = 0.8f;
         private float _angle;
-        private WorldPositionComponent? _worldPosition;
-
-        public Vector2 Center
+        public CanvasPosition Center
         {
             get => _center;
             set => _center = value;
@@ -35,8 +33,7 @@ namespace IsometricMagic.Game.Components.Vfx.Light
 
         protected override void Awake()
         {
-            _worldPosition = Entity?.GetComponent<WorldPositionComponent>();
-            _light = new Light2D(_center)
+            _light = new Light2D(_center.ToVector2())
             {
                 Intensity = 5f,
                 Radius = 256f,
@@ -55,12 +52,11 @@ namespace IsometricMagic.Game.Components.Vfx.Light
 
             _angle += dt * _speed;
             var offset = new Vector2(MathF.Cos(_angle) * _radius, MathF.Sin(_angle) * _radius);
-            _light.Position = _center + offset;
+            _light.Position = _center.ToVector2() + offset;
 
-            if (_worldPosition != null)
+            if (Entity != null)
             {
-                _worldPosition.WorldPosX = (int)_light.Position.X;
-                _worldPosition.WorldPosY = (int)_light.Position.Y;
+                Entity.Transform.LocalPosition = _light.Position;
             }
         }
 

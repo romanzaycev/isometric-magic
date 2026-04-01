@@ -1,14 +1,14 @@
 using System.Numerics;
 using IsometricMagic.Engine;
-using IsometricMagic.Game.Components.Spatial;
 using IsometricMagic.Game.Components.Vfx.Light;
+using IsometricMagic.Game.Model;
 using IsometricMagic.Game.Rendering;
 
 namespace IsometricMagic.Game.Prefabs
 {
     public readonly record struct MovingLightPrefabSpec(
         string EntityName,
-        Vector2 OrbitCenterCanvas,
+        CanvasPosition OrbitCenterCanvas,
         float OrbitRadius,
         float OrbitSpeed,
         int LayerBase,
@@ -27,7 +27,6 @@ namespace IsometricMagic.Game.Prefabs
         public Entity Instantiate(Scene scene, Entity? parent = null)
         {
             var entity = scene.CreateEntity(_spec.EntityName, parent);
-            entity.AddComponent(new WorldPositionComponent());
             entity.AddComponent(new OrbitLightComponent
             {
                 Center = _spec.OrbitCenterCanvas,

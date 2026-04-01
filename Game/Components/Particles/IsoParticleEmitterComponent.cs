@@ -13,7 +13,7 @@ namespace IsometricMagic.Game.Components.Particles
         public int LayerBase { get; set; }
         public bool UseIsoPosition { get; set; } = true;
 
-        private WorldPositionComponent? _worldPosition;
+        private IsoWorldPositionComponent? _worldPosition;
         private ParticleSystemComponent? _particleSystem;
         private IsoWorldPositionConverter? _converter;
         private bool _converterResolved;
@@ -21,7 +21,7 @@ namespace IsometricMagic.Game.Components.Particles
 
         protected override void Awake()
         {
-            _worldPosition = Entity?.GetComponent<WorldPositionComponent>();
+            _worldPosition = Entity?.GetComponent<IsoWorldPositionComponent>();
             _particleSystem = Entity?.GetComponent<ParticleSystemComponent>();
             _lastBaseSorting = int.MinValue;
         }
@@ -39,7 +39,7 @@ namespace IsometricMagic.Game.Components.Particles
                 EnsureConverter();
                 if (_converter != null)
                 {
-                    canvasPos = _converter.GetCanvasPosition(_worldPosition.WorldPosX, _worldPosition.WorldPosY);
+                    canvasPos = _converter.ToCanvas(_worldPosition.Position).ToVector2();
                 }
                 else
                 {
@@ -57,7 +57,7 @@ namespace IsometricMagic.Game.Components.Particles
                 _particleSystem.Position = canvasPos;
             }
 
-            var baseSorting = IsoSort.FromCanvas(canvasPos, LayerBase, Bias);
+            var baseSorting = IsoSort.FromCanvas(CanvasPosition.FromVector2(canvasPos), LayerBase, Bias);
             if (baseSorting != _lastBaseSorting)
             {
                 _particleSystem.SetBaseSorting(baseSorting, applyToAlive: true);

@@ -133,8 +133,9 @@ namespace IsometricMagic.Game.Components.Tilemap
                 sprite.Texture = tex;
                 sprite.Width = tile.Image.Width;
                 sprite.Height = tile.Image.Height;
-                sprite.Position = _converter.GetTilePosition(x, y);
-                sprite.Sorting = CalculateSortIndex(sprite.Position, layerOffset);
+                var canvasPos = _converter.ToIsoTileCanvas(x, y);
+                sprite.Position = canvasPos.ToVector2();
+                sprite.Sorting = CalculateSortIndex(canvasPos, layerOffset);
             }
         }
 
@@ -170,7 +171,7 @@ namespace IsometricMagic.Game.Components.Tilemap
             return layerIndex * _layerStride;
         }
 
-        private static int CalculateSortIndex(Vector2 canvasPos, int layerOffset)
+        private static int CalculateSortIndex(CanvasPosition canvasPos, int layerOffset)
         {
             return IsoSort.FromCanvas(canvasPos, layerOffset, IsoSort.BiasFloor);
         }
@@ -180,12 +181,12 @@ namespace IsometricMagic.Game.Components.Tilemap
             var tile = _tileSet.Tiles[tileId];
             var tex = GetOrLoadTexture(tile);
 
-            var position = _converter.GetTilePosition(tileX, tileY);
+            var position = _converter.ToIsoTileCanvas(tileX, tileY);
             var sprite = new Sprite
             {
                 Width = tile.Image.Width,
                 Height = tile.Image.Height,
-                Position = position,
+                Position = position.ToVector2(),
                 Texture = tex,
                 Sorting = CalculateSortIndex(position, layerOffset),
                 OriginPoint = OriginPoint.LeftBottom

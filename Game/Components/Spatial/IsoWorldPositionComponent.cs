@@ -1,6 +1,9 @@
-namespace IsometricMagic.Game.Model
+using IsometricMagic.Engine;
+using IsometricMagic.Game.Model;
+
+namespace IsometricMagic.Game.Components.Spatial
 {
-    public abstract class WorldObject
+    public class IsoWorldPositionComponent : Component
     {
         public IsoWorldPosition Position = new(0f, 0f);
 

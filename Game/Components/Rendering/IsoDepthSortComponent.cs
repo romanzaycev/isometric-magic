@@ -11,14 +11,14 @@ namespace IsometricMagic.Game.Components.Rendering
         public int Bias { get; set; } = IsoSort.BiasObject;
         public int LayerBase { get; set; }
 
-        private WorldPositionComponent? _worldPosition;
+        private IsoWorldPositionComponent? _worldPosition;
         private SpriteRendererComponent? _spriteRenderer;
         private IsoWorldPositionConverter? _converter;
         private bool _converterResolved;
 
         protected override void Awake()
         {
-            _worldPosition = Entity?.GetComponent<WorldPositionComponent>();
+            _worldPosition = Entity?.GetComponent<IsoWorldPositionComponent>();
             _spriteRenderer = Entity?.GetComponent<SpriteRendererComponent>();
         }
 
@@ -41,7 +41,7 @@ namespace IsometricMagic.Game.Components.Rendering
                 EnsureConverter();
                 if (_converter != null)
                 {
-                    canvasPos = _converter.GetCanvasPosition(_worldPosition.WorldPosX, _worldPosition.WorldPosY);
+                    canvasPos = _converter.ToCanvas(_worldPosition.Position).ToVector2();
                 }
                 else
                 {
@@ -53,7 +53,7 @@ namespace IsometricMagic.Game.Components.Rendering
                 canvasPos = sprite.Position;
             }
 
-            var sorting = IsoSort.FromCanvas(canvasPos, LayerBase, Bias);
+            var sorting = IsoSort.FromCanvas(CanvasPosition.FromVector2(canvasPos), LayerBase, Bias);
             if (sprite.Sorting != sorting)
             {
                 sprite.Sorting = sorting;
