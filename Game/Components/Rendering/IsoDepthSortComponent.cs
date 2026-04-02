@@ -1,6 +1,3 @@
-using System.Numerics;
-using IsometricMagic.Engine;
-using IsometricMagic.Game.Components.Spatial;
 using IsometricMagic.Game.Model;
 using IsometricMagic.Game.Rendering;
 
@@ -11,14 +8,14 @@ namespace IsometricMagic.Game.Components.Rendering
         public int Bias { get; set; } = IsoSort.BiasObject;
         public int LayerBase { get; set; }
 
-        private IsoWorldPositionComponent? _worldPosition;
         private SpriteRendererComponent? _spriteRenderer;
-        private IsoWorldPositionConverter? _converter;
-        private bool _converterResolved;
+
+        public override ComponentUpdateGroup UpdateGroup => ComponentUpdateGroup.Late;
+
+        public override int UpdateOrder => 500;
 
         protected override void Awake()
         {
-            _worldPosition = Entity?.GetComponent<IsoWorldPositionComponent>();
             _spriteRenderer = Entity?.GetComponent<SpriteRendererComponent>();
         }
 
@@ -35,41 +32,13 @@ namespace IsometricMagic.Game.Components.Rendering
                 return;
             }
 
-            Vector2 canvasPos;
-            if (_worldPosition != null)
-            {
-                EnsureConverter();
-                if (_converter != null)
-                {
-                    canvasPos = _converter.ToCanvas(_worldPosition.Position).ToVector2();
-                }
-                else
-                {
-                    canvasPos = sprite.Position;
-                }
-            }
-            else
-            {
-                canvasPos = sprite.Position;
-            }
+            var canvasPos = Entity?.Transform.CanvasPosition ?? sprite.Position;
 
             var sorting = IsoSort.FromCanvas(CanvasPosition.FromVector2(canvasPos), LayerBase, Bias);
             if (sprite.Sorting != sorting)
             {
                 sprite.Sorting = sorting;
             }
-        }
-
-        private void EnsureConverter()
-        {
-            if (_converterResolved)
-            {
-                return;
-            }
-
-            _converterResolved = true;
-            var provider = Scene?.FindComponent<WorldPositionConverterProviderComponent>();
-            _converter = provider?.Converter;
         }
     }
 }

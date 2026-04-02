@@ -1,6 +1,4 @@
 using System.Numerics;
-using IsometricMagic.Engine;
-using IsometricMagic.Engine.Graphics.Materials;
 using IsometricMagic.Game.Animation;
 using IsometricMagic.Game.Model;
 using IsometricMagic.Game.Rendering;
@@ -15,6 +13,10 @@ public class FireCircleComponent : Component
     
     private Sequence? _sequence;
     private readonly List<Sprite> _sprites = new();
+
+    public override ComponentUpdateGroup UpdateGroup => ComponentUpdateGroup.Late;
+
+    public override int UpdateOrder => 600;
 
     protected override void Awake()
     {

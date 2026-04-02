@@ -1,4 +1,3 @@
-using System;
 using IsometricMagic.Game.Model;
 
 namespace IsometricMagic.Game.Rendering

@@ -1,4 +1,3 @@
-using IsometricMagic.Engine;
 using IsometricMagic.Game.Components.Actor;
 using IsometricMagic.Game.Model;
 
@@ -12,6 +11,10 @@ namespace IsometricMagic.Game.Controllers.Character
         private int _startMouseY;
 
         private MotorComponent? _motor;
+
+        public override ComponentUpdateGroup UpdateGroup => ComponentUpdateGroup.Critical;
+
+        public override int UpdateOrder => 20;
 
         protected override void Awake()
         {
@@ -45,7 +48,7 @@ namespace IsometricMagic.Game.Controllers.Character
                     return;
                 }
 
-                var mouseWorldPos = positionConverter.ToIsoWorld(canvasMousePos);
+                var mouseWorldPos = IsoWorldPicking.ToIsoWorld(positionConverter, canvasMousePos);
 
                 var moveX = (int)(mouseWorldPos.X - position.X);
                 var moveY = (int)(mouseWorldPos.Y - position.Y);

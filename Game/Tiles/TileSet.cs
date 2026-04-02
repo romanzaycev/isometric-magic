@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace IsometricMagic.Game.Tiles
 {
     [Newtonsoft.Json.JsonObject]

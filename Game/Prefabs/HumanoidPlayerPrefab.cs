@@ -1,4 +1,3 @@
-using IsometricMagic.Engine;
 using IsometricMagic.Game.Components.Actor;
 using IsometricMagic.Game.Components.Camera;
 using IsometricMagic.Game.Components.Character.Humanoid;
@@ -39,6 +38,10 @@ namespace IsometricMagic.Game.Prefabs
                 Position = _spec.StartPosition
             });
 
+            entity.AddComponent(new CanvasPositionComponent());
+
+            entity.AddComponent(new IsoWorldToCanvasPositionSyncComponent());
+
             entity.AddComponent(new WorldColliderComponent
             {
                 Radius = _spec.ColliderRadius,
@@ -63,7 +66,7 @@ namespace IsometricMagic.Game.Prefabs
                 CenterYOffset = _spec.CameraCenterYOffset
             });
 
-            entity.AddComponent(new HumanoidWorldPositionSyncComponent
+            entity.AddComponent(new HumanoidCanvasPositionSyncComponent
             {
                 LayerBase = _spec.WorldLayerBase
             });

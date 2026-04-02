@@ -1,4 +1,3 @@
-using IsometricMagic.Engine;
 using IsometricMagic.Game.Components.Collision;
 
 namespace IsometricMagic.Game.Prefabs

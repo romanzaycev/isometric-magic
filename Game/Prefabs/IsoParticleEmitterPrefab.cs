@@ -1,8 +1,4 @@
-using System;
 using System.Numerics;
-using IsometricMagic.Engine;
-using IsometricMagic.Engine.Graphics.Materials;
-using IsometricMagic.Engine.Particles;
 using IsometricMagic.Game.Components.Particles;
 using IsometricMagic.Game.Components.Spatial;
 using IsometricMagic.Game.Model;
@@ -71,6 +67,10 @@ namespace IsometricMagic.Game.Prefabs
             {
                 Position = _spec.WorldPosition
             });
+
+            entity.AddComponent(new CanvasPositionComponent());
+
+            entity.AddComponent(new IsoWorldToCanvasPositionSyncComponent());
 
             var lease = new SharedTextureLeaseComponent();
             var visuals = new ParticleVisual[_spec.Visuals.Length];
@@ -142,7 +142,7 @@ namespace IsometricMagic.Game.Prefabs
 
             entity.AddComponent(particles);
 
-            entity.AddComponent(new IsoParticleEmitterComponent
+            entity.AddComponent(new IsoParticleDepthSortComponent
             {
                 LayerBase = _spec.LayerBase,
                 Bias = _spec.Bias

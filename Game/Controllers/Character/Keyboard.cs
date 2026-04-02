@@ -1,4 +1,3 @@
-using IsometricMagic.Engine;
 using IsometricMagic.Game.Components.Actor;
 
 namespace IsometricMagic.Game.Controllers.Character
@@ -6,6 +5,10 @@ namespace IsometricMagic.Game.Controllers.Character
     public class Keyboard : Component
     {
         private MotorComponent? _motor;
+
+        public override ComponentUpdateGroup UpdateGroup => ComponentUpdateGroup.Critical;
+
+        public override int UpdateOrder => 10;
 
         protected override void Awake()
         {

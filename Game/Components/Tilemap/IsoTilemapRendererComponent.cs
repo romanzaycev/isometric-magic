@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Numerics;
-using IsometricMagic.Engine;
 using IsometricMagic.Game.Maps;
 using IsometricMagic.Game.Model;
 using IsometricMagic.Game.Components.Spatial;
@@ -212,6 +209,7 @@ namespace IsometricMagic.Game.Components.Tilemap
         private static void DestroyLayerSprites(LayerState state)
         {
             if (state.Sprites == null) return;
+            
             foreach (var sprite in state.Sprites)
             {
                 if (sprite != null && sprite.Texture != null)

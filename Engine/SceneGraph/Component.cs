@@ -35,6 +35,10 @@ namespace IsometricMagic.Engine.SceneGraph
 
         public bool IsActiveAndEnabled => _enabled && (_entity?.ActiveInHierarchy ?? false);
 
+        public virtual ComponentUpdateGroup UpdateGroup => ComponentUpdateGroup.Default;
+
+        public virtual int UpdateOrder => 0;
+
         internal Entity? Owner
         {
             get => _entity;

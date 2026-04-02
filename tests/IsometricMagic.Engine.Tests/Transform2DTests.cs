@@ -93,6 +93,49 @@ public sealed class Transform2DTests
         Assert.Equal(0.4d, child.Transform.LocalRotation, 10);
     }
 
+    [Fact]
+    public void SetCanvasPosition_WithoutParent_SetsLocalPosition()
+    {
+        var entity = new Entity("e");
+
+        entity.Transform.SetCanvasPosition(new Vector2(7f, -2f));
+
+        Assert.Equal(new Vector2(7f, -2f), entity.Transform.LocalPosition);
+        Assert.Equal(new Vector2(7f, -2f), entity.Transform.CanvasPosition);
+    }
+
+    [Fact]
+    public void SetCanvasPosition_WithParentNoRotation_ComputesLocalOffset()
+    {
+        var parent = new Entity("parent");
+        parent.Transform.LocalPosition = new Vector2(10f, 20f);
+
+        var child = new Entity("child");
+        child.SetParent(parent, canvasPositionStays: false);
+
+        child.Transform.SetCanvasPosition(new Vector2(17f, 9f));
+
+        Assert.Equal(new Vector2(7f, -11f), child.Transform.LocalPosition);
+        Assert.Equal(new Vector2(17f, 9f), child.Transform.CanvasPosition);
+    }
+
+    [Fact]
+    public void SetCanvasPosition_WithParentRotation_ComputesInverseRotatedLocal()
+    {
+        var parent = new Entity("parent");
+        parent.Transform.LocalRotation = 0.25d;
+
+        var child = new Entity("child");
+        child.SetParent(parent, canvasPositionStays: false);
+
+        child.Transform.SetCanvasPosition(new Vector2(0f, 10f));
+
+        Assert.InRange(child.Transform.LocalPosition.X, 9.999f, 10.001f);
+        Assert.InRange(child.Transform.LocalPosition.Y, -0.001f, 0.001f);
+        Assert.InRange(child.Transform.CanvasPosition.X, -0.001f, 0.001f);
+        Assert.InRange(child.Transform.CanvasPosition.Y, 9.999f, 10.001f);
+    }
+
     [Theory]
     [InlineData(0.0, 0.0)]
     [InlineData(0.25, 0.25)]

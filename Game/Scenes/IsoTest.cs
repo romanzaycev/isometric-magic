@@ -1,8 +1,5 @@
 using System.Collections;
 using System.Numerics;
-using IsometricMagic.Engine;
-using IsometricMagic.Engine.Graphics.Effects;
-using IsometricMagic.Engine.Graphics.Lighting;
 using IsometricMagic.Game.Model;
 using IsometricMagic.Game.Prefabs;
 using IsometricMagic.Game.Scenes.IsoTestPrefabs;
@@ -79,9 +76,7 @@ namespace IsometricMagic.Game.Scenes
             });
             PostProcess.Add(new ToneMapEffect
             {
-                Exposure = 0.6f,
-                Gamma = 1.3f,
-                Contrast = 1.05f,
+                Exposure = 0.23f,
             });
             PostProcess.Add(new VignetteEffect
             {

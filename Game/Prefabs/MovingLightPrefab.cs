@@ -1,5 +1,4 @@
-using System.Numerics;
-using IsometricMagic.Engine;
+using IsometricMagic.Game.Components.Spatial;
 using IsometricMagic.Game.Components.Vfx.Light;
 using IsometricMagic.Game.Model;
 using IsometricMagic.Game.Rendering;
@@ -27,6 +26,10 @@ namespace IsometricMagic.Game.Prefabs
         public Entity Instantiate(Scene scene, Entity? parent = null)
         {
             var entity = scene.CreateEntity(_spec.EntityName, parent);
+            entity.AddComponent(new CanvasPositionComponent
+            {
+                Position = _spec.OrbitCenterCanvas
+            });
             entity.AddComponent(new OrbitLightComponent
             {
                 Center = _spec.OrbitCenterCanvas,

@@ -1,10 +1,7 @@
-using System;
 using System.Collections;
-using IsometricMagic.Engine;
 using IsometricMagic.Game.Components.Tilemap;
 using IsometricMagic.Game.Maps;
 using IsometricMagic.Game.Model;
-using IsometricMagic.Game.Rendering;
 using IsometricMagic.Game.Tiles;
 using MapLoader = IsometricMagic.Game.Maps.Loader;
 using TileSetLoader = IsometricMagic.Game.Tiles.Loader;

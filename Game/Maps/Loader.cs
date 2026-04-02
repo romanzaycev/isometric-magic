@@ -1,4 +1,3 @@
-using System.IO;
 using Newtonsoft.Json;
 
 namespace IsometricMagic.Game.Maps

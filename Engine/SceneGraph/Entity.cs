@@ -9,6 +9,14 @@ namespace IsometricMagic.Engine.SceneGraph
 {
     public class Entity
     {
+        private static readonly ComponentUpdateGroup[] UpdateGroupsInOrder =
+        {
+            ComponentUpdateGroup.Critical,
+            ComponentUpdateGroup.Early,
+            ComponentUpdateGroup.Default,
+            ComponentUpdateGroup.Late
+        };
+
         private static readonly SceneManager SceneManagerInstance = SceneManager.GetInstance();
 
         public string Name;
@@ -40,6 +48,7 @@ namespace IsometricMagic.Engine.SceneGraph
         public bool ActiveInHierarchy => _activeInHierarchy;
 
         private readonly List<Component> _components = new();
+        private readonly List<Component> _orderedComponentsBuffer = new();
         public IReadOnlyList<Component> Components => _components;
 
         internal Scene? Scene { get; set; }
@@ -223,10 +232,7 @@ namespace IsometricMagic.Engine.SceneGraph
                 }
             }
 
-            foreach (var component in _components)
-            {
-                component.CallUpdate(dt);
-            }
+            CallOrderedUpdate(dt, isLateUpdate: false);
 
             foreach (var child in _children)
             {
@@ -238,14 +244,59 @@ namespace IsometricMagic.Engine.SceneGraph
         {
             if (!_activeInHierarchy) return;
 
-            foreach (var component in _components)
-            {
-                component.CallLateUpdate(dt);
-            }
+            CallOrderedUpdate(dt, isLateUpdate: true);
 
             foreach (var child in _children)
             {
                 child.CallLateUpdate(dt);
+            }
+        }
+
+        private void CallOrderedUpdate(float dt, bool isLateUpdate)
+        {
+            foreach (var group in UpdateGroupsInOrder)
+            {
+                _orderedComponentsBuffer.Clear();
+
+                foreach (var component in _components)
+                {
+                    if (component.UpdateGroup == group)
+                    {
+                        _orderedComponentsBuffer.Add(component);
+                    }
+                }
+
+                StableSortByUpdateOrder(_orderedComponentsBuffer);
+
+                foreach (var component in _orderedComponentsBuffer)
+                {
+                    if (isLateUpdate)
+                    {
+                        component.CallLateUpdate(dt);
+                    }
+                    else
+                    {
+                        component.CallUpdate(dt);
+                    }
+                }
+            }
+        }
+
+        private static void StableSortByUpdateOrder(List<Component> components)
+        {
+            for (var i = 1; i < components.Count; i++)
+            {
+                var key = components[i];
+                var keyOrder = key.UpdateOrder;
+                var j = i - 1;
+
+                while (j >= 0 && components[j].UpdateOrder > keyOrder)
+                {
+                    components[j + 1] = components[j];
+                    j--;
+                }
+
+                components[j + 1] = key;
             }
         }
 

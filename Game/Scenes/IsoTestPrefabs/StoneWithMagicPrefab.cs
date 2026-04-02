@@ -1,7 +1,4 @@
 using System.Numerics;
-using IsometricMagic.Engine;
-using IsometricMagic.Engine.Graphics.Materials;
-using IsometricMagic.Engine.Particles;
 using IsometricMagic.Game.Components.Collision;
 using IsometricMagic.Game.Components.Rendering;
 using IsometricMagic.Game.Components.Spatial;
@@ -91,6 +88,10 @@ namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
                 Position = _spec.WorldPosition
             });
 
+            stone.AddComponent(new CanvasPositionComponent());
+
+            stone.AddComponent(new IsoWorldToCanvasPositionSyncComponent());
+
             var stoneMaterial = new EmissiveNormalMappedLitSpriteMaterial
             {
                 EmissionColor = emissionColor,
@@ -104,7 +105,6 @@ namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
                 Width = 256,
                 Height = 256,
                 OriginPoint = OriginPoint.BottomCenter,
-                PositionMode = SpritePositionMode.CanvasFromIsoWorldPositionComponent,
                 Sorting = 0,
                 Material = stoneMaterial,
                 TargetLayer = scene.MainLayer

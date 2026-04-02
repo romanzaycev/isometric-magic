@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using IsometricMagic.Engine;
-
 namespace IsometricMagic.Game.Animation
 {
     public class Sequence

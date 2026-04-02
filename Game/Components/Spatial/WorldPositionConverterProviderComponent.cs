@@ -1,4 +1,3 @@
-using IsometricMagic.Engine;
 using IsometricMagic.Game.Model;
 
 namespace IsometricMagic.Game.Components.Spatial

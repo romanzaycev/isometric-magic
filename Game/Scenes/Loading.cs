@@ -1,6 +1,4 @@
-using System;
 using System.Numerics;
-using IsometricMagic.Engine;
 
 namespace IsometricMagic.Game.Scenes
 {

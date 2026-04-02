@@ -1,6 +1,4 @@
-using System;
 using System.Numerics;
-using IsometricMagic.Engine;
 using IsometricMagic.Game.Components.Collision;
 using IsometricMagic.Game.Components.Spatial;
 using IsometricMagic.Game.Model;

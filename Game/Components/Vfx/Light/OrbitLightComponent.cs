@@ -1,18 +1,25 @@
-using System.Diagnostics;
 using System.Numerics;
-using IsometricMagic.Engine;
-using IsometricMagic.Engine.Graphics.Lighting;
+using IsometricMagic.Game.Components.Spatial;
 using IsometricMagic.Game.Model;
 
 namespace IsometricMagic.Game.Components.Vfx.Light
 {
     public class OrbitLightComponent : Component
     {
+        private static readonly IEngineLogger Logger = Log.For<OrbitLightComponent>();
+
         private Light2D? _light;
+        private CanvasPositionComponent? _canvasPosition;
         private CanvasPosition _center;
         private float _radius = 300f;
         private float _speed = 0.8f;
         private float _angle;
+        private bool _missingCanvasPositionWarned;
+
+        public override ComponentUpdateGroup UpdateGroup => ComponentUpdateGroup.Critical;
+
+        public override int UpdateOrder => 50;
+
         public CanvasPosition Center
         {
             get => _center;
@@ -33,6 +40,8 @@ namespace IsometricMagic.Game.Components.Vfx.Light
 
         protected override void Awake()
         {
+            _canvasPosition = Entity?.GetComponent<CanvasPositionComponent>();
+
             _light = new Light2D(_center.ToVector2())
             {
                 Intensity = 5f,
@@ -54,9 +63,17 @@ namespace IsometricMagic.Game.Components.Vfx.Light
             var offset = new Vector2(MathF.Cos(_angle) * _radius, MathF.Sin(_angle) * _radius);
             _light.Position = _center.ToVector2() + offset;
 
-            if (Entity != null)
+            if (_canvasPosition != null)
             {
-                Entity.Transform.LocalPosition = _light.Position;
+                _canvasPosition.Position = CanvasPosition.FromVector2(_light.Position);
+                return;
+            }
+
+            if (!_missingCanvasPositionWarned)
+            {
+                var entityName = Entity?.Name ?? "unknown";
+                Logger.Warn($"OrbitLightComponent on '{entityName}' requires CanvasPositionComponent to move entity on canvas.");
+                _missingCanvasPositionWarned = true;
             }
         }
 

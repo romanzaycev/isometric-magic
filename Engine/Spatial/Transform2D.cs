@@ -45,6 +45,26 @@ namespace IsometricMagic.Engine.Spatial
             }
         }
 
+        public void SetCanvasPosition(Vector2 canvasPosition)
+        {
+            if (_parent == null || _parent.Transform == null)
+            {
+                LocalPosition = canvasPosition;
+                return;
+            }
+
+            var parentTransform = _parent.Transform;
+            var parentRot = parentTransform.CanvasRotation;
+            var translated = canvasPosition - parentTransform.CanvasPosition;
+            if (parentRot == 0.0)
+            {
+                LocalPosition = translated;
+                return;
+            }
+
+            LocalPosition = RotateVector(translated, -parentRot);
+        }
+
         private static Vector2 RotateVector(Vector2 v, double angleNor)
         {
             if (angleNor == 0.0) return v;

@@ -1,18 +1,5 @@
-using System;
-using System.Numerics;
-using IsometricMagic.Engine;
-using IsometricMagic.Engine.Graphics.Materials;
-using IsometricMagic.Game.Components.Spatial;
-using IsometricMagic.Game.Model;
-
 namespace IsometricMagic.Game.Components.Rendering
 {
-    public enum SpritePositionMode
-    {
-        CanvasFromIsoWorldPositionComponent,
-        CanvasFromEntityTransform
-    }
-
     public class SpriteRendererComponent : Component
     {
         public SceneLayer? TargetLayer { get; set; }
@@ -35,25 +22,17 @@ namespace IsometricMagic.Game.Components.Rendering
         public OriginPoint OriginPoint { get; set; } = OriginPoint.LeftTop;
         public int Sorting { get; set; } = 0;
         public IMaterial? Material { get; set; }
-        public SpritePositionMode PositionMode { get; set; } = SpritePositionMode.CanvasFromEntityTransform;
-
-        private IsoWorldPositionComponent? _worldPosition;
-        private IsoWorldPositionConverter? _converter;
         private Sprite? _sprite;
         private Texture? _texture;
-        private bool _converterResolved;
 
-        public void SetConverter(IsoWorldPositionConverter converter)
-        {
-            _converter = converter;
-            _converterResolved = true;
-        }
+        public override ComponentUpdateGroup UpdateGroup => ComponentUpdateGroup.Late;
+
+        public override int UpdateOrder => 100;
 
         public Sprite? GetSprite() => _sprite;
 
         protected override void Awake()
         {
-            _worldPosition = Entity?.GetComponent<IsoWorldPositionComponent>();
             if (TargetLayer == null)
             {
                 TargetLayer = Scene?.MainLayer;
@@ -119,43 +98,10 @@ namespace IsometricMagic.Game.Components.Rendering
 
             _sprite.Sorting = Sorting;
 
-            if (PositionMode == SpritePositionMode.CanvasFromEntityTransform)
+            if (Entity != null)
             {
-                if (Entity != null)
-                {
-                    _sprite.Position = Entity.Transform.CanvasPosition;
-                }
-                return;
+                _sprite.Position = Entity.Transform.CanvasPosition;
             }
-
-            if (_worldPosition == null)
-            {
-                return;
-            }
-
-            if (PositionMode == SpritePositionMode.CanvasFromIsoWorldPositionComponent)
-            {
-                EnsureConverter();
-                if (_converter == null)
-                {
-                    return;
-                }
-
-                var canvasPos = _converter.ToCanvas(_worldPosition.Position);
-                _sprite.Position = canvasPos.ToVector2();
-            }
-        }
-
-        private void EnsureConverter()
-        {
-            if (_converterResolved)
-            {
-                return;
-            }
-
-            _converterResolved = true;
-            var provider = Scene?.FindComponent<WorldPositionConverterProviderComponent>();
-            _converter = provider?.Converter;
         }
 
         protected override void OnDestroy()

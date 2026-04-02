@@ -36,11 +36,16 @@ This split is not cosmetic. It is the primary encapsulation mechanism: engine in
 
 ## Coordinate Semantics (Game)
 - `IsoWorldPosition` and `CanvasPosition` are distinct value types in `Game/Model` and must not be mixed implicitly.
+- `CanvasPosition` is the primary game-facing positioning API for rendering, camera, and VFX.
+- `IsoWorldPosition` is a world/gameplay coordinate and is treated as a derived source for canvas placement.
+- One-way position flow for entities is required: `IsoWorldPositionComponent` -> `IsoWorldToCanvasPositionSyncComponent` -> `CanvasPositionComponent` -> `Transform2D`.
 - `IsoWorldPositionComponent` stores only isometric world-space coordinates (world units, `float`).
+- `CanvasPositionComponent` stores only canvas-space coordinates and is the component that applies entity placement on the canvas.
 - Conversion between spaces is centralized in `IsoWorldPositionConverter` via typed methods only:
   - `ToCanvas(IsoWorldPosition)`
-  - `ToIsoWorld(CanvasPosition)`
+  - `ToIsoWorld(CanvasPosition)` (allowed for input/picking helpers, not as an entity positioning mode)
   - `ToIsoTileCanvas(int tileX, int tileY)`
+- In game code, treat direct writes to `Entity.Transform.LocalPosition` for gameplay positioning as forbidden by convention; use `CanvasPositionComponent` instead.
 - On engine boundaries, use explicit bridging (`ToVector2()` / `FromVector2(...)`) to prevent semantic drift.
 
 ## Naming Conventions
