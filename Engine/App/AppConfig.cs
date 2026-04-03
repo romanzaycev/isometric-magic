@@ -399,6 +399,74 @@ namespace IsometricMagic.Engine.App
             }
         }
 
+        private bool _runtimeEditorEnabledFetched = false;
+        private bool _runtimeEditorEnabled;
+
+        public bool RuntimeEditorEnabled
+        {
+            get
+            {
+                if (!_runtimeEditorEnabledFetched)
+                {
+                    _runtimeEditorEnabled = GetBool(GetValue("RuntimeEditor", "Enabled"), false);
+                    _runtimeEditorEnabledFetched = true;
+                }
+
+                return _runtimeEditorEnabled;
+            }
+        }
+
+        private bool _runtimeEditorToggleKeyFetched = false;
+        private Key _runtimeEditorToggleKey;
+
+        public Key RuntimeEditorToggleKey
+        {
+            get
+            {
+                if (!_runtimeEditorToggleKeyFetched)
+                {
+                    _runtimeEditorToggleKey = GetKey(GetValue("RuntimeEditor", "ToggleKey"), Key.F4);
+                    _runtimeEditorToggleKeyFetched = true;
+                }
+
+                return _runtimeEditorToggleKey;
+            }
+        }
+
+        private bool _runtimeEditorPortFetched = false;
+        private int _runtimeEditorPort;
+
+        public int RuntimeEditorPort
+        {
+            get
+            {
+                if (!_runtimeEditorPortFetched)
+                {
+                    _runtimeEditorPort = Math.Max(1, Math.Min(65535, GetInt(GetValue("RuntimeEditor", "Port"), 5057)));
+                    _runtimeEditorPortFetched = true;
+                }
+
+                return _runtimeEditorPort;
+            }
+        }
+
+        private bool _runtimeEditorOpenBrowserFetched = false;
+        private bool _runtimeEditorOpenBrowser;
+
+        public bool RuntimeEditorOpenBrowser
+        {
+            get
+            {
+                if (!_runtimeEditorOpenBrowserFetched)
+                {
+                    _runtimeEditorOpenBrowser = GetBool(GetValue("RuntimeEditor", "OpenBrowser"), true);
+                    _runtimeEditorOpenBrowserFetched = true;
+                }
+
+                return _runtimeEditorOpenBrowser;
+            }
+        }
+
         public AppConfig(string iniFile)
         {
             var parser = new FileIniDataParser();
