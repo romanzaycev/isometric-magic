@@ -87,9 +87,6 @@ namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
             {
                 Position = _spec.WorldPosition
             });
-
-            stone.AddComponent(new CanvasPositionComponent());
-
             stone.AddComponent(new IsoWorldToCanvasPositionSyncComponent());
 
             var stoneMaterial = new EmissiveNormalMappedLitSpriteMaterial

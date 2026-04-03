@@ -8,7 +8,6 @@ namespace IsometricMagic.Game.Components.Spatial
         private static readonly IEngineLogger Logger = Log.For<IsoWorldToCanvasPositionSyncComponent>();
 
         private IsoWorldPositionComponent? _isoWorldPosition;
-        private CanvasPositionComponent? _canvasPosition;
         private MotorComponent? _motor;
         private IsoWorldPositionConverter? _converter;
         private bool _converterResolved;
@@ -34,7 +33,7 @@ namespace IsometricMagic.Game.Components.Spatial
         {
             ResolveDependencies();
 
-            if (_isoWorldPosition == null || _canvasPosition == null)
+            if (_isoWorldPosition == null)
             {
                 return;
             }
@@ -52,7 +51,8 @@ namespace IsometricMagic.Game.Components.Spatial
             }
 
             var sourcePosition = _motor?.PreciseWorldPosition ?? _isoWorldPosition.Position;
-            _canvasPosition.Position = _converter.ToCanvas(sourcePosition);
+            
+            Entity?.Transform.LocalPosition = _converter.ToCanvas(sourcePosition).ToVector2();
         }
 
         private void EnsureConverter()
@@ -72,11 +72,6 @@ namespace IsometricMagic.Game.Components.Spatial
             if (_isoWorldPosition == null)
             {
                 _isoWorldPosition = Entity?.GetComponent<IsoWorldPositionComponent>();
-            }
-
-            if (_canvasPosition == null)
-            {
-                _canvasPosition = Entity?.GetComponent<CanvasPositionComponent>();
             }
 
             if (_motor == null)

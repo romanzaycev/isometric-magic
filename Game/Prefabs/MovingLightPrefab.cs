@@ -1,4 +1,5 @@
-using IsometricMagic.Game.Components.Spatial;
+using System.Numerics;
+using IsometricMagic.Game.Components.Movement;
 using IsometricMagic.Game.Components.Vfx.Light;
 using IsometricMagic.Game.Model;
 using IsometricMagic.Game.Rendering;
@@ -26,15 +27,22 @@ namespace IsometricMagic.Game.Prefabs
         public Entity Instantiate(Scene scene, Entity? parent = null)
         {
             var entity = scene.CreateEntity(_spec.EntityName, parent);
-            entity.AddComponent(new CanvasPositionComponent
-            {
-                Position = _spec.OrbitCenterCanvas
-            });
-            entity.AddComponent(new OrbitLightComponent
+            
+            entity.AddComponent(new OrbitMotionComponent
             {
                 Center = _spec.OrbitCenterCanvas,
                 Radius = _spec.OrbitRadius,
                 Speed = _spec.OrbitSpeed
+            });
+            entity.AddComponent(new Light2DComponent
+            {
+                Intensity = 5f,
+                Radius = 256f,
+                Height = 2f,
+                Falloff = 2f,
+                InnerRadius = 64f,
+                CenterAttenuation = 0.15f,
+                Color = new Vector3(0.929f, 0.565f, 0.122f),
             });
             entity.AddComponent(new FireCircleComponent
             {

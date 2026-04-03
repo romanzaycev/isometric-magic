@@ -38,8 +38,6 @@ namespace IsometricMagic.Game.Prefabs
                 Position = _spec.StartPosition
             });
 
-            entity.AddComponent(new CanvasPositionComponent());
-
             entity.AddComponent(new IsoWorldToCanvasPositionSyncComponent());
 
             entity.AddComponent(new WorldColliderComponent

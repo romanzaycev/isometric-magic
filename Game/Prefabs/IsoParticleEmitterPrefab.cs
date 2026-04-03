@@ -63,12 +63,11 @@ namespace IsometricMagic.Game.Prefabs
         public Entity Instantiate(Scene scene, Entity? parent = null)
         {
             var entity = scene.CreateEntity(_spec.EntityName, parent);
+            
             entity.AddComponent(new IsoWorldPositionComponent
             {
                 Position = _spec.WorldPosition
             });
-
-            entity.AddComponent(new CanvasPositionComponent());
 
             entity.AddComponent(new IsoWorldToCanvasPositionSyncComponent());
 

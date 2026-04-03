@@ -119,6 +119,27 @@ namespace IsometricMagic.Engine.SceneGraph
             return FindInChildren<T>(this, includeInactive);
         }
 
+        public T? GetComponentInParent<T>(bool includeInactive = false) where T : Component
+        {
+            for (Entity? current = this; current != null; current = current._parent)
+            {
+                if (!includeInactive && !current.ActiveInHierarchy)
+                {
+                    continue;
+                }
+
+                foreach (var c in current._components)
+                {
+                    if (c is T result)
+                    {
+                        return result;
+                    }
+                }
+            }
+
+            return null;
+        }
+
         private static IEnumerable<T> FindInChildren<T>(Entity entity, bool includeInactive) where T : Component
         {
             foreach (var child in entity._children)

@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 
 using IsometricMagic.Engine.SceneGraph;
@@ -22,13 +23,14 @@ namespace IsometricMagic.Engine.Spatial
                 }
 
                 var parentRot = _parent.Transform.CanvasRotation;
-                if (parentRot == 0.0)
+                if (parentRot != 0.0)
                 {
-                    return _parent.Transform.CanvasPosition + LocalPosition;
+                    var rotated = RotateVector(LocalPosition, parentRot);
+                    
+                    return _parent.Transform.CanvasPosition + rotated;
                 }
-
-                var rotated = RotateVector(LocalPosition, parentRot);
-                return _parent.Transform.CanvasPosition + rotated;
+                
+                return _parent.Transform.CanvasPosition + LocalPosition;
             }
         }
 

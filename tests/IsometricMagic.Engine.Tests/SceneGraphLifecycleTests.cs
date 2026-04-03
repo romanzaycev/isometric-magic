@@ -136,6 +136,56 @@ public sealed class SceneGraphLifecycleTests
         Assert.Same(scene, grandChild.Scene);
     }
 
+    [Fact]
+    public void GetComponentInParent_ReturnsSelfComponentFirst()
+    {
+        var scene = new Scene("test_scene");
+        var parent = scene.CreateEntity("parent");
+        var child = scene.CreateEntity("child", parent);
+        var parentComponent = new ProbeComponent();
+        var childComponent = new ProbeComponent();
+
+        parent.AddComponent(parentComponent);
+        child.AddComponent(childComponent);
+
+        var resolved = child.GetComponentInParent<ProbeComponent>();
+
+        Assert.Same(childComponent, resolved);
+    }
+
+    [Fact]
+    public void GetComponentInParent_ReturnsFirstParentMatch()
+    {
+        var scene = new Scene("test_scene");
+        var root = scene.CreateEntity("root");
+        var parent = scene.CreateEntity("parent", root);
+        var child = scene.CreateEntity("child", parent);
+        var rootComponent = new ProbeComponent();
+        var parentComponent = new ProbeComponent();
+
+        root.AddComponent(rootComponent);
+        parent.AddComponent(parentComponent);
+
+        var resolved = child.GetComponentInParent<ProbeComponent>();
+
+        Assert.Same(parentComponent, resolved);
+    }
+
+    [Fact]
+    public void GetComponentInParent_RespectsIncludeInactive()
+    {
+        var scene = new Scene("test_scene");
+        var parent = scene.CreateEntity("parent");
+        var child = scene.CreateEntity("child", parent);
+        var parentComponent = new ProbeComponent();
+        parent.AddComponent(parentComponent);
+
+        parent.ActiveSelf = false;
+
+        Assert.Null(child.GetComponentInParent<ProbeComponent>());
+        Assert.Same(parentComponent, child.GetComponentInParent<ProbeComponent>(includeInactive: true));
+    }
+
     private sealed class ProbeComponent : Component
     {
         public int AwakeCalls;
