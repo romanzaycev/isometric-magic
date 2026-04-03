@@ -121,7 +121,7 @@ namespace IsometricMagic.Game.Components.Character.Humanoid
                         tex.LoadImage($"{framesPath}/{frameName}{i}{extension}");
                         sprite.Material = new NormalMappedLitSpriteMaterial();
                         sprite.Outline.Enabled = true;
-                        sprite.Outline.Color = new(0f, 0f, 0f, 0.5f);
+                        sprite.Outline.Color = new(0f, 0f, 0f, 0.7f);
                         sprite.Visible = false;
 
                         sprites.Add(sprite);

@@ -23,6 +23,15 @@ namespace IsometricMagic.Engine.Rendering
         BottomCenter,
     }
 
+    public enum SpriteBlendMode
+    {
+        Normal,
+        Multiply,
+        Screen,
+        SoftLight,
+        Overlay,
+    }
+
     public class Rotation
     {
         public bool Clockwise = true;
@@ -56,6 +65,7 @@ namespace IsometricMagic.Engine.Rendering
         public Vector2 Pivot = Vector2.Zero;
 
         public Vector4 Color = new(1f, 1f, 1f, 1f);
+        public SpriteBlendMode BlendMode = SpriteBlendMode.Normal;
         
         public PivotMode PivotMode = PivotMode.Centered;
         public OriginPoint OriginPoint = OriginPoint.LeftTop;

@@ -14,5 +14,6 @@ namespace IsometricMagic.Engine.Rendering
         public float ThicknessTexels = 1f;
         public Vector4 Color = new(1f, 1f, 1f, 1f);
         public OutlineLayering Layering = OutlineLayering.Under;
+        public bool ForceAlphaBlend;
     }
 }

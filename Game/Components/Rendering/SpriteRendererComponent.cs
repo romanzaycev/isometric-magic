@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace IsometricMagic.Game.Components.Rendering
 {
     public class SpriteRendererComponent : Component
@@ -19,9 +21,14 @@ namespace IsometricMagic.Game.Components.Rendering
         }
         public int Width { get; set; }
         public int Height { get; set; }
+        public int TextureWidth { get; set; }
+        public int TextureHeight { get; set; }
         public OriginPoint OriginPoint { get; set; } = OriginPoint.LeftTop;
+        public SpriteBlendMode BlendMode { get; set; } = SpriteBlendMode.Normal;
+        public bool OutlineForceAlphaBlend { get; set; }
         public int Sorting { get; set; } = 0;
         public IMaterial? Material { get; set; }
+        public Vector4? Color { get; set; }
         private Sprite? _sprite;
         private Texture? _texture;
 
@@ -53,7 +60,9 @@ namespace IsometricMagic.Game.Components.Rendering
                 throw new InvalidOperationException("SpriteRendererComponent requires ImagePath to be set.");
             }
 
-            _texture = new Texture(Width, Height);
+            var textureWidth = ResolveTextureWidth();
+            var textureHeight = ResolveTextureHeight();
+            _texture = new Texture(textureWidth, textureHeight);
             _texture.LoadImage(_imagePath);
 
             _sprite = new Sprite
@@ -62,13 +71,17 @@ namespace IsometricMagic.Game.Components.Rendering
                 Height = Height,
                 Texture = _texture,
                 OriginPoint = OriginPoint,
-                Sorting = Sorting
+                BlendMode = BlendMode,
+                Sorting = Sorting,
             };
 
             if (Material != null)
             {
                 _sprite.Material = Material;
             }
+
+            _sprite.Outline.ForceAlphaBlend = OutlineForceAlphaBlend;
+            _sprite.Color = Color ?? new Vector4(1f, 1f, 1f, 1f);
 
             TargetLayer.Add(_sprite);
         }
@@ -97,6 +110,8 @@ namespace IsometricMagic.Game.Components.Rendering
             }
 
             _sprite.Sorting = Sorting;
+            _sprite.BlendMode = BlendMode;
+            _sprite.Outline.ForceAlphaBlend = OutlineForceAlphaBlend;
 
             if (Entity != null)
             {
@@ -132,7 +147,9 @@ namespace IsometricMagic.Game.Components.Rendering
                 _texture.Destroy();
             }
 
-            _texture = new Texture(Width, Height);
+            var textureWidth = ResolveTextureWidth();
+            var textureHeight = ResolveTextureHeight();
+            _texture = new Texture(textureWidth, textureHeight);
             _texture.LoadImage(_imagePath);
 
             if (_sprite != null)
@@ -141,6 +158,16 @@ namespace IsometricMagic.Game.Components.Rendering
                 _sprite.Width = Width;
                 _sprite.Height = Height;
             }
+        }
+
+        private int ResolveTextureWidth()
+        {
+            return TextureWidth > 0 ? TextureWidth : Width;
+        }
+
+        private int ResolveTextureHeight()
+        {
+            return TextureHeight > 0 ? TextureHeight : Height;
         }
     }
 }

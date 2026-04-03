@@ -36,6 +36,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
         private GlRenderContext _renderContext = null!;
         private GlFullscreenQuad _fullscreenQuad = null!;
         private GlShaderProgram _presentShader = null!;
+        private GlShaderProgram _blendCompositeShader = null!;
         private UnlitSpriteMaterial _defaultMaterial = null!;
         private OutlineSpriteMaterial _outlineMaterial = null!;
 
@@ -130,18 +131,17 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             _renderContext.ViewportHeight = _viewportHeight;
             _renderContext.Time += Time.DeltaTime;
 
-            _gl.BindFramebuffer(FramebufferTarget.Framebuffer, _sceneTarget.FramebufferId);
-            _gl.Viewport(0, 0, (uint) _sceneTarget.Width, (uint) _sceneTarget.Height);
+            BindTarget(_sceneTarget);
             _gl.Clear(ClearBufferMask.ColorBufferBit);
-            DrawLayer(scene.MainLayer, camera, true);
+            var mainTarget = DrawLayer(scene.MainLayer, camera, true, _sceneTarget);
 
-            var finalTarget = ApplyPostProcess(scene.PostProcess);
+            var postProcessed = ApplyPostProcess(scene.PostProcess, mainTarget);
+            var finalTarget = DrawLayer(scene.UiLayer, camera, false, postProcessed);
 
             _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             _gl.Viewport(0, 0, (uint) _viewportWidth, (uint) _viewportHeight);
             DrawPresent(finalTarget.TextureId);
 
-            DrawLayer(scene.UiLayer, camera, false);
             DebugOverlay.Update(Time.DeltaTime);
             DrawDebugOverlay();
 
@@ -263,7 +263,12 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             _gl.ClearColor(0f, 0f, 0f, 1f);
             _gl.Disable(EnableCap.DepthTest);
             _gl.Enable(EnableCap.Blend);
-            _gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            _gl.BlendFuncSeparate(
+                BlendingFactor.SrcAlpha,
+                BlendingFactor.OneMinusSrcAlpha,
+                BlendingFactor.One,
+                BlendingFactor.OneMinusSrcAlpha
+            );
 
             SDL_GL_GetDrawableSize(_sdlWindow, out _viewportWidth, out _viewportHeight);
             _gl.Viewport(0, 0, (uint) _viewportWidth, (uint) _viewportHeight);
@@ -276,6 +281,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 new Camera(_graphicsParams.InitialWindowWidth, _graphicsParams.InitialWindowHeight));
 
             _presentShader = new GlShaderProgram(_gl, PresentVertexSource, PresentFragmentSource);
+            _blendCompositeShader = new GlShaderProgram(_gl, BlendCompositeVertexSource, BlendCompositeFragmentSource);
             _defaultMaterial = new UnlitSpriteMaterial(_gl);
             _outlineMaterial = new OutlineSpriteMaterial();
 
@@ -307,6 +313,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
         private void DrawPresent(uint textureId)
         {
+            SetBlendDisabledState();
             _presentShader.Use();
             _presentShader.SetInt("u_texture", 0);
             _gl.ActiveTexture(TextureUnit.Texture0);
@@ -315,15 +322,100 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             _gl.BindTexture(TextureTarget.Texture2D, 0);
         }
 
-        private GlRenderTarget ApplyPostProcess(PostProcessStack stack)
+        private void BindTarget(GlRenderTarget target)
         {
-            if (!stack.Enabled || stack.Effects.Count == 0)
+            _gl.BindFramebuffer(FramebufferTarget.Framebuffer, target.FramebufferId);
+            _gl.Viewport(0, 0, (uint) target.Width, (uint) target.Height);
+        }
+
+        private void SetAlphaBlendState()
+        {
+            _gl.Enable(EnableCap.Blend);
+            _gl.BlendFuncSeparate(
+                BlendingFactor.SrcAlpha,
+                BlendingFactor.OneMinusSrcAlpha,
+                BlendingFactor.One,
+                BlendingFactor.OneMinusSrcAlpha
+            );
+        }
+
+        private void SetBlendDisabledState()
+        {
+            _gl.Disable(EnableCap.Blend);
+        }
+
+        private GlRenderTarget SelectPostProcessOutputTarget(GlRenderTarget input)
+        {
+            if (TargetsEqual(input, _pingTarget))
+            {
+                return _pongTarget;
+            }
+
+            return _pingTarget;
+        }
+
+        private GlRenderTarget SelectForegroundTarget(GlRenderTarget current)
+        {
+            if (!TargetsEqual(current, _sceneTarget))
             {
                 return _sceneTarget;
             }
 
-            var input = _sceneTarget;
-            var usePing = true;
+            return _pingTarget;
+        }
+
+        private GlRenderTarget SelectCompositeOutputTarget(GlRenderTarget current, GlRenderTarget foreground)
+        {
+            if (!TargetsEqual(_sceneTarget, current) && !TargetsEqual(_sceneTarget, foreground))
+            {
+                return _sceneTarget;
+            }
+
+            if (!TargetsEqual(_pingTarget, current) && !TargetsEqual(_pingTarget, foreground))
+            {
+                return _pingTarget;
+            }
+
+            return _pongTarget;
+        }
+
+        private void CompositeTargets(GlRenderTarget background, GlRenderTarget foreground, GlRenderTarget output,
+            SpriteBlendMode blendMode)
+        {
+            BindTarget(output);
+            SetBlendDisabledState();
+            _blendCompositeShader.Use();
+            _blendCompositeShader.SetInt("u_background", 0);
+            _blendCompositeShader.SetInt("u_foreground", 1);
+            _blendCompositeShader.SetInt("u_mode", (int) blendMode);
+
+            _gl.ActiveTexture(TextureUnit.Texture0);
+            _gl.BindTexture(TextureTarget.Texture2D, background.TextureId);
+            _gl.ActiveTexture(TextureUnit.Texture1);
+            _gl.BindTexture(TextureTarget.Texture2D, foreground.TextureId);
+
+            _fullscreenQuad.Draw();
+            FrameStats.AddDrawCall();
+
+            _gl.ActiveTexture(TextureUnit.Texture1);
+            _gl.BindTexture(TextureTarget.Texture2D, 0);
+            _gl.ActiveTexture(TextureUnit.Texture0);
+            _gl.BindTexture(TextureTarget.Texture2D, 0);
+        }
+
+        private static bool TargetsEqual(GlRenderTarget a, GlRenderTarget b)
+        {
+            return a.FramebufferId == b.FramebufferId;
+        }
+
+        private GlRenderTarget ApplyPostProcess(PostProcessStack stack, GlRenderTarget inputTarget)
+        {
+            if (!stack.Enabled || stack.Effects.Count == 0)
+            {
+                return inputTarget;
+            }
+
+            var input = inputTarget;
             var applied = false;
 
             foreach (var effect in stack.Effects)
@@ -333,28 +425,28 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                     continue;
                 }
 
-                var output = usePing ? _pingTarget : _pongTarget;
+                var output = SelectPostProcessOutputTarget(input);
                 glEffect.Apply(_renderContext, input, output);
                 input = output;
-                usePing = !usePing;
                 applied = true;
             }
 
-            return applied ? input : _sceneTarget;
+            return applied ? input : inputTarget;
         }
 
         private void DrawSprites(Scene scene, Camera camera)
         {
-            DrawLayer(scene.MainLayer, camera, true);
-            DrawLayer(scene.UiLayer, camera, false);
+            var mainTarget = DrawLayer(scene.MainLayer, camera, true, _sceneTarget);
+            DrawLayer(scene.UiLayer, camera, false, mainTarget);
         }
 
         [SuppressMessage("ReSharper", "PossibleLossOfFraction")]
-        private void DrawLayer(SceneLayer layer, Camera camera, bool isCameraLayer)
+        private GlRenderTarget DrawLayer(SceneLayer layer, Camera camera, bool isCameraLayer, GlRenderTarget initialTarget)
         {
             var cameraRect = camera.Rect;
             var cameraOffsetX = cameraRect.X + camera.SubpixelOffset.X;
             var cameraOffsetY = cameraRect.Y + camera.SubpixelOffset.Y;
+            var target = initialTarget;
 
             foreach (var sprite in layer.Sprites)
             {
@@ -457,10 +549,12 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 );
                 var outline = sprite.Outline;
                 var outlineEnabled = outline.Enabled && outline.ThicknessTexels > 0f && outline.Color.W > 0f;
+                var outlineBlendMode = outline.ForceAlphaBlend ? SpriteBlendMode.Normal : sprite.BlendMode;
 
                 if (outlineEnabled && outline.Layering == OutlineLayering.Under)
                 {
-                    DrawOutline(sprite, albedo, canvasSpritePosX, canvasSpritePosY, screenSpritePosX, screenSpritePosY);
+                    DrawOutline(sprite, albedo, canvasSpritePosX, canvasSpritePosY, screenSpritePosX, screenSpritePosY,
+                        outlineBlendMode, ref target);
                 }
 
                 var material = ResolveMaterial(sprite);
@@ -470,13 +564,40 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 }
 
                 var normalMap = ResolveNormalMap(sprite);
-                DrawSprite(vertices, material, sprite, albedo, normalMap);
+                DrawSpriteWithBlendMode(vertices, material, sprite, albedo, normalMap, sprite.BlendMode, ref target);
 
                 if (outlineEnabled && outline.Layering == OutlineLayering.Over)
                 {
-                    DrawOutline(sprite, albedo, canvasSpritePosX, canvasSpritePosY, screenSpritePosX, screenSpritePosY);
+                    DrawOutline(sprite, albedo, canvasSpritePosX, canvasSpritePosY, screenSpritePosX, screenSpritePosY,
+                        outlineBlendMode, ref target);
                 }
             }
+
+            return target;
+        }
+
+        private void DrawSpriteWithBlendMode(float[] vertices, IGlMaterial material, Sprite sprite, GlNativeTexture albedo,
+            GlNativeTexture? normalMap, SpriteBlendMode blendMode, ref GlRenderTarget target)
+        {
+            if (blendMode == SpriteBlendMode.Normal)
+            {
+                BindTarget(target);
+                SetAlphaBlendState();
+                DrawSprite(vertices, material, sprite, albedo, normalMap);
+                return;
+            }
+
+            var foregroundTarget = SelectForegroundTarget(target);
+            BindTarget(foregroundTarget);
+            _gl.ClearColor(0f, 0f, 0f, 0f);
+            _gl.Clear(ClearBufferMask.ColorBufferBit);
+            SetBlendDisabledState();
+            DrawSprite(vertices, material, sprite, albedo, normalMap);
+            _gl.ClearColor(0f, 0f, 0f, 1f);
+
+            var outputTarget = SelectCompositeOutputTarget(target, foregroundTarget);
+            CompositeTargets(target, foregroundTarget, outputTarget, blendMode);
+            target = outputTarget;
         }
 
         private void DrawSprite(float[] vertices, IGlMaterial material, Sprite sprite, GlNativeTexture albedo,
@@ -496,7 +617,9 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
         private void DrawOutline(Sprite sprite, GlNativeTexture albedo,
             float worldSpritePosX, float worldSpritePosY,
-            float screenSpritePosX, float screenSpritePosY)
+            float screenSpritePosX, float screenSpritePosY,
+            SpriteBlendMode blendMode,
+            ref GlRenderTarget target)
         {
             var pad = (int) MathF.Ceiling(sprite.Outline.ThicknessTexels);
             if (pad <= 0)
@@ -524,7 +647,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 1f + uvPadX, 1f + uvPadY
             );
 
-            DrawSprite(outlineVertices, _outlineMaterial, sprite, albedo, null);
+            DrawSpriteWithBlendMode(outlineVertices, _outlineMaterial, sprite, albedo, null, blendMode, ref target);
         }
 
         private IGlMaterial? ResolveMaterial(Sprite sprite)
@@ -837,6 +960,8 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 return;
             }
 
+            SetAlphaBlendState();
+
             var x = DebugOverlay.PosX;
             var y = DebugOverlay.PosY;
             const int lineGap = 2;
@@ -919,6 +1044,95 @@ void main()
 {
     v_uv = a_uv;
     gl_Position = vec4(a_pos.xy, 0.0, 1.0);
+}
+";
+
+        private const string BlendCompositeVertexSource = @"#version 330 core
+layout(location = 0) in vec2 a_pos;
+layout(location = 1) in vec2 a_uv;
+
+out vec2 v_uv;
+
+void main()
+{
+    v_uv = a_uv;
+    gl_Position = vec4(a_pos.xy, 0.0, 1.0);
+}
+";
+
+        private const string BlendCompositeFragmentSource = @"#version 330 core
+in vec2 v_uv;
+out vec4 FragColor;
+
+uniform sampler2D u_background;
+uniform sampler2D u_foreground;
+uniform int u_mode;
+
+float BlendSoftLightChannel(float d, float s)
+{
+    if (s <= 0.5)
+    {
+        return d - (1.0 - 2.0 * s) * d * (1.0 - d);
+    }
+
+    float g;
+    if (d <= 0.25)
+    {
+        g = ((16.0 * d - 12.0) * d + 4.0) * d;
+    }
+    else
+    {
+        g = sqrt(max(d, 0.0));
+    }
+
+    return d + (2.0 * s - 1.0) * (g - d);
+}
+
+vec3 BlendRgb(vec3 dst, vec3 src)
+{
+    if (u_mode == 1)
+    {
+        return dst * src;
+    }
+
+    if (u_mode == 2)
+    {
+        return 1.0 - (1.0 - src) * (1.0 - dst);
+    }
+
+    if (u_mode == 3)
+    {
+        return vec3(
+            BlendSoftLightChannel(dst.r, src.r),
+            BlendSoftLightChannel(dst.g, src.g),
+            BlendSoftLightChannel(dst.b, src.b)
+        );
+    }
+
+    if (u_mode == 4)
+    {
+        return vec3(
+            dst.r <= 0.5 ? (2.0 * dst.r * src.r) : (1.0 - 2.0 * (1.0 - dst.r) * (1.0 - src.r)),
+            dst.g <= 0.5 ? (2.0 * dst.g * src.g) : (1.0 - 2.0 * (1.0 - dst.g) * (1.0 - src.g)),
+            dst.b <= 0.5 ? (2.0 * dst.b * src.b) : (1.0 - 2.0 * (1.0 - dst.b) * (1.0 - src.b))
+        );
+    }
+
+    return src;
+}
+
+void main()
+{
+    vec4 background = texture(u_background, v_uv);
+    vec4 foreground = texture(u_foreground, v_uv);
+
+    float dstA = clamp(background.a, 0.0, 1.0);
+    float srcA = clamp(foreground.a, 0.0, 1.0);
+    vec3 blended = BlendRgb(background.rgb, foreground.rgb);
+    vec3 outRgb = (1.0 - srcA) * background.rgb + srcA * ((1.0 - dstA) * foreground.rgb + dstA * blended);
+    float outA = srcA + dstA - srcA * dstA;
+
+    FragColor = vec4(outRgb, outA);
 }
 ";
 

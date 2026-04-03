@@ -2,6 +2,7 @@ using System.Numerics;
 using IsometricMagic.Game.Components.Collision;
 using IsometricMagic.Game.Components.Rendering;
 using IsometricMagic.Game.Components.Spatial;
+using IsometricMagic.Game.Components.Vfx.Light;
 using IsometricMagic.Game.Model;
 using IsometricMagic.Game.Prefabs;
 using IsometricMagic.Game.Rendering;
@@ -117,6 +118,17 @@ namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
             {
                 Radius = _spec.ColliderRadius,
                 IsStatic = true
+            });
+            
+            stone.AddComponent(new Light2DComponent()
+            {
+                Intensity = 5f,
+                Radius = 512f,
+                Height = 2f,
+                Falloff = 2f,
+                InnerRadius = 64f,
+                CenterAttenuation = 0.1f,
+                Color = new Vector3(0.37f, 0.81f, 0.51f),
             });
 
             var sparksSpec = BaseSparksPrototype with

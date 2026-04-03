@@ -29,7 +29,8 @@ namespace IsometricMagic.Game.Scenes
             var playerPrefab = new HumanoidPlayerPrefab(new HumanoidPlayerPrefabSpec(
                 EntityName: "Player",
                 StartPosition: new IsoWorldPosition(470f, 470f),
-                WorldLayerBase: mapInstance.WorldLayerBase
+                WorldLayerBase: mapInstance.WorldLayerBase,
+                LayerStride: mapInstance.LayerStride
             ));
             playerPrefab.Instantiate(this);
             yield return true;
@@ -54,18 +55,6 @@ namespace IsometricMagic.Game.Scenes
             yield return true;
 
             Lighting.AmbientIntensity = 0.45f;
-            Lighting.Add(
-                new Light2D(mapInstance.Converter.ToCanvas(new IsoWorldPosition(410f, 410f)).ToVector2())
-                {
-                    Intensity = 5f,
-                    Radius = 512f,
-                    Height = 2f,
-                    Falloff = 2f,
-                    InnerRadius = 64f,
-                    CenterAttenuation = 0.1f,
-                    Color = new Vector3(0.37f, 0.81f, 0.51f),
-                }
-            );
 
             PostProcess.Add(new BloomEffect
             {
