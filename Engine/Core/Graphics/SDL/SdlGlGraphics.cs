@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using IsometricMagic.Engine.App;
 using IsometricMagic.Engine.Assets;
@@ -16,6 +17,7 @@ using IsometricMagic.Engine.Inputs;
 using IsometricMagic.Engine.Rendering;
 using IsometricMagic.Engine.Scenes;
 using IsometricMagic.Engine.Core.Assets;
+using EngineTexture = IsometricMagic.Engine.Assets.Texture;
 using SDL2;
 using Silk.NET.OpenGL;
 using static SDL2.SDL;
@@ -37,11 +39,129 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
         private GlFullscreenQuad _fullscreenQuad = null!;
         private GlShaderProgram _presentShader = null!;
         private GlShaderProgram _blendCompositeShader = null!;
-        private UnlitSpriteMaterial _defaultMaterial = null!;
+        private GlShaderProgram _directCompositeShader = null!;
+        private bool _blendCompositeSamplersInitialized;
+        private bool _directCompositeSamplersInitialized;
+        private StandardSpriteMaterial _defaultMaterial = null!;
         private OutlineSpriteMaterial _outlineMaterial = null!;
+        private long _frameId;
+
+        private const int SpriteVertexCount = 6;
+        private const int SpriteVertexStrideFloats = 10;
+        private const int SpriteFloatCount = SpriteVertexCount * SpriteVertexStrideFloats;
 
         private uint _spriteVao;
         private uint _spriteVbo;
+        private int _spriteBufferCapacityFloats;
+
+        private float[] _singleSpriteVertices = new float[SpriteFloatCount];
+        private float[] _batchedVertices = new float[SpriteFloatCount * 256];
+
+        private enum BlendStateMode
+        {
+            Unknown,
+            Disabled,
+            AlphaBlend,
+        }
+
+        private BlendStateMode _blendState = BlendStateMode.Unknown;
+        private uint _boundFramebufferId = uint.MaxValue;
+        private int _boundViewportWidth = -1;
+        private int _boundViewportHeight = -1;
+
+        private uint _backgroundRectTextureId;
+        private uint _backgroundRectFramebufferId;
+        private int _backgroundRectTextureWidth;
+        private int _backgroundRectTextureHeight;
+
+        private readonly struct ScreenRect
+        {
+            public readonly int X;
+            public readonly int Y;
+            public readonly int Width;
+            public readonly int Height;
+
+            public ScreenRect(int x, int y, int width, int height)
+            {
+                X = x;
+                Y = y;
+                Width = width;
+                Height = height;
+            }
+        }
+
+        private readonly struct SpriteBatchKey : IEquatable<SpriteBatchKey>
+        {
+            public readonly uint AlbedoTextureId;
+            public readonly uint NormalTextureId;
+            public readonly uint EmissionTextureId;
+            public readonly int ShadingModel;
+            public readonly int NormalMapMode;
+            public readonly int EmissionColorX;
+            public readonly int EmissionColorY;
+            public readonly int EmissionColorZ;
+            public readonly int EmissionIntensity;
+            public readonly bool ForceUnlitShading;
+
+            public SpriteBatchKey(
+                uint albedoTextureId,
+                uint normalTextureId,
+                uint emissionTextureId,
+                int shadingModel,
+                int normalMapMode,
+                int emissionColorX,
+                int emissionColorY,
+                int emissionColorZ,
+                int emissionIntensity,
+                bool forceUnlitShading)
+            {
+                AlbedoTextureId = albedoTextureId;
+                NormalTextureId = normalTextureId;
+                EmissionTextureId = emissionTextureId;
+                ShadingModel = shadingModel;
+                NormalMapMode = normalMapMode;
+                EmissionColorX = emissionColorX;
+                EmissionColorY = emissionColorY;
+                EmissionColorZ = emissionColorZ;
+                EmissionIntensity = emissionIntensity;
+                ForceUnlitShading = forceUnlitShading;
+            }
+
+            public bool Equals(SpriteBatchKey other)
+            {
+                return AlbedoTextureId == other.AlbedoTextureId
+                       && NormalTextureId == other.NormalTextureId
+                       && EmissionTextureId == other.EmissionTextureId
+                       && ShadingModel == other.ShadingModel
+                       && NormalMapMode == other.NormalMapMode
+                       && EmissionColorX == other.EmissionColorX
+                       && EmissionColorY == other.EmissionColorY
+                       && EmissionColorZ == other.EmissionColorZ
+                       && EmissionIntensity == other.EmissionIntensity
+                       && ForceUnlitShading == other.ForceUnlitShading;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                return obj is SpriteBatchKey other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                var hash = new HashCode();
+                hash.Add(AlbedoTextureId);
+                hash.Add(NormalTextureId);
+                hash.Add(EmissionTextureId);
+                hash.Add(ShadingModel);
+                hash.Add(NormalMapMode);
+                hash.Add(EmissionColorX);
+                hash.Add(EmissionColorY);
+                hash.Add(EmissionColorZ);
+                hash.Add(EmissionIntensity);
+                hash.Add(ForceUnlitShading);
+                return hash.ToHashCode();
+            }
+        }
 
         private GlRenderTarget _sceneTarget;
         private GlRenderTarget _pingTarget;
@@ -88,6 +208,20 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 _gl.DeleteVertexArray(_spriteVao);
             }
 
+            if (_backgroundRectTextureId != 0)
+            {
+                _gl.DeleteTexture(_backgroundRectTextureId);
+                _backgroundRectTextureId = 0;
+                _backgroundRectTextureWidth = 0;
+                _backgroundRectTextureHeight = 0;
+            }
+
+            if (_backgroundRectFramebufferId != 0)
+            {
+                _gl.DeleteFramebuffer(_backgroundRectFramebufferId);
+                _backgroundRectFramebufferId = 0;
+            }
+
             if (_glContext != IntPtr.Zero)
             {
                 SDL_GL_DeleteContext(_glContext);
@@ -111,6 +245,8 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             _viewportWidth = w;
             _viewportHeight = h;
             _gl.Viewport(0, 0, (uint) w, (uint) h);
+            _boundViewportWidth = w;
+            _boundViewportHeight = h;
             ResizeRenderTargets(w, h);
             width = w;
             height = h;
@@ -130,6 +266,8 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             _renderContext.ViewportWidth = _viewportWidth;
             _renderContext.ViewportHeight = _viewportHeight;
             _renderContext.Time += Time.DeltaTime;
+            _renderContext.FrameId = ++_frameId;
+            _renderContext.ForceUnlitShading = false;
 
             BindTarget(_sceneTarget);
             _gl.Clear(ClearBufferMask.ColorBufferBit);
@@ -138,8 +276,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             var postProcessed = ApplyPostProcess(scene.PostProcess, mainTarget);
             var finalTarget = DrawLayer(scene.UiLayer, camera, false, postProcessed);
 
-            _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-            _gl.Viewport(0, 0, (uint) _viewportWidth, (uint) _viewportHeight);
+            BindDefaultTarget();
             DrawPresent(finalTarget.TextureId);
 
             DebugOverlay.Update(Time.DeltaTime);
@@ -272,6 +409,9 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
             SDL_GL_GetDrawableSize(_sdlWindow, out _viewportWidth, out _viewportHeight);
             _gl.Viewport(0, 0, (uint) _viewportWidth, (uint) _viewportHeight);
+            _boundFramebufferId = 0;
+            _boundViewportWidth = _viewportWidth;
+            _boundViewportHeight = _viewportHeight;
         }
 
         private void InitResources()
@@ -282,7 +422,10 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
             _presentShader = new GlShaderProgram(_gl, PresentVertexSource, PresentFragmentSource);
             _blendCompositeShader = new GlShaderProgram(_gl, BlendCompositeVertexSource, BlendCompositeFragmentSource);
-            _defaultMaterial = new UnlitSpriteMaterial(_gl);
+            _directCompositeShader = new GlShaderProgram(_gl, DirectCompositeVertexSource, DirectCompositeFragmentSource);
+            _blendCompositeSamplersInitialized = false;
+            _directCompositeSamplersInitialized = false;
+            _defaultMaterial = SpriteMaterialFactory.Unlit();
             _outlineMaterial = new OutlineSpriteMaterial();
 
             _spriteVao = _gl.GenVertexArray();
@@ -290,20 +433,25 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
             _gl.BindVertexArray(_spriteVao);
             _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _spriteVbo);
+            _spriteBufferCapacityFloats = SpriteFloatCount * 256;
             unsafe
             {
-                _gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint) (6 * 6 * sizeof(float)), null,
+                _gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint) (_spriteBufferCapacityFloats * sizeof(float)), null,
                     BufferUsageARB.DynamicDraw);
             }
 
             _gl.EnableVertexAttribArray(0);
-            _gl.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
+            _gl.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, SpriteVertexStrideFloats * sizeof(float),
+                0);
             _gl.EnableVertexAttribArray(1);
-            _gl.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 6 * sizeof(float),
+            _gl.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, SpriteVertexStrideFloats * sizeof(float),
                 2 * sizeof(float));
             _gl.EnableVertexAttribArray(2);
-            _gl.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, 6 * sizeof(float),
+            _gl.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, SpriteVertexStrideFloats * sizeof(float),
                 4 * sizeof(float));
+            _gl.EnableVertexAttribArray(3);
+            _gl.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, SpriteVertexStrideFloats * sizeof(float),
+                6 * sizeof(float));
 
             _gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
             _gl.BindVertexArray(0);
@@ -324,12 +472,43 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
         private void BindTarget(GlRenderTarget target)
         {
-            _gl.BindFramebuffer(FramebufferTarget.Framebuffer, target.FramebufferId);
-            _gl.Viewport(0, 0, (uint) target.Width, (uint) target.Height);
+            if (_boundFramebufferId != target.FramebufferId)
+            {
+                _gl.BindFramebuffer(FramebufferTarget.Framebuffer, target.FramebufferId);
+                _boundFramebufferId = target.FramebufferId;
+            }
+
+            if (_boundViewportWidth != target.Width || _boundViewportHeight != target.Height)
+            {
+                _gl.Viewport(0, 0, (uint) target.Width, (uint) target.Height);
+                _boundViewportWidth = target.Width;
+                _boundViewportHeight = target.Height;
+            }
+        }
+
+        private void BindDefaultTarget()
+        {
+            if (_boundFramebufferId != 0)
+            {
+                _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+                _boundFramebufferId = 0;
+            }
+
+            if (_boundViewportWidth != _viewportWidth || _boundViewportHeight != _viewportHeight)
+            {
+                _gl.Viewport(0, 0, (uint) _viewportWidth, (uint) _viewportHeight);
+                _boundViewportWidth = _viewportWidth;
+                _boundViewportHeight = _viewportHeight;
+            }
         }
 
         private void SetAlphaBlendState()
         {
+            if (_blendState == BlendStateMode.AlphaBlend)
+            {
+                return;
+            }
+
             _gl.Enable(EnableCap.Blend);
             _gl.BlendFuncSeparate(
                 BlendingFactor.SrcAlpha,
@@ -337,11 +516,18 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 BlendingFactor.One,
                 BlendingFactor.OneMinusSrcAlpha
             );
+            _blendState = BlendStateMode.AlphaBlend;
         }
 
         private void SetBlendDisabledState()
         {
+            if (_blendState == BlendStateMode.Disabled)
+            {
+                return;
+            }
+
             _gl.Disable(EnableCap.Blend);
+            _blendState = BlendStateMode.Disabled;
         }
 
         private GlRenderTarget SelectPostProcessOutputTarget(GlRenderTarget input)
@@ -364,43 +550,54 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             return _pingTarget;
         }
 
-        private GlRenderTarget SelectCompositeOutputTarget(GlRenderTarget current, GlRenderTarget foreground)
-        {
-            if (!TargetsEqual(_sceneTarget, current) && !TargetsEqual(_sceneTarget, foreground))
-            {
-                return _sceneTarget;
-            }
-
-            if (!TargetsEqual(_pingTarget, current) && !TargetsEqual(_pingTarget, foreground))
-            {
-                return _pingTarget;
-            }
-
-            return _pongTarget;
-        }
-
-        private void CompositeTargets(GlRenderTarget background, GlRenderTarget foreground, GlRenderTarget output,
+        private void CompositeTargetsToCurrentTarget(ScreenRect rect, GlRenderTarget foreground, GlRenderTarget target,
             SpriteBlendMode blendMode)
         {
-            BindTarget(output);
+            if (rect.Width <= 0 || rect.Height <= 0)
+            {
+                return;
+            }
+
+            EnsureBackgroundRectTexture(rect.Width, rect.Height);
+            CaptureBackgroundRect(target, rect);
+
+            BuildCompositeRectVertices(_singleSpriteVertices, rect.X, rect.Y, rect.Width, rect.Height,
+                2f / target.Width,
+                -1f,
+                -2f / target.Height,
+                1f);
+
+            BindTarget(target);
             SetBlendDisabledState();
+            EnableScissor(rect, target.Height);
+
             _blendCompositeShader.Use();
-            _blendCompositeShader.SetInt("u_background", 0);
-            _blendCompositeShader.SetInt("u_foreground", 1);
+            if (!_blendCompositeSamplersInitialized)
+            {
+                _blendCompositeShader.SetInt("u_background", 0);
+                _blendCompositeShader.SetInt("u_foreground", 1);
+                _blendCompositeSamplersInitialized = true;
+            }
+
             _blendCompositeShader.SetInt("u_mode", (int) blendMode);
+            _blendCompositeShader.SetVector2("u_backgroundUvScale",
+                rect.Width / (float) _backgroundRectTextureWidth,
+                rect.Height / (float) _backgroundRectTextureHeight);
+            _blendCompositeShader.SetVector2("u_foregroundUvMin",
+                rect.X / (float) target.Width,
+                1f - (rect.Y + rect.Height) / (float) target.Height);
+            _blendCompositeShader.SetVector2("u_foregroundUvScale",
+                rect.Width / (float) target.Width,
+                rect.Height / (float) target.Height);
 
             _gl.ActiveTexture(TextureUnit.Texture0);
-            _gl.BindTexture(TextureTarget.Texture2D, background.TextureId);
+            _gl.BindTexture(TextureTarget.Texture2D, _backgroundRectTextureId);
             _gl.ActiveTexture(TextureUnit.Texture1);
             _gl.BindTexture(TextureTarget.Texture2D, foreground.TextureId);
 
-            _fullscreenQuad.Draw();
+            DrawRawSpriteVertices(_singleSpriteVertices, SpriteVertexCount);
             FrameStats.AddDrawCall();
-
-            _gl.ActiveTexture(TextureUnit.Texture1);
-            _gl.BindTexture(TextureTarget.Texture2D, 0);
-            _gl.ActiveTexture(TextureUnit.Texture0);
-            _gl.BindTexture(TextureTarget.Texture2D, 0);
+            DisableScissor();
         }
 
         private static bool TargetsEqual(GlRenderTarget a, GlRenderTarget b)
@@ -447,6 +644,46 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             var cameraOffsetX = cameraRect.X + camera.SubpixelOffset.X;
             var cameraOffsetY = cameraRect.Y + camera.SubpixelOffset.Y;
             var target = initialTarget;
+            _renderContext.ForceUnlitShading = !isCameraLayer;
+
+            var ndcScaleX = 2f / _viewportWidth;
+            var ndcBiasX = -1f;
+            var ndcScaleY = -2f / _viewportHeight;
+            var ndcBiasY = 1f;
+
+            var hasPendingBatch = false;
+            var pendingBatchKey = default(SpriteBatchKey);
+            var pendingBatchMaterial = default(IGlMaterial)!;
+            var pendingBatchSprite = default(Sprite)!;
+            var pendingBatchAlbedo = default(GlNativeTexture)!;
+            GlNativeTexture? pendingBatchNormal = null;
+            GlNativeTexture? pendingBatchEmission = null;
+            var pendingBatchSpriteCount = 0;
+            var pendingBatchFloatCount = 0;
+
+            void FlushPendingBatch()
+            {
+                if (!hasPendingBatch)
+                {
+                    return;
+                }
+
+                BindTarget(target);
+                SetAlphaBlendState();
+                DrawSprite(
+                    _batchedVertices.AsSpan(0, pendingBatchFloatCount),
+                    pendingBatchFloatCount / SpriteVertexStrideFloats,
+                    pendingBatchSpriteCount,
+                    pendingBatchMaterial,
+                    pendingBatchSprite,
+                    pendingBatchAlbedo,
+                    pendingBatchNormal,
+                    pendingBatchEmission);
+
+                hasPendingBatch = false;
+                pendingBatchSpriteCount = 0;
+                pendingBatchFloatCount = 0;
+            }
 
             foreach (var sprite in layer.Sprites)
             {
@@ -540,12 +777,21 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                     screenSpritePosY -= cameraOffsetY;
                 }
 
-                var vertices = BuildQuadVertices(
+                BuildQuadVertices(
+                    _singleSpriteVertices,
                     canvasSpritePosX, canvasSpritePosY,
                     screenSpritePosX, screenSpritePosY,
                     sprite.Width, sprite.Height,
                     sprite.Transformation.Rotation.Angle,
-                    sprite.Transformation.Rotation.Clockwise
+                    sprite.Transformation.Rotation.Clockwise,
+                    sprite.Color.X,
+                    sprite.Color.Y,
+                    sprite.Color.Z,
+                    sprite.Color.W,
+                    ndcScaleX,
+                    ndcBiasX,
+                    ndcScaleY,
+                    ndcBiasY
                 );
                 var outline = sprite.Outline;
                 var outlineEnabled = outline.Enabled && outline.ThicknessTexels > 0f && outline.Color.W > 0f;
@@ -553,8 +799,9 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
                 if (outlineEnabled && outline.Layering == OutlineLayering.Under)
                 {
+                    FlushPendingBatch();
                     DrawOutline(sprite, albedo, canvasSpritePosX, canvasSpritePosY, screenSpritePosX, screenSpritePosY,
-                        outlineBlendMode, ref target);
+                        outlineBlendMode, ref target, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
                 }
 
                 var material = ResolveMaterial(sprite);
@@ -563,63 +810,363 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                     continue;
                 }
 
-                var normalMap = ResolveNormalMap(sprite);
-                DrawSpriteWithBlendMode(vertices, material, sprite, albedo, normalMap, sprite.BlendMode, ref target);
+                var capabilities = ResolveMaterialCapabilities(material);
+                var normalMap = ResolveNormalMap(sprite, capabilities);
+                var emissionMap = ResolveEmissionMap(capabilities);
+
+                if (sprite.BlendMode == SpriteBlendMode.Normal
+                    && TryBuildBatchKey(material, albedo, normalMap, emissionMap, out var batchKey))
+                {
+                    if (hasPendingBatch && !pendingBatchKey.Equals(batchKey))
+                    {
+                        FlushPendingBatch();
+                    }
+
+                    if (!hasPendingBatch)
+                    {
+                        pendingBatchKey = batchKey;
+                        pendingBatchMaterial = material;
+                        pendingBatchSprite = sprite;
+                        pendingBatchAlbedo = albedo;
+                        pendingBatchNormal = normalMap;
+                        pendingBatchEmission = emissionMap;
+                        hasPendingBatch = true;
+                    }
+
+                    EnsureBatchVertexCapacity(pendingBatchFloatCount + SpriteFloatCount);
+                    Array.Copy(_singleSpriteVertices, 0, _batchedVertices, pendingBatchFloatCount, SpriteFloatCount);
+                    pendingBatchFloatCount += SpriteFloatCount;
+                    pendingBatchSpriteCount++;
+                }
+                else
+                {
+                    FlushPendingBatch();
+                    DrawSpriteWithBlendMode(
+                        _singleSpriteVertices,
+                        SpriteVertexCount,
+                        1,
+                        material,
+                        sprite,
+                        albedo,
+                        normalMap,
+                        emissionMap,
+                        sprite.BlendMode,
+                        ref target);
+                }
 
                 if (outlineEnabled && outline.Layering == OutlineLayering.Over)
                 {
+                    FlushPendingBatch();
                     DrawOutline(sprite, albedo, canvasSpritePosX, canvasSpritePosY, screenSpritePosX, screenSpritePosY,
-                        outlineBlendMode, ref target);
+                        outlineBlendMode, ref target, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
                 }
             }
+
+            FlushPendingBatch();
 
             return target;
         }
 
-        private void DrawSpriteWithBlendMode(float[] vertices, IGlMaterial material, Sprite sprite, GlNativeTexture albedo,
-            GlNativeTexture? normalMap, SpriteBlendMode blendMode, ref GlRenderTarget target)
+        private bool TryBuildBatchKey(IGlMaterial material, GlNativeTexture albedo, GlNativeTexture? normalMap,
+            GlNativeTexture? emissionMap, out SpriteBatchKey key)
+        {
+            if (material is not StandardSpriteMaterial standardMaterial)
+            {
+                key = default;
+                return false;
+            }
+
+            key = new SpriteBatchKey(
+                albedo.TextureId,
+                normalMap?.TextureId ?? 0u,
+                emissionMap?.TextureId ?? 0u,
+                (int) standardMaterial.ShadingModel,
+                (int) standardMaterial.NormalMapMode,
+                BitConverter.SingleToInt32Bits(standardMaterial.EmissionColor.X),
+                BitConverter.SingleToInt32Bits(standardMaterial.EmissionColor.Y),
+                BitConverter.SingleToInt32Bits(standardMaterial.EmissionColor.Z),
+                BitConverter.SingleToInt32Bits(standardMaterial.EmissionIntensity),
+                _renderContext.ForceUnlitShading);
+            return true;
+        }
+
+        private void EnsureBatchVertexCapacity(int requiredFloats)
+        {
+            if (_batchedVertices.Length >= requiredFloats)
+            {
+                return;
+            }
+
+            var newCapacity = _batchedVertices.Length;
+            while (newCapacity < requiredFloats)
+            {
+                newCapacity *= 2;
+            }
+
+            Array.Resize(ref _batchedVertices, newCapacity);
+        }
+
+        private void DrawSpriteWithBlendMode(ReadOnlySpan<float> vertices, int vertexCount, int spriteCount,
+            IGlMaterial material, Sprite sprite, GlNativeTexture albedo,
+            GlNativeTexture? normalMap, GlNativeTexture? emissionMap, SpriteBlendMode blendMode, ref GlRenderTarget target)
         {
             if (blendMode == SpriteBlendMode.Normal)
             {
                 BindTarget(target);
                 SetAlphaBlendState();
-                DrawSprite(vertices, material, sprite, albedo, normalMap);
+                DrawSprite(vertices, vertexCount, spriteCount, material, sprite, albedo, normalMap, emissionMap);
+                return;
+            }
+
+            if (!TryGetScreenRect(vertices, vertexCount, target.Width, target.Height, out var rect))
+            {
+                return;
+            }
+
+            if (TryDrawDirectCompositeSprite(vertices, vertexCount, spriteCount, material, sprite, albedo, emissionMap,
+                    blendMode, ref target, rect))
+            {
                 return;
             }
 
             var foregroundTarget = SelectForegroundTarget(target);
             BindTarget(foregroundTarget);
+            EnableScissor(rect, foregroundTarget.Height);
             _gl.ClearColor(0f, 0f, 0f, 0f);
             _gl.Clear(ClearBufferMask.ColorBufferBit);
             SetBlendDisabledState();
-            DrawSprite(vertices, material, sprite, albedo, normalMap);
+            DrawSprite(vertices, vertexCount, spriteCount, material, sprite, albedo, normalMap, emissionMap);
+            DisableScissor();
             _gl.ClearColor(0f, 0f, 0f, 1f);
 
-            var outputTarget = SelectCompositeOutputTarget(target, foregroundTarget);
-            CompositeTargets(target, foregroundTarget, outputTarget, blendMode);
-            target = outputTarget;
+            CompositeTargetsToCurrentTarget(rect, foregroundTarget, target, blendMode);
         }
 
-        private void DrawSprite(float[] vertices, IGlMaterial material, Sprite sprite, GlNativeTexture albedo,
-            GlNativeTexture? normalMap)
+        private bool TryDrawDirectCompositeSprite(ReadOnlySpan<float> vertices, int vertexCount, int spriteCount,
+            IGlMaterial material, Sprite sprite, GlNativeTexture albedo, GlNativeTexture? emissionMap,
+            SpriteBlendMode blendMode, ref GlRenderTarget target, ScreenRect rect)
+        {
+            if (spriteCount != 1 || vertexCount != SpriteVertexCount)
+            {
+                return false;
+            }
+
+            if (material is not StandardSpriteMaterial standardMaterial)
+            {
+                return false;
+            }
+
+            if (standardMaterial.ShadingModel == SpriteShadingModel.Lit && !_renderContext.ForceUnlitShading)
+            {
+                return false;
+            }
+
+            EnsureBackgroundRectTexture(rect.Width, rect.Height);
+            CaptureBackgroundRect(target, rect);
+
+            BindTarget(target);
+            SetBlendDisabledState();
+
+            _directCompositeShader.Use();
+            if (!_directCompositeSamplersInitialized)
+            {
+                _directCompositeShader.SetInt("u_background", 0);
+                _directCompositeShader.SetInt("u_albedo", 1);
+                _directCompositeShader.SetInt("u_emissionMap", 2);
+                _directCompositeSamplersInitialized = true;
+            }
+
+            _directCompositeShader.SetInt("u_mode", (int) blendMode);
+            _directCompositeShader.SetInt("u_useEmission", standardMaterial.EmissionIntensity > 0f ? 1 : 0);
+            _directCompositeShader.SetInt("u_hasEmissionMap", emissionMap != null ? 1 : 0);
+            _directCompositeShader.SetVector3("u_emissionColor", standardMaterial.EmissionColor.X,
+                standardMaterial.EmissionColor.Y, standardMaterial.EmissionColor.Z);
+            _directCompositeShader.SetFloat("u_emissionIntensity", standardMaterial.EmissionIntensity);
+            var glY = target.Height - rect.Y - rect.Height;
+            _directCompositeShader.SetVector2("u_backgroundUvScale",
+                1f / _backgroundRectTextureWidth,
+                1f / _backgroundRectTextureHeight);
+            _directCompositeShader.SetVector2("u_backgroundUvBias",
+                -rect.X / (float) _backgroundRectTextureWidth,
+                -glY / (float) _backgroundRectTextureHeight);
+
+            _gl.ActiveTexture(TextureUnit.Texture0);
+            _gl.BindTexture(TextureTarget.Texture2D, _backgroundRectTextureId);
+            _gl.ActiveTexture(TextureUnit.Texture1);
+            _gl.BindTexture(TextureTarget.Texture2D, albedo.TextureId);
+            _gl.ActiveTexture(TextureUnit.Texture2);
+            _gl.BindTexture(TextureTarget.Texture2D, emissionMap?.TextureId ?? 0u);
+
+            DrawRawSpriteVertices(vertices, vertexCount);
+            FrameStats.AddDrawCall();
+            for (var i = 0; i < spriteCount; i++)
+            {
+                FrameStats.AddSpriteDrawn();
+            }
+            return true;
+        }
+
+        private void DrawSprite(ReadOnlySpan<float> vertices, int vertexCount, int spriteCount,
+            IGlMaterial material, Sprite sprite, GlNativeTexture albedo,
+            GlNativeTexture? normalMap, GlNativeTexture? emissionMap)
+        {
+            material.Bind(_renderContext, sprite, albedo, normalMap, emissionMap);
+
+            DrawRawSpriteVertices(vertices, vertexCount);
+            FrameStats.AddDrawCall();
+            for (var i = 0; i < spriteCount; i++)
+            {
+                FrameStats.AddSpriteDrawn();
+            }
+        }
+
+        private void DrawRawSpriteVertices(ReadOnlySpan<float> vertices, int vertexCount)
         {
             UpdateSpriteBuffer(vertices);
-            material.Bind(_renderContext, sprite, albedo, normalMap);
-
             _gl.BindVertexArray(_spriteVao);
-            FrameStats.AddDrawCall();
-            FrameStats.AddSpriteDrawn();
-            _gl.DrawArrays(PrimitiveType.Triangles, 0, 6);
-            _gl.BindVertexArray(0);
+            _gl.DrawArrays(PrimitiveType.Triangles, 0, (uint) vertexCount);
+        }
 
-            material.Unbind(_renderContext);
+        private static bool TryGetScreenRect(ReadOnlySpan<float> vertices, int vertexCount, int targetWidth,
+            int targetHeight, out ScreenRect rect)
+        {
+            var minX = float.PositiveInfinity;
+            var minY = float.PositiveInfinity;
+            var maxX = float.NegativeInfinity;
+            var maxY = float.NegativeInfinity;
+
+            for (var i = 0; i < vertexCount; i++)
+            {
+                var offset = i * SpriteVertexStrideFloats;
+                var ndcX = vertices[offset];
+                var ndcY = vertices[offset + 1];
+
+                var screenX = (ndcX * 0.5f + 0.5f) * targetWidth;
+                var screenY = (0.5f - ndcY * 0.5f) * targetHeight;
+
+                if (screenX < minX)
+                {
+                    minX = screenX;
+                }
+
+                if (screenY < minY)
+                {
+                    minY = screenY;
+                }
+
+                if (screenX > maxX)
+                {
+                    maxX = screenX;
+                }
+
+                if (screenY > maxY)
+                {
+                    maxY = screenY;
+                }
+            }
+
+            var x0 = Math.Clamp((int) MathF.Floor(minX), 0, targetWidth);
+            var y0 = Math.Clamp((int) MathF.Floor(minY), 0, targetHeight);
+            var x1 = Math.Clamp((int) MathF.Ceiling(maxX), 0, targetWidth);
+            var y1 = Math.Clamp((int) MathF.Ceiling(maxY), 0, targetHeight);
+
+            var width = x1 - x0;
+            var height = y1 - y0;
+            if (width <= 0 || height <= 0)
+            {
+                rect = default;
+                return false;
+            }
+
+            rect = new ScreenRect(x0, y0, width, height);
+            return true;
+        }
+
+        private void EnsureBackgroundRectTexture(int width, int height)
+        {
+            if (_backgroundRectTextureId != 0 && _backgroundRectTextureWidth >= width && _backgroundRectTextureHeight >= height)
+            {
+                return;
+            }
+
+            if (_backgroundRectTextureId != 0)
+            {
+                _gl.DeleteTexture(_backgroundRectTextureId);
+            }
+
+            _backgroundRectTextureId = CreateHdrTexture(width, height);
+            _backgroundRectTextureWidth = width;
+            _backgroundRectTextureHeight = height;
+
+            if (_backgroundRectFramebufferId == 0)
+            {
+                _backgroundRectFramebufferId = _gl.GenFramebuffer();
+            }
+
+            _gl.BindFramebuffer(FramebufferTarget.Framebuffer, _backgroundRectFramebufferId);
+            _boundFramebufferId = _backgroundRectFramebufferId;
+            _gl.FramebufferTexture2D(
+                FramebufferTarget.Framebuffer,
+                FramebufferAttachment.ColorAttachment0,
+                TextureTarget.Texture2D,
+                _backgroundRectTextureId,
+                0);
+
+            var status = _gl.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
+            if (status != GLEnum.FramebufferComplete)
+            {
+                throw new InvalidOperationException($"Background framebuffer incomplete: {status}");
+            }
+
+            _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            _boundFramebufferId = 0;
+        }
+
+        private void CaptureBackgroundRect(GlRenderTarget target, ScreenRect rect)
+        {
+            var glY = target.Height - rect.Y - rect.Height;
+
+            _gl.BindFramebuffer(FramebufferTarget.ReadFramebuffer, target.FramebufferId);
+            _gl.BindFramebuffer(FramebufferTarget.DrawFramebuffer, _backgroundRectFramebufferId);
+            _gl.ReadBuffer(ReadBufferMode.ColorAttachment0);
+            _gl.DrawBuffer(DrawBufferMode.ColorAttachment0);
+            _gl.BlitFramebuffer(
+                rect.X,
+                glY,
+                rect.X + rect.Width,
+                glY + rect.Height,
+                0,
+                0,
+                rect.Width,
+                rect.Height,
+                ClearBufferMask.ColorBufferBit,
+                BlitFramebufferFilter.Nearest);
+
+            _boundFramebufferId = uint.MaxValue;
+            BindTarget(target);
+        }
+
+        private void EnableScissor(ScreenRect rect, int targetHeight)
+        {
+            _gl.Enable(EnableCap.ScissorTest);
+            var glY = targetHeight - rect.Y - rect.Height;
+            _gl.Scissor(rect.X, glY, (uint) rect.Width, (uint) rect.Height);
+        }
+
+        private void DisableScissor()
+        {
+            _gl.Disable(EnableCap.ScissorTest);
         }
 
         private void DrawOutline(Sprite sprite, GlNativeTexture albedo,
             float worldSpritePosX, float worldSpritePosY,
             float screenSpritePosX, float screenSpritePosY,
             SpriteBlendMode blendMode,
-            ref GlRenderTarget target)
+            ref GlRenderTarget target,
+            float ndcScaleX,
+            float ndcBiasX,
+            float ndcScaleY,
+            float ndcBiasY)
         {
             var pad = (int) MathF.Ceiling(sprite.Outline.ThicknessTexels);
             if (pad <= 0)
@@ -637,17 +1184,28 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             var uvPadX = pad / (float) sprite.Width;
             var uvPadY = pad / (float) sprite.Height;
 
-            var outlineVertices = BuildQuadVertices(
+            BuildQuadVertices(
+                _singleSpriteVertices,
                 outlineWorldX, outlineWorldY,
                 outlineScreenX, outlineScreenY,
                 outlineWidth, outlineHeight,
                 sprite.Transformation.Rotation.Angle,
                 sprite.Transformation.Rotation.Clockwise,
                 -uvPadX, -uvPadY,
-                1f + uvPadX, 1f + uvPadY
+                1f + uvPadX, 1f + uvPadY,
+                sprite.Color.X,
+                sprite.Color.Y,
+                sprite.Color.Z,
+                sprite.Color.W,
+                ndcScaleX,
+                ndcBiasX,
+                ndcScaleY,
+                ndcBiasY
             );
 
-            DrawSpriteWithBlendMode(outlineVertices, _outlineMaterial, sprite, albedo, null, blendMode, ref target);
+            DrawSpriteWithBlendMode(_singleSpriteVertices, SpriteVertexCount, 1, _outlineMaterial, sprite, albedo,
+                null, null, blendMode,
+                ref target);
         }
 
         private IGlMaterial? ResolveMaterial(Sprite sprite)
@@ -660,17 +1218,40 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             return _defaultMaterial;
         }
 
-        private GlNativeTexture? ResolveNormalMap(Sprite sprite)
+        private static ISpriteMaterialCapabilities ResolveMaterialCapabilities(IGlMaterial material)
         {
-            if (sprite.Material is not NormalMappedLitSpriteMaterial &&
-                sprite.Material is not EmissiveNormalMappedLitSpriteMaterial)
+            if (material is ISpriteMaterialCapabilities capabilities)
+            {
+                return capabilities;
+            }
+
+            return DefaultMaterialCapabilities.Instance;
+        }
+
+        private GlNativeTexture? ResolveNormalMap(Sprite sprite, ISpriteMaterialCapabilities capabilities)
+        {
+            if (capabilities.ShadingModel != SpriteShadingModel.Lit || _renderContext.ForceUnlitShading)
             {
                 return null;
             }
 
-            if (sprite.NormalMap != null)
+            switch (capabilities.NormalMapMode)
             {
-                return TextureHolder.GetInstance().GetNativeTexture(sprite.NormalMap) as GlNativeTexture;
+                case SpriteNormalMapMode.None:
+                    return null;
+
+                case SpriteNormalMapMode.UseMaterial:
+                {
+                    if (capabilities.NormalMapTexture != null)
+                    {
+                        return TextureHolder.GetInstance().GetNativeTexture(capabilities.NormalMapTexture) as GlNativeTexture;
+                    }
+
+                    return _neutralNormal;
+                }
+
+                case SpriteNormalMapMode.Neutral:
+                    return _neutralNormal;
             }
 
             var imagePath = sprite.Texture?.ImagePath;
@@ -691,63 +1272,222 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             return generated;
         }
 
-        private float[] BuildQuadVertices(
-            float worldX, float worldY,
-            float screenX, float screenY,
-            int width, int height,
-            double angle, bool clockwise)
+        private static GlNativeTexture? ResolveEmissionMap(ISpriteMaterialCapabilities capabilities)
         {
-            return BuildQuadVertices(worldX, worldY, screenX, screenY, width, height, angle, clockwise, 0f, 0f, 1f, 1f);
-        }
-
-        private float[] BuildQuadVertices(
-            float worldX, float worldY,
-            float screenX, float screenY,
-            int width, int height,
-            double angle, bool clockwise,
-            float uvMinX, float uvMinY,
-            float uvMaxX, float uvMaxY)
-        {
-            var rotationDeg = MathHelper.NorRotationToDegree(clockwise ? angle : -angle);
-            var rotationRad = (float) (rotationDeg * Math.PI / 180f);
-
-            float worldX0 = worldX;
-            float worldY0 = worldY;
-            float worldX1 = worldX + width;
-            float worldY1 = worldY + height;
-            float worldCenterX = worldX + width / 2f;
-            float worldCenterY = worldY + height / 2f;
-
-            var worldTl = RotatePoint(worldX0, worldY0, worldCenterX, worldCenterY, rotationRad);
-            var worldTr = RotatePoint(worldX1, worldY0, worldCenterX, worldCenterY, rotationRad);
-            var worldBr = RotatePoint(worldX1, worldY1, worldCenterX, worldCenterY, rotationRad);
-            var worldBl = RotatePoint(worldX0, worldY1, worldCenterX, worldCenterY, rotationRad);
-
-            float screenX0 = screenX;
-            float screenY0 = screenY;
-            float screenX1 = screenX + width;
-            float screenY1 = screenY + height;
-            float screenCenterX = screenX + width / 2f;
-            float screenCenterY = screenY + height / 2f;
-
-            var screenTl = RotatePoint(screenX0, screenY0, screenCenterX, screenCenterY, rotationRad);
-            var screenTr = RotatePoint(screenX1, screenY0, screenCenterX, screenCenterY, rotationRad);
-            var screenBr = RotatePoint(screenX1, screenY1, screenCenterX, screenCenterY, rotationRad);
-            var screenBl = RotatePoint(screenX0, screenY1, screenCenterX, screenCenterY, rotationRad);
-
-            return new float[]
+            if (capabilities.EmissionIntensity <= 0f || capabilities.EmissionMapTexture == null)
             {
-                ToNdcX(screenTl.X), ToNdcY(screenTl.Y), uvMinX, uvMinY, worldTl.X, worldTl.Y,
-                ToNdcX(screenTr.X), ToNdcY(screenTr.Y), uvMaxX, uvMinY, worldTr.X, worldTr.Y,
-                ToNdcX(screenBr.X), ToNdcY(screenBr.Y), uvMaxX, uvMaxY, worldBr.X, worldBr.Y,
-                ToNdcX(screenTl.X), ToNdcY(screenTl.Y), uvMinX, uvMinY, worldTl.X, worldTl.Y,
-                ToNdcX(screenBr.X), ToNdcY(screenBr.Y), uvMaxX, uvMaxY, worldBr.X, worldBr.Y,
-                ToNdcX(screenBl.X), ToNdcY(screenBl.Y), uvMinX, uvMaxY, worldBl.X, worldBl.Y
-            };
+                return null;
+            }
+
+            return TextureHolder.GetInstance().GetNativeTexture(capabilities.EmissionMapTexture) as GlNativeTexture;
         }
 
-        private void UpdateSpriteBuffer(float[] vertices)
+        private sealed class DefaultMaterialCapabilities : ISpriteMaterialCapabilities
         {
+            public static readonly DefaultMaterialCapabilities Instance = new();
+
+            public bool Enabled
+            {
+                get => true;
+                set
+                {
+                }
+            }
+
+            public SpriteShadingModel ShadingModel => SpriteShadingModel.Unlit;
+            public SpriteNormalMapMode NormalMapMode => SpriteNormalMapMode.None;
+            public EngineTexture? NormalMapTexture => null;
+            public EngineTexture? EmissionMapTexture => null;
+            public System.Numerics.Vector3 EmissionColor => System.Numerics.Vector3.One;
+            public float EmissionIntensity => 0f;
+        }
+
+        private static void BuildQuadVertices(
+            Span<float> vertices,
+            float worldX, float worldY,
+            float screenX, float screenY,
+            int width, int height,
+            double angle,
+            bool clockwise,
+            float tintR,
+            float tintG,
+            float tintB,
+            float tintA,
+            float ndcScaleX,
+            float ndcBiasX,
+            float ndcScaleY,
+            float ndcBiasY)
+        {
+            BuildQuadVertices(vertices, worldX, worldY, screenX, screenY, width, height, angle, clockwise, 0f, 0f,
+                1f, 1f, tintR, tintG, tintB, tintA, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
+        }
+
+        private static void BuildQuadVertices(
+            Span<float> vertices,
+            float worldX,
+            float worldY,
+            float screenX,
+            float screenY,
+            int width,
+            int height,
+            double angle,
+            bool clockwise,
+            float uvMinX,
+            float uvMinY,
+            float uvMaxX,
+            float uvMaxY,
+            float tintR,
+            float tintG,
+            float tintB,
+            float tintA,
+            float ndcScaleX,
+            float ndcBiasX,
+            float ndcScaleY,
+            float ndcBiasY)
+        {
+            float worldTlX;
+            float worldTlY;
+            float worldTrX;
+            float worldTrY;
+            float worldBrX;
+            float worldBrY;
+            float worldBlX;
+            float worldBlY;
+
+            float screenTlX;
+            float screenTlY;
+            float screenTrX;
+            float screenTrY;
+            float screenBrX;
+            float screenBrY;
+            float screenBlX;
+            float screenBlY;
+
+            if (Math.Abs(angle) < double.Epsilon)
+            {
+                worldTlX = worldX;
+                worldTlY = worldY;
+                worldTrX = worldX + width;
+                worldTrY = worldY;
+                worldBrX = worldX + width;
+                worldBrY = worldY + height;
+                worldBlX = worldX;
+                worldBlY = worldY + height;
+
+                screenTlX = screenX;
+                screenTlY = screenY;
+                screenTrX = screenX + width;
+                screenTrY = screenY;
+                screenBrX = screenX + width;
+                screenBrY = screenY + height;
+                screenBlX = screenX;
+                screenBlY = screenY + height;
+            }
+            else
+            {
+                var rotationDeg = MathHelper.NorRotationToDegree(clockwise ? angle : -angle);
+                var rotationRad = (float) (rotationDeg * Math.PI / 180f);
+                var cos = MathF.Cos(rotationRad);
+                var sin = MathF.Sin(rotationRad);
+
+                var worldX0 = worldX;
+                var worldY0 = worldY;
+                var worldX1 = worldX + width;
+                var worldY1 = worldY + height;
+                var worldCenterX = worldX + width / 2f;
+                var worldCenterY = worldY + height / 2f;
+
+                RotatePoint(worldX0, worldY0, worldCenterX, worldCenterY, cos, sin, out worldTlX, out worldTlY);
+                RotatePoint(worldX1, worldY0, worldCenterX, worldCenterY, cos, sin, out worldTrX, out worldTrY);
+                RotatePoint(worldX1, worldY1, worldCenterX, worldCenterY, cos, sin, out worldBrX, out worldBrY);
+                RotatePoint(worldX0, worldY1, worldCenterX, worldCenterY, cos, sin, out worldBlX, out worldBlY);
+
+                var screenX0 = screenX;
+                var screenY0 = screenY;
+                var screenX1 = screenX + width;
+                var screenY1 = screenY + height;
+                var screenCenterX = screenX + width / 2f;
+                var screenCenterY = screenY + height / 2f;
+
+                RotatePoint(screenX0, screenY0, screenCenterX, screenCenterY, cos, sin, out screenTlX,
+                    out screenTlY);
+                RotatePoint(screenX1, screenY0, screenCenterX, screenCenterY, cos, sin, out screenTrX,
+                    out screenTrY);
+                RotatePoint(screenX1, screenY1, screenCenterX, screenCenterY, cos, sin, out screenBrX,
+                    out screenBrY);
+                RotatePoint(screenX0, screenY1, screenCenterX, screenCenterY, cos, sin, out screenBlX,
+                    out screenBlY);
+            }
+
+            WriteSpriteVertex(vertices, 0, screenTlX, screenTlY, uvMinX, uvMinY, worldTlX, worldTlY, tintR, tintG,
+                tintB, tintA, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
+            WriteSpriteVertex(vertices, 1, screenTrX, screenTrY, uvMaxX, uvMinY, worldTrX, worldTrY, tintR, tintG,
+                tintB, tintA, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
+            WriteSpriteVertex(vertices, 2, screenBrX, screenBrY, uvMaxX, uvMaxY, worldBrX, worldBrY, tintR, tintG,
+                tintB, tintA, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
+            WriteSpriteVertex(vertices, 3, screenTlX, screenTlY, uvMinX, uvMinY, worldTlX, worldTlY, tintR, tintG,
+                tintB, tintA, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
+            WriteSpriteVertex(vertices, 4, screenBrX, screenBrY, uvMaxX, uvMaxY, worldBrX, worldBrY, tintR, tintG,
+                tintB, tintA, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
+            WriteSpriteVertex(vertices, 5, screenBlX, screenBlY, uvMinX, uvMaxY, worldBlX, worldBlY, tintR, tintG,
+                tintB, tintA, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
+        }
+
+        private static void RotatePoint(float x, float y, float cx, float cy, float cos, float sin, out float rx,
+            out float ry)
+        {
+            var dx = x - cx;
+            var dy = y - cy;
+            rx = dx * cos - dy * sin + cx;
+            ry = dx * sin + dy * cos + cy;
+        }
+
+        private static void BuildCompositeRectVertices(Span<float> vertices, int x, int y, int width, int height,
+            float ndcScaleX, float ndcBiasX, float ndcScaleY, float ndcBiasY)
+        {
+            var tlX = x;
+            var tlY = y;
+            var trX = x + width;
+            var trY = y;
+            var brX = x + width;
+            var brY = y + height;
+            var blX = x;
+            var blY = y + height;
+
+            WriteSpriteVertex(vertices, 0, tlX, tlY, 0f, 1f, 0f, 0f, 1f, 1f, 1f, 1f, ndcScaleX, ndcBiasX, ndcScaleY,
+                ndcBiasY);
+            WriteSpriteVertex(vertices, 1, trX, trY, 1f, 1f, 0f, 0f, 1f, 1f, 1f, 1f, ndcScaleX, ndcBiasX, ndcScaleY,
+                ndcBiasY);
+            WriteSpriteVertex(vertices, 2, brX, brY, 1f, 0f, 0f, 0f, 1f, 1f, 1f, 1f, ndcScaleX, ndcBiasX, ndcScaleY,
+                ndcBiasY);
+            WriteSpriteVertex(vertices, 3, tlX, tlY, 0f, 1f, 0f, 0f, 1f, 1f, 1f, 1f, ndcScaleX, ndcBiasX, ndcScaleY,
+                ndcBiasY);
+            WriteSpriteVertex(vertices, 4, brX, brY, 1f, 0f, 0f, 0f, 1f, 1f, 1f, 1f, ndcScaleX, ndcBiasX, ndcScaleY,
+                ndcBiasY);
+            WriteSpriteVertex(vertices, 5, blX, blY, 0f, 0f, 0f, 0f, 1f, 1f, 1f, 1f, ndcScaleX, ndcBiasX, ndcScaleY,
+                ndcBiasY);
+        }
+
+        private static void WriteSpriteVertex(Span<float> vertices, int index, float screenX, float screenY, float uvX,
+            float uvY, float worldX, float worldY, float tintR, float tintG, float tintB, float tintA,
+            float ndcScaleX, float ndcBiasX, float ndcScaleY, float ndcBiasY)
+        {
+            var offset = index * SpriteVertexStrideFloats;
+            vertices[offset + 0] = screenX * ndcScaleX + ndcBiasX;
+            vertices[offset + 1] = screenY * ndcScaleY + ndcBiasY;
+            vertices[offset + 2] = uvX;
+            vertices[offset + 3] = uvY;
+            vertices[offset + 4] = worldX;
+            vertices[offset + 5] = worldY;
+            vertices[offset + 6] = tintR;
+            vertices[offset + 7] = tintG;
+            vertices[offset + 8] = tintB;
+            vertices[offset + 9] = tintA;
+        }
+
+        private void UpdateSpriteBuffer(ReadOnlySpan<float> vertices)
+        {
+            EnsureSpriteBufferCapacity(vertices.Length);
             _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _spriteVbo);
             unsafe
             {
@@ -757,28 +1497,29 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                         data);
                 }
             }
-            _gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
         }
 
-        private float ToNdcX(float x)
+        private void EnsureSpriteBufferCapacity(int requiredFloats)
         {
-            return (x / _viewportWidth) * 2f - 1f;
-        }
+            if (_spriteBufferCapacityFloats >= requiredFloats)
+            {
+                return;
+            }
 
-        private float ToNdcY(float y)
-        {
-            return 1f - (y / _viewportHeight) * 2f;
-        }
+            var newCapacity = _spriteBufferCapacityFloats;
+            while (newCapacity < requiredFloats)
+            {
+                newCapacity *= 2;
+            }
 
-        private static PointF RotatePoint(float x, float y, float cx, float cy, float angleRad)
-        {
-            var cos = MathF.Cos(angleRad);
-            var sin = MathF.Sin(angleRad);
-            var dx = x - cx;
-            var dy = y - cy;
-            var rx = dx * cos - dy * sin + cx;
-            var ry = dx * sin + dy * cos + cy;
-            return new PointF(rx, ry);
+            _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _spriteVbo);
+            unsafe
+            {
+                _gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint) (newCapacity * sizeof(float)), null,
+                    BufferUsageARB.DynamicDraw);
+            }
+
+            _spriteBufferCapacityFloats = newCapacity;
         }
 
         private void EnsureRenderTargets()
@@ -826,6 +1567,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             var textureId = CreateTextureFromData(width, height, null);
             var framebufferId = _gl.GenFramebuffer();
             _gl.BindFramebuffer(FramebufferTarget.Framebuffer, framebufferId);
+            _boundFramebufferId = framebufferId;
             _gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
                 TextureTarget.Texture2D, textureId, 0);
 
@@ -836,6 +1578,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             }
 
             _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            _boundFramebufferId = 0;
             return new GlRenderTarget(framebufferId, textureId, width, height);
         }
 
@@ -844,6 +1587,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             var textureId = CreateHdrTexture(width, height);
             var framebufferId = _gl.GenFramebuffer();
             _gl.BindFramebuffer(FramebufferTarget.Framebuffer, framebufferId);
+            _boundFramebufferId = framebufferId;
             _gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
                 TextureTarget.Texture2D, textureId, 0);
 
@@ -854,6 +1598,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             }
 
             _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            _boundFramebufferId = 0;
             return new GlRenderTarget(framebufferId, textureId, width, height);
         }
 
@@ -974,9 +1719,30 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                     continue;
                 }
 
-                var sprite = new Sprite(width, height);
-                var vertices = BuildQuadVertices(x, y, x, y, width, height, 0d, true);
-                DrawSprite(vertices, _defaultMaterial, sprite, texture, null);
+                var sprite = new Sprite(width, height)
+                {
+                    Color = Vector4.One,
+                };
+
+                BuildQuadVertices(
+                    _singleSpriteVertices,
+                    x,
+                    y,
+                    x,
+                    y,
+                    width,
+                    height,
+                    0d,
+                    true,
+                    sprite.Color.X,
+                    sprite.Color.Y,
+                    sprite.Color.Z,
+                    sprite.Color.W,
+                    2f / _viewportWidth,
+                    -1f,
+                    -2f / _viewportHeight,
+                    1f);
+                DrawSprite(_singleSpriteVertices, SpriteVertexCount, 1, _defaultMaterial, sprite, texture, null, null);
                 y += height + lineGap;
 
                 DeleteTexture(texture);
@@ -1067,6 +1833,9 @@ out vec4 FragColor;
 uniform sampler2D u_background;
 uniform sampler2D u_foreground;
 uniform int u_mode;
+uniform vec2 u_backgroundUvScale;
+uniform vec2 u_foregroundUvMin;
+uniform vec2 u_foregroundUvScale;
 
 float BlendSoftLightChannel(float d, float s)
 {
@@ -1123,9 +1892,127 @@ vec3 BlendRgb(vec3 dst, vec3 src)
 
 void main()
 {
-    vec4 background = texture(u_background, v_uv);
-    vec4 foreground = texture(u_foreground, v_uv);
+    vec2 bgUv = v_uv * u_backgroundUvScale;
+    vec2 fgUv = u_foregroundUvMin + v_uv * u_foregroundUvScale;
 
+    vec4 background = texture(u_background, bgUv);
+    vec4 foreground = texture(u_foreground, fgUv);
+
+    float dstA = clamp(background.a, 0.0, 1.0);
+    float srcA = clamp(foreground.a, 0.0, 1.0);
+    vec3 blended = BlendRgb(background.rgb, foreground.rgb);
+    vec3 outRgb = (1.0 - srcA) * background.rgb + srcA * ((1.0 - dstA) * foreground.rgb + dstA * blended);
+    float outA = srcA + dstA - srcA * dstA;
+
+    FragColor = vec4(outRgb, outA);
+}
+";
+
+        private const string DirectCompositeVertexSource = @"#version 330 core
+layout(location = 0) in vec2 a_pos;
+layout(location = 1) in vec2 a_uv;
+layout(location = 3) in vec4 a_color;
+
+out vec2 v_uv;
+out vec4 v_color;
+
+void main()
+{
+    v_uv = a_uv;
+    v_color = a_color;
+    gl_Position = vec4(a_pos.xy, 0.0, 1.0);
+}
+";
+
+        private const string DirectCompositeFragmentSource = @"#version 330 core
+in vec2 v_uv;
+in vec4 v_color;
+out vec4 FragColor;
+
+uniform sampler2D u_background;
+uniform sampler2D u_albedo;
+uniform sampler2D u_emissionMap;
+uniform int u_mode;
+uniform vec2 u_backgroundUvScale;
+uniform vec2 u_backgroundUvBias;
+uniform int u_useEmission;
+uniform int u_hasEmissionMap;
+uniform vec3 u_emissionColor;
+uniform float u_emissionIntensity;
+
+float BlendSoftLightChannel(float d, float s)
+{
+    if (s <= 0.5)
+    {
+        return d - (1.0 - 2.0 * s) * d * (1.0 - d);
+    }
+
+    float g;
+    if (d <= 0.25)
+    {
+        g = ((16.0 * d - 12.0) * d + 4.0) * d;
+    }
+    else
+    {
+        g = sqrt(max(d, 0.0));
+    }
+
+    return d + (2.0 * s - 1.0) * (g - d);
+}
+
+vec3 BlendRgb(vec3 dst, vec3 src)
+{
+    if (u_mode == 1)
+    {
+        return dst * src;
+    }
+
+    if (u_mode == 2)
+    {
+        return 1.0 - (1.0 - src) * (1.0 - dst);
+    }
+
+    if (u_mode == 3)
+    {
+        return vec3(
+            BlendSoftLightChannel(dst.r, src.r),
+            BlendSoftLightChannel(dst.g, src.g),
+            BlendSoftLightChannel(dst.b, src.b)
+        );
+    }
+
+    if (u_mode == 4)
+    {
+        return vec3(
+            dst.r <= 0.5 ? (2.0 * dst.r * src.r) : (1.0 - 2.0 * (1.0 - dst.r) * (1.0 - src.r)),
+            dst.g <= 0.5 ? (2.0 * dst.g * src.g) : (1.0 - 2.0 * (1.0 - dst.g) * (1.0 - src.g)),
+            dst.b <= 0.5 ? (2.0 * dst.b * src.b) : (1.0 - 2.0 * (1.0 - dst.b) * (1.0 - src.b))
+        );
+    }
+
+    return src;
+}
+
+void main()
+{
+    vec2 bgUv = gl_FragCoord.xy * u_backgroundUvScale + u_backgroundUvBias;
+    vec4 background = texture(u_background, bgUv);
+
+    vec4 baseColor = texture(u_albedo, v_uv) * v_color;
+    vec3 foregroundRgb = baseColor.rgb;
+    if (u_useEmission == 1)
+    {
+        vec3 emissionMask = vec3(1.0);
+        if (u_hasEmissionMap == 1)
+        {
+            emissionMask = texture(u_emissionMap, v_uv).rgb;
+        }
+
+        vec3 emission = u_emissionColor * baseColor.a * u_emissionIntensity * emissionMask * v_color.rgb;
+        foregroundRgb += emission;
+    }
+
+    vec4 foreground = vec4(foregroundRgb, baseColor.a);
     float dstA = clamp(background.a, 0.0, 1.0);
     float srcA = clamp(foreground.a, 0.0, 1.0);
     vec3 blended = BlendRgb(background.rgb, foreground.rgb);

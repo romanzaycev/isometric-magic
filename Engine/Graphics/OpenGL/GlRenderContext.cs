@@ -10,6 +10,8 @@ namespace IsometricMagic.Engine.Graphics.OpenGL
         public int ViewportWidth { get; set; }
         public int ViewportHeight { get; set; }
         public float Time { get; set; }
+        public long FrameId { get; set; }
+        public bool ForceUnlitShading { get; set; }
         public Scene Scene { get; set; }
         public Camera Camera { get; set; }
         public GlFullscreenQuad FullscreenQuad { get; }

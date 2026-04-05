@@ -467,7 +467,6 @@ namespace IsometricMagic.Engine.Particles
         {
             var sprite = _sprites[spriteIndex];
             sprite.Texture = visual.Texture;
-            sprite.NormalMap = visual.NormalMap;
             sprite.Material = visual.Material;
             sprite.OriginPoint = visual.OriginPoint;
             sprite.Sorting = BaseSorting + visual.SortingOffset;

@@ -41,21 +41,6 @@ namespace IsometricMagic.Game.Components.Tilemap
             }
         }
 
-        public void BuildLayer(string layerName)
-        {
-            var layerIndex = GetLayerIndex(layerName);
-            if (layerIndex < 0) return;
-
-            var layer = _map.Layers[layerIndex];
-            if (_layerStates.TryGetValue(layerName, out var existing))
-            {
-                DestroyLayerSprites(existing);
-                _layerStates.Remove(layerName);
-            }
-
-            BuildLayerInternal(layer, layerIndex);
-        }
-
         private void BuildLayerInternal(MapLayer layer, int layerIndex)
         {
             var state = new LayerState
@@ -74,6 +59,7 @@ namespace IsometricMagic.Game.Components.Tilemap
             state.Sprites = new Sprite?[layer.Data.Length];
 
             var layerOffset = CalculateLayerBase(layerIndex);
+            var mat = SpriteMaterialFactory.LitAutoNormal();
 
             for (var y = 0; y < _map.Height; y++)
             {
@@ -82,7 +68,7 @@ namespace IsometricMagic.Game.Components.Tilemap
                     var tileId = state.TileIds[y * _map.Width + (_map.Width - 1 - x)];
                     if (tileId <= 0) continue;
 
-                    var sprite = CreateTileSprite(tileId, x, y, layerOffset);
+                    var sprite = CreateTileSprite(tileId, x, y, layerOffset, mat);
                     state.Sprites[y * _map.Width + (_map.Width - 1 - x)] = sprite;
                     _targetLayer.Add(sprite);
                 }
@@ -117,7 +103,8 @@ namespace IsometricMagic.Game.Components.Tilemap
             if (sprite == null)
             {
                 var layerOffset = CalculateLayerBase(GetLayerIndex(layerName));
-                sprite = CreateTileSprite(tileId, x, y, layerOffset);
+                var mat = SpriteMaterialFactory.LitAutoNormal();
+                sprite = CreateTileSprite(tileId, x, y, layerOffset, mat);
                 state.Sprites[index] = sprite;
                 _targetLayer.Add(sprite);
             }
@@ -173,7 +160,7 @@ namespace IsometricMagic.Game.Components.Tilemap
             return IsoSort.FromCanvas(canvasPos, layerOffset, IsoSort.BiasFloor);
         }
 
-        private Sprite CreateTileSprite(int tileId, int tileX, int tileY, int layerOffset)
+        private Sprite CreateTileSprite(int tileId, int tileX, int tileY, int layerOffset, StandardSpriteMaterial mat)
         {
             var tile = _tileSet.Tiles[tileId];
             var tex = GetOrLoadTexture(tile);
@@ -188,7 +175,7 @@ namespace IsometricMagic.Game.Components.Tilemap
                 Sorting = CalculateSortIndex(position, layerOffset),
                 OriginPoint = OriginPoint.LeftBottom
             };
-            sprite.Material = new Engine.Graphics.Materials.NormalMappedLitSpriteMaterial();
+            sprite.Material = mat;
 
             return sprite;
         }
@@ -206,25 +193,9 @@ namespace IsometricMagic.Game.Components.Tilemap
             return tex;
         }
 
-        private static void DestroyLayerSprites(LayerState state)
-        {
-            if (state.Sprites == null) return;
-            
-            foreach (var sprite in state.Sprites)
-            {
-                if (sprite != null && sprite.Texture != null)
-                {
-                    sprite.Texture.Destroy();
-                }
-            }
-        }
-
         protected override void OnDestroy()
         {
-            foreach (var state in _layerStates.Values)
-            {
-                DestroyLayerSprites(state);
-            }
+            
             _layerStates.Clear();
             _textureCache.Clear();
         }

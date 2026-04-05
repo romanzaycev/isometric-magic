@@ -91,7 +91,6 @@ namespace IsometricMagic.Engine.Rendering
         public int Height;
 
         private Texture _texture = null!; 
-        public Texture? NormalMap;
         public IMaterial? Material;
         public SpriteOutline Outline { get; } = new();
 

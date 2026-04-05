@@ -36,11 +36,7 @@ public class FireCircleComponent : Component
                 OriginPoint = OriginPoint.Centered,
             };
             tex.LoadImage(string.Format(animationPath, i.ToString().PadLeft(3, '0')));
-            sprite.Material = new EmissiveNormalMappedLitSpriteMaterial
-            {
-                EmissionColor = new Vector3(1f, 0.6f, 0.2f),
-                EmissionIntensity = 2.5f
-            };
+            sprite.Material = SpriteMaterialFactory.LitEmissiveAutoNormal(new Vector3(1f, 0.6f, 0.2f), 2.5f);
 
             _sprites.Add(sprite);
             TargetLayer.Add(sprite);

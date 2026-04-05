@@ -7,21 +7,34 @@ namespace IsometricMagic.Engine.Graphics.Materials
     public sealed class OutlineSpriteMaterial : IGlMaterial
     {
         private GlShaderProgram? _shader;
+        private bool _samplerInitialized;
         public bool Enabled { get; set; } = true;
 
         private const int MaxSteps = 12;
 
-        public void Bind(GlRenderContext context, Sprite sprite, GlNativeTexture albedo, GlNativeTexture? normalMap)
+        public void Bind(
+            GlRenderContext context,
+            Sprite sprite,
+            GlNativeTexture albedo,
+            GlNativeTexture? normalMap,
+            GlNativeTexture? emissionMap
+        )
         {
             if (_shader == null)
             {
                 _shader = new GlShaderProgram(context.Gl, VertexSource, FragmentSource);
+                _samplerInitialized = false;
             }
 
             _shader.Use();
+            if (!_samplerInitialized)
+            {
+                _shader.SetInt("u_texture", 0);
+                _samplerInitialized = true;
+            }
+
             context.Gl.ActiveTexture(TextureUnit.Texture0);
             context.Gl.BindTexture(TextureTarget.Texture2D, albedo.TextureId);
-            _shader.SetInt("u_texture", 0);
 
             var outline = sprite.Outline;
             var clampedThickness = MathF.Max(0f, MathF.Min(outline.ThicknessTexels, MaxSteps));
@@ -29,37 +42,37 @@ namespace IsometricMagic.Engine.Graphics.Materials
             var texelY = albedo.Height > 0 ? 1f / albedo.Height : 0f;
 
             _shader.SetVector4("u_outlineColor", outline.Color.X, outline.Color.Y, outline.Color.Z, outline.Color.W);
-            var tint = sprite.Color;
-            _shader.SetVector4("u_tint", tint.X, tint.Y, tint.Z, tint.W);
             _shader.SetFloat("u_thickness", clampedThickness);
             _shader.SetVector2("u_texelSize", texelX, texelY);
         }
 
         public void Unbind(GlRenderContext context)
         {
-            context.Gl.BindTexture(TextureTarget.Texture2D, 0);
         }
 
         private const string VertexSource = @"#version 330 core
 layout(location = 0) in vec2 a_pos;
 layout(location = 1) in vec2 a_uv;
+layout(location = 3) in vec4 a_color;
 
 out vec2 v_uv;
+out vec4 v_color;
 
 void main()
 {
     v_uv = a_uv;
+    v_color = a_color;
     gl_Position = vec4(a_pos.xy, 0.0, 1.0);
 }
 ";
 
         private const string FragmentSource = @"#version 330 core
 in vec2 v_uv;
+in vec4 v_color;
 out vec4 FragColor;
 
 uniform sampler2D u_texture;
 uniform vec4 u_outlineColor;
-uniform vec4 u_tint;
 uniform vec2 u_texelSize;
 uniform float u_thickness;
 
@@ -94,7 +107,7 @@ void main()
     }
 
     float edge = clamp(maxAlpha - baseAlpha, 0.0, 1.0);
-    vec4 color = u_outlineColor * u_tint;
+    vec4 color = u_outlineColor * v_color;
     FragColor = vec4(color.rgb, color.a * edge);
 }
 ";
