@@ -39,6 +39,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
         private GlFullscreenQuad _fullscreenQuad = null!;
         private GlShaderProgram _presentShader = null!;
         private GlShaderProgram _blendCompositeShader = null!;
+        private bool _blendCompositeSamplersInitialized;
         private StandardSpriteMaterial _defaultMaterial = null!;
         private OutlineSpriteMaterial _outlineMaterial = null!;
         private long _frameId;
@@ -62,6 +63,29 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
         }
 
         private BlendStateMode _blendState = BlendStateMode.Unknown;
+        private uint _boundFramebufferId = uint.MaxValue;
+        private int _boundViewportWidth = -1;
+        private int _boundViewportHeight = -1;
+
+        private uint _backgroundRectTextureId;
+        private int _backgroundRectTextureWidth;
+        private int _backgroundRectTextureHeight;
+
+        private readonly struct ScreenRect
+        {
+            public readonly int X;
+            public readonly int Y;
+            public readonly int Width;
+            public readonly int Height;
+
+            public ScreenRect(int x, int y, int width, int height)
+            {
+                X = x;
+                Y = y;
+                Width = width;
+                Height = height;
+            }
+        }
 
         private readonly struct SpriteBatchKey : IEquatable<SpriteBatchKey>
         {
@@ -181,6 +205,14 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 _gl.DeleteVertexArray(_spriteVao);
             }
 
+            if (_backgroundRectTextureId != 0)
+            {
+                _gl.DeleteTexture(_backgroundRectTextureId);
+                _backgroundRectTextureId = 0;
+                _backgroundRectTextureWidth = 0;
+                _backgroundRectTextureHeight = 0;
+            }
+
             if (_glContext != IntPtr.Zero)
             {
                 SDL_GL_DeleteContext(_glContext);
@@ -204,6 +236,8 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             _viewportWidth = w;
             _viewportHeight = h;
             _gl.Viewport(0, 0, (uint) w, (uint) h);
+            _boundViewportWidth = w;
+            _boundViewportHeight = h;
             ResizeRenderTargets(w, h);
             width = w;
             height = h;
@@ -233,8 +267,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             var postProcessed = ApplyPostProcess(scene.PostProcess, mainTarget);
             var finalTarget = DrawLayer(scene.UiLayer, camera, false, postProcessed);
 
-            _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-            _gl.Viewport(0, 0, (uint) _viewportWidth, (uint) _viewportHeight);
+            BindDefaultTarget();
             DrawPresent(finalTarget.TextureId);
 
             DebugOverlay.Update(Time.DeltaTime);
@@ -367,6 +400,9 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
             SDL_GL_GetDrawableSize(_sdlWindow, out _viewportWidth, out _viewportHeight);
             _gl.Viewport(0, 0, (uint) _viewportWidth, (uint) _viewportHeight);
+            _boundFramebufferId = 0;
+            _boundViewportWidth = _viewportWidth;
+            _boundViewportHeight = _viewportHeight;
         }
 
         private void InitResources()
@@ -377,6 +413,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
             _presentShader = new GlShaderProgram(_gl, PresentVertexSource, PresentFragmentSource);
             _blendCompositeShader = new GlShaderProgram(_gl, BlendCompositeVertexSource, BlendCompositeFragmentSource);
+            _blendCompositeSamplersInitialized = false;
             _defaultMaterial = SpriteMaterialFactory.Unlit();
             _outlineMaterial = new OutlineSpriteMaterial();
 
@@ -424,8 +461,34 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
         private void BindTarget(GlRenderTarget target)
         {
-            _gl.BindFramebuffer(FramebufferTarget.Framebuffer, target.FramebufferId);
-            _gl.Viewport(0, 0, (uint) target.Width, (uint) target.Height);
+            if (_boundFramebufferId != target.FramebufferId)
+            {
+                _gl.BindFramebuffer(FramebufferTarget.Framebuffer, target.FramebufferId);
+                _boundFramebufferId = target.FramebufferId;
+            }
+
+            if (_boundViewportWidth != target.Width || _boundViewportHeight != target.Height)
+            {
+                _gl.Viewport(0, 0, (uint) target.Width, (uint) target.Height);
+                _boundViewportWidth = target.Width;
+                _boundViewportHeight = target.Height;
+            }
+        }
+
+        private void BindDefaultTarget()
+        {
+            if (_boundFramebufferId != 0)
+            {
+                _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+                _boundFramebufferId = 0;
+            }
+
+            if (_boundViewportWidth != _viewportWidth || _boundViewportHeight != _viewportHeight)
+            {
+                _gl.Viewport(0, 0, (uint) _viewportWidth, (uint) _viewportHeight);
+                _boundViewportWidth = _viewportWidth;
+                _boundViewportHeight = _viewportHeight;
+            }
         }
 
         private void SetAlphaBlendState()
@@ -476,43 +539,54 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             return _pingTarget;
         }
 
-        private GlRenderTarget SelectCompositeOutputTarget(GlRenderTarget current, GlRenderTarget foreground)
-        {
-            if (!TargetsEqual(_sceneTarget, current) && !TargetsEqual(_sceneTarget, foreground))
-            {
-                return _sceneTarget;
-            }
-
-            if (!TargetsEqual(_pingTarget, current) && !TargetsEqual(_pingTarget, foreground))
-            {
-                return _pingTarget;
-            }
-
-            return _pongTarget;
-        }
-
-        private void CompositeTargets(GlRenderTarget background, GlRenderTarget foreground, GlRenderTarget output,
+        private void CompositeTargetsToCurrentTarget(ScreenRect rect, GlRenderTarget foreground, GlRenderTarget target,
             SpriteBlendMode blendMode)
         {
-            BindTarget(output);
+            if (rect.Width <= 0 || rect.Height <= 0)
+            {
+                return;
+            }
+
+            EnsureBackgroundRectTexture(rect.Width, rect.Height);
+            CaptureBackgroundRect(target, rect);
+
+            BuildCompositeRectVertices(_singleSpriteVertices, rect.X, rect.Y, rect.Width, rect.Height,
+                2f / target.Width,
+                -1f,
+                -2f / target.Height,
+                1f);
+
+            BindTarget(target);
             SetBlendDisabledState();
+            EnableScissor(rect, target.Height);
+
             _blendCompositeShader.Use();
-            _blendCompositeShader.SetInt("u_background", 0);
-            _blendCompositeShader.SetInt("u_foreground", 1);
+            if (!_blendCompositeSamplersInitialized)
+            {
+                _blendCompositeShader.SetInt("u_background", 0);
+                _blendCompositeShader.SetInt("u_foreground", 1);
+                _blendCompositeSamplersInitialized = true;
+            }
+
             _blendCompositeShader.SetInt("u_mode", (int) blendMode);
+            _blendCompositeShader.SetVector2("u_backgroundUvScale",
+                rect.Width / (float) _backgroundRectTextureWidth,
+                rect.Height / (float) _backgroundRectTextureHeight);
+            _blendCompositeShader.SetVector2("u_foregroundUvMin",
+                rect.X / (float) target.Width,
+                1f - (rect.Y + rect.Height) / (float) target.Height);
+            _blendCompositeShader.SetVector2("u_foregroundUvScale",
+                rect.Width / (float) target.Width,
+                rect.Height / (float) target.Height);
 
             _gl.ActiveTexture(TextureUnit.Texture0);
-            _gl.BindTexture(TextureTarget.Texture2D, background.TextureId);
+            _gl.BindTexture(TextureTarget.Texture2D, _backgroundRectTextureId);
             _gl.ActiveTexture(TextureUnit.Texture1);
             _gl.BindTexture(TextureTarget.Texture2D, foreground.TextureId);
 
-            _fullscreenQuad.Draw();
+            DrawRawSpriteVertices(_singleSpriteVertices, SpriteVertexCount);
             FrameStats.AddDrawCall();
-
-            _gl.ActiveTexture(TextureUnit.Texture1);
-            _gl.BindTexture(TextureTarget.Texture2D, 0);
-            _gl.ActiveTexture(TextureUnit.Texture0);
-            _gl.BindTexture(TextureTarget.Texture2D, 0);
+            DisableScissor();
         }
 
         private static bool TargetsEqual(GlRenderTarget a, GlRenderTarget b)
@@ -833,34 +907,138 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 return;
             }
 
+            if (!TryGetScreenRect(vertices, vertexCount, target.Width, target.Height, out var rect))
+            {
+                return;
+            }
+
             var foregroundTarget = SelectForegroundTarget(target);
             BindTarget(foregroundTarget);
+            EnableScissor(rect, foregroundTarget.Height);
             _gl.ClearColor(0f, 0f, 0f, 0f);
             _gl.Clear(ClearBufferMask.ColorBufferBit);
             SetBlendDisabledState();
             DrawSprite(vertices, vertexCount, spriteCount, material, sprite, albedo, normalMap, emissionMap);
+            DisableScissor();
             _gl.ClearColor(0f, 0f, 0f, 1f);
 
-            var outputTarget = SelectCompositeOutputTarget(target, foregroundTarget);
-            CompositeTargets(target, foregroundTarget, outputTarget, blendMode);
-            target = outputTarget;
+            CompositeTargetsToCurrentTarget(rect, foregroundTarget, target, blendMode);
         }
 
         private void DrawSprite(ReadOnlySpan<float> vertices, int vertexCount, int spriteCount,
             IGlMaterial material, Sprite sprite, GlNativeTexture albedo,
             GlNativeTexture? normalMap, GlNativeTexture? emissionMap)
         {
-            UpdateSpriteBuffer(vertices);
             material.Bind(_renderContext, sprite, albedo, normalMap, emissionMap);
 
-            _gl.BindVertexArray(_spriteVao);
+            DrawRawSpriteVertices(vertices, vertexCount);
             FrameStats.AddDrawCall();
             for (var i = 0; i < spriteCount; i++)
             {
                 FrameStats.AddSpriteDrawn();
             }
+        }
 
+        private void DrawRawSpriteVertices(ReadOnlySpan<float> vertices, int vertexCount)
+        {
+            UpdateSpriteBuffer(vertices);
+            _gl.BindVertexArray(_spriteVao);
             _gl.DrawArrays(PrimitiveType.Triangles, 0, (uint) vertexCount);
+        }
+
+        private static bool TryGetScreenRect(ReadOnlySpan<float> vertices, int vertexCount, int targetWidth,
+            int targetHeight, out ScreenRect rect)
+        {
+            var minX = float.PositiveInfinity;
+            var minY = float.PositiveInfinity;
+            var maxX = float.NegativeInfinity;
+            var maxY = float.NegativeInfinity;
+
+            for (var i = 0; i < vertexCount; i++)
+            {
+                var offset = i * SpriteVertexStrideFloats;
+                var ndcX = vertices[offset];
+                var ndcY = vertices[offset + 1];
+
+                var screenX = (ndcX * 0.5f + 0.5f) * targetWidth;
+                var screenY = (0.5f - ndcY * 0.5f) * targetHeight;
+
+                if (screenX < minX)
+                {
+                    minX = screenX;
+                }
+
+                if (screenY < minY)
+                {
+                    minY = screenY;
+                }
+
+                if (screenX > maxX)
+                {
+                    maxX = screenX;
+                }
+
+                if (screenY > maxY)
+                {
+                    maxY = screenY;
+                }
+            }
+
+            var x0 = Math.Clamp((int) MathF.Floor(minX), 0, targetWidth);
+            var y0 = Math.Clamp((int) MathF.Floor(minY), 0, targetHeight);
+            var x1 = Math.Clamp((int) MathF.Ceiling(maxX), 0, targetWidth);
+            var y1 = Math.Clamp((int) MathF.Ceiling(maxY), 0, targetHeight);
+
+            var width = x1 - x0;
+            var height = y1 - y0;
+            if (width <= 0 || height <= 0)
+            {
+                rect = default;
+                return false;
+            }
+
+            rect = new ScreenRect(x0, y0, width, height);
+            return true;
+        }
+
+        private void EnsureBackgroundRectTexture(int width, int height)
+        {
+            if (_backgroundRectTextureId != 0 && _backgroundRectTextureWidth >= width && _backgroundRectTextureHeight >= height)
+            {
+                return;
+            }
+
+            if (_backgroundRectTextureId != 0)
+            {
+                _gl.DeleteTexture(_backgroundRectTextureId);
+            }
+
+            _backgroundRectTextureId = CreateHdrTexture(width, height);
+            _backgroundRectTextureWidth = width;
+            _backgroundRectTextureHeight = height;
+        }
+
+        private void CaptureBackgroundRect(GlRenderTarget target, ScreenRect rect)
+        {
+            BindTarget(target);
+            _gl.ReadBuffer(ReadBufferMode.ColorAttachment0);
+            _gl.BindTexture(TextureTarget.Texture2D, _backgroundRectTextureId);
+
+            var glY = target.Height - rect.Y - rect.Height;
+            _gl.CopyTexSubImage2D(GLEnum.Texture2D, 0, 0, 0, rect.X, glY, (uint) rect.Width,
+                (uint) rect.Height);
+        }
+
+        private void EnableScissor(ScreenRect rect, int targetHeight)
+        {
+            _gl.Enable(EnableCap.ScissorTest);
+            var glY = targetHeight - rect.Y - rect.Height;
+            _gl.Scissor(rect.X, glY, (uint) rect.Width, (uint) rect.Height);
+        }
+
+        private void DisableScissor()
+        {
+            _gl.Disable(EnableCap.ScissorTest);
         }
 
         private void DrawOutline(Sprite sprite, GlNativeTexture albedo,
@@ -1147,6 +1325,32 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             ry = dx * sin + dy * cos + cy;
         }
 
+        private static void BuildCompositeRectVertices(Span<float> vertices, int x, int y, int width, int height,
+            float ndcScaleX, float ndcBiasX, float ndcScaleY, float ndcBiasY)
+        {
+            var tlX = x;
+            var tlY = y;
+            var trX = x + width;
+            var trY = y;
+            var brX = x + width;
+            var brY = y + height;
+            var blX = x;
+            var blY = y + height;
+
+            WriteSpriteVertex(vertices, 0, tlX, tlY, 0f, 1f, 0f, 0f, 1f, 1f, 1f, 1f, ndcScaleX, ndcBiasX, ndcScaleY,
+                ndcBiasY);
+            WriteSpriteVertex(vertices, 1, trX, trY, 1f, 1f, 0f, 0f, 1f, 1f, 1f, 1f, ndcScaleX, ndcBiasX, ndcScaleY,
+                ndcBiasY);
+            WriteSpriteVertex(vertices, 2, brX, brY, 1f, 0f, 0f, 0f, 1f, 1f, 1f, 1f, ndcScaleX, ndcBiasX, ndcScaleY,
+                ndcBiasY);
+            WriteSpriteVertex(vertices, 3, tlX, tlY, 0f, 1f, 0f, 0f, 1f, 1f, 1f, 1f, ndcScaleX, ndcBiasX, ndcScaleY,
+                ndcBiasY);
+            WriteSpriteVertex(vertices, 4, brX, brY, 1f, 0f, 0f, 0f, 1f, 1f, 1f, 1f, ndcScaleX, ndcBiasX, ndcScaleY,
+                ndcBiasY);
+            WriteSpriteVertex(vertices, 5, blX, blY, 0f, 0f, 0f, 0f, 1f, 1f, 1f, 1f, ndcScaleX, ndcBiasX, ndcScaleY,
+                ndcBiasY);
+        }
+
         private static void WriteSpriteVertex(Span<float> vertices, int index, float screenX, float screenY, float uvX,
             float uvY, float worldX, float worldY, float tintR, float tintG, float tintB, float tintA,
             float ndcScaleX, float ndcBiasX, float ndcScaleY, float ndcBiasY)
@@ -1246,6 +1450,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             var textureId = CreateTextureFromData(width, height, null);
             var framebufferId = _gl.GenFramebuffer();
             _gl.BindFramebuffer(FramebufferTarget.Framebuffer, framebufferId);
+            _boundFramebufferId = framebufferId;
             _gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
                 TextureTarget.Texture2D, textureId, 0);
 
@@ -1256,6 +1461,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             }
 
             _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            _boundFramebufferId = 0;
             return new GlRenderTarget(framebufferId, textureId, width, height);
         }
 
@@ -1264,6 +1470,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             var textureId = CreateHdrTexture(width, height);
             var framebufferId = _gl.GenFramebuffer();
             _gl.BindFramebuffer(FramebufferTarget.Framebuffer, framebufferId);
+            _boundFramebufferId = framebufferId;
             _gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
                 TextureTarget.Texture2D, textureId, 0);
 
@@ -1274,6 +1481,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             }
 
             _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            _boundFramebufferId = 0;
             return new GlRenderTarget(framebufferId, textureId, width, height);
         }
 
@@ -1508,6 +1716,9 @@ out vec4 FragColor;
 uniform sampler2D u_background;
 uniform sampler2D u_foreground;
 uniform int u_mode;
+uniform vec2 u_backgroundUvScale;
+uniform vec2 u_foregroundUvMin;
+uniform vec2 u_foregroundUvScale;
 
 float BlendSoftLightChannel(float d, float s)
 {
@@ -1564,8 +1775,11 @@ vec3 BlendRgb(vec3 dst, vec3 src)
 
 void main()
 {
-    vec4 background = texture(u_background, v_uv);
-    vec4 foreground = texture(u_foreground, v_uv);
+    vec2 bgUv = v_uv * u_backgroundUvScale;
+    vec2 fgUv = u_foregroundUvMin + v_uv * u_foregroundUvScale;
+
+    vec4 background = texture(u_background, bgUv);
+    vec4 foreground = texture(u_foreground, fgUv);
 
     float dstA = clamp(background.a, 0.0, 1.0);
     float srcA = clamp(foreground.a, 0.0, 1.0);
