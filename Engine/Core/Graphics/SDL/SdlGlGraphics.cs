@@ -5,7 +5,6 @@ using System.Drawing;
 using System.IO;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using System.Text;
 using IsometricMagic.Engine.App;
 using IsometricMagic.Engine.Assets;
 using IsometricMagic.Engine.Diagnostics;
@@ -40,7 +39,9 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
         private GlFullscreenQuad _fullscreenQuad = null!;
         private GlShaderProgram _presentShader = null!;
         private GlShaderProgram _blendCompositeShader = null!;
+        private GlShaderProgram _directCompositeShader = null!;
         private bool _blendCompositeSamplersInitialized;
+        private bool _directCompositeSamplersInitialized;
         private StandardSpriteMaterial _defaultMaterial = null!;
         private OutlineSpriteMaterial _outlineMaterial = null!;
         private long _frameId;
@@ -72,19 +73,6 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
         private uint _backgroundRectFramebufferId;
         private int _backgroundRectTextureWidth;
         private int _backgroundRectTextureHeight;
-
-        // DEBUG_PROFILING_START: composite/outline counters CSV
-        private const string DebugProfilingDir = "profiling";
-        private const string DebugProfilingFile = "composite_outline_counters.csv";
-        private string? _debugProfilingCsvPath;
-        private bool _debugProfilingHeaderWritten;
-
-        private int _debugCompositeSpriteCount;
-        private int _debugOutlineUnderCount;
-        private int _debugOutlineOverCount;
-        private int _debugBackgroundCaptureCount;
-        private long _debugCompositeRectPixels;
-        // DEBUG_PROFILING_END: composite/outline counters CSV
 
         private readonly struct ScreenRect
         {
@@ -271,10 +259,6 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 SDL_GL_GetDrawableSize(_sdlWindow, out _viewportWidth, out _viewportHeight);
             }
 
-            // DEBUG_PROFILING_START: composite/outline counters CSV
-            ResetDebugProfilingCounters();
-            // DEBUG_PROFILING_END: composite/outline counters CSV
-
             EnsureRenderTargets();
 
             _renderContext.Scene = scene;
@@ -298,98 +282,8 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             DebugOverlay.Update(Time.DeltaTime);
             DrawDebugOverlay();
 
-            // DEBUG_PROFILING_START: composite/outline counters CSV
-            AppendDebugProfilingCsv(scene);
-            // DEBUG_PROFILING_END: composite/outline counters CSV
-
             SDL_GL_SwapWindow(_sdlWindow);
         }
-
-        // DEBUG_PROFILING_START: composite/outline counters CSV
-        private void ResetDebugProfilingCounters()
-        {
-            _debugCompositeSpriteCount = 0;
-            _debugOutlineUnderCount = 0;
-            _debugOutlineOverCount = 0;
-            _debugBackgroundCaptureCount = 0;
-            _debugCompositeRectPixels = 0;
-        }
-
-        private void AppendDebugProfilingCsv(Scene scene)
-        {
-            EnsureDebugProfilingCsvReady();
-            if (string.IsNullOrEmpty(_debugProfilingCsvPath))
-            {
-                return;
-            }
-
-            var lineBuilder = new StringBuilder(256);
-            lineBuilder.Append(DateTime.UtcNow.ToString("O"));
-            lineBuilder.Append(',');
-            lineBuilder.Append(_frameId);
-            lineBuilder.Append(',');
-            lineBuilder.Append(EscapeCsv(scene.Name));
-            lineBuilder.Append(',');
-            lineBuilder.Append(_viewportWidth);
-            lineBuilder.Append(',');
-            lineBuilder.Append(_viewportHeight);
-            lineBuilder.Append(',');
-            lineBuilder.Append((Time.DeltaTime * 1000f).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture));
-            lineBuilder.Append(',');
-            lineBuilder.Append(FrameStats.DrawCalls);
-            lineBuilder.Append(',');
-            lineBuilder.Append(FrameStats.SpritesDrawn);
-            lineBuilder.Append(',');
-            lineBuilder.Append(FrameStats.SpritesCulled);
-            lineBuilder.Append(',');
-            lineBuilder.Append(_debugCompositeSpriteCount);
-            lineBuilder.Append(',');
-            lineBuilder.Append(_debugOutlineUnderCount);
-            lineBuilder.Append(',');
-            lineBuilder.Append(_debugOutlineOverCount);
-            lineBuilder.Append(',');
-            lineBuilder.Append(_debugBackgroundCaptureCount);
-            lineBuilder.Append(',');
-            lineBuilder.Append(_debugCompositeRectPixels);
-
-            File.AppendAllText(_debugProfilingCsvPath, lineBuilder.AppendLine().ToString(), Encoding.UTF8);
-        }
-
-        private void EnsureDebugProfilingCsvReady()
-        {
-            if (_debugProfilingHeaderWritten)
-            {
-                return;
-            }
-
-            var dirPath = Path.Combine(Environment.CurrentDirectory, DebugProfilingDir);
-            Directory.CreateDirectory(dirPath);
-            _debugProfilingCsvPath = Path.Combine(dirPath, DebugProfilingFile);
-
-            if (!File.Exists(_debugProfilingCsvPath))
-            {
-                var header = "utc_ts,frame_id,scene,viewport_w,viewport_h,frame_ms,draw_calls,sprites_drawn,sprites_culled,composite_sprites,outline_under,outline_over,background_captures,composite_rect_pixels";
-                File.WriteAllText(_debugProfilingCsvPath, header + Environment.NewLine, Encoding.UTF8);
-            }
-
-            _debugProfilingHeaderWritten = true;
-        }
-
-        private static string EscapeCsv(string value)
-        {
-            if (string.IsNullOrEmpty(value))
-            {
-                return string.Empty;
-            }
-
-            if (!value.Contains(',') && !value.Contains('"') && !value.Contains('\n') && !value.Contains('\r'))
-            {
-                return value;
-            }
-
-            return '"' + value.Replace("\"", "\"\"") + '"';
-        }
-        // DEBUG_PROFILING_END: composite/outline counters CSV
 
         public NativeTexture CreateTexture(PixelFormat format, TextureAccess access, int width, int height)
         {
@@ -528,7 +422,9 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
             _presentShader = new GlShaderProgram(_gl, PresentVertexSource, PresentFragmentSource);
             _blendCompositeShader = new GlShaderProgram(_gl, BlendCompositeVertexSource, BlendCompositeFragmentSource);
+            _directCompositeShader = new GlShaderProgram(_gl, DirectCompositeVertexSource, DirectCompositeFragmentSource);
             _blendCompositeSamplersInitialized = false;
+            _directCompositeSamplersInitialized = false;
             _defaultMaterial = SpriteMaterialFactory.Unlit();
             _outlineMaterial = new OutlineSpriteMaterial();
 
@@ -664,11 +560,6 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
             EnsureBackgroundRectTexture(rect.Width, rect.Height);
             CaptureBackgroundRect(target, rect);
-
-            // DEBUG_PROFILING_START: composite/outline counters CSV
-            _debugBackgroundCaptureCount++;
-            _debugCompositeRectPixels += (long) rect.Width * rect.Height;
-            // DEBUG_PROFILING_END: composite/outline counters CSV
 
             BuildCompositeRectVertices(_singleSpriteVertices, rect.X, rect.Y, rect.Width, rect.Height,
                 2f / target.Width,
@@ -908,9 +799,6 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
                 if (outlineEnabled && outline.Layering == OutlineLayering.Under)
                 {
-                    // DEBUG_PROFILING_START: composite/outline counters CSV
-                    _debugOutlineUnderCount++;
-                    // DEBUG_PROFILING_END: composite/outline counters CSV
                     FlushPendingBatch();
                     DrawOutline(sprite, albedo, canvasSpritePosX, canvasSpritePosY, screenSpritePosX, screenSpritePosY,
                         outlineBlendMode, ref target, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
@@ -968,9 +856,6 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
                 if (outlineEnabled && outline.Layering == OutlineLayering.Over)
                 {
-                    // DEBUG_PROFILING_START: composite/outline counters CSV
-                    _debugOutlineOverCount++;
-                    // DEBUG_PROFILING_END: composite/outline counters CSV
                     FlushPendingBatch();
                     DrawOutline(sprite, albedo, canvasSpritePosX, canvasSpritePosY, screenSpritePosX, screenSpritePosY,
                         outlineBlendMode, ref target, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
@@ -1033,11 +918,13 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 return;
             }
 
-            // DEBUG_PROFILING_START: composite/outline counters CSV
-            _debugCompositeSpriteCount += spriteCount;
-            // DEBUG_PROFILING_END: composite/outline counters CSV
-
             if (!TryGetScreenRect(vertices, vertexCount, target.Width, target.Height, out var rect))
+            {
+                return;
+            }
+
+            if (TryDrawDirectCompositeSprite(vertices, vertexCount, spriteCount, material, sprite, albedo, emissionMap,
+                    blendMode, ref target, rect))
             {
                 return;
             }
@@ -1053,6 +940,70 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             _gl.ClearColor(0f, 0f, 0f, 1f);
 
             CompositeTargetsToCurrentTarget(rect, foregroundTarget, target, blendMode);
+        }
+
+        private bool TryDrawDirectCompositeSprite(ReadOnlySpan<float> vertices, int vertexCount, int spriteCount,
+            IGlMaterial material, Sprite sprite, GlNativeTexture albedo, GlNativeTexture? emissionMap,
+            SpriteBlendMode blendMode, ref GlRenderTarget target, ScreenRect rect)
+        {
+            if (spriteCount != 1 || vertexCount != SpriteVertexCount)
+            {
+                return false;
+            }
+
+            if (material is not StandardSpriteMaterial standardMaterial)
+            {
+                return false;
+            }
+
+            if (standardMaterial.ShadingModel == SpriteShadingModel.Lit && !_renderContext.ForceUnlitShading)
+            {
+                return false;
+            }
+
+            EnsureBackgroundRectTexture(rect.Width, rect.Height);
+            CaptureBackgroundRect(target, rect);
+
+            BindTarget(target);
+            SetBlendDisabledState();
+
+            _directCompositeShader.Use();
+            if (!_directCompositeSamplersInitialized)
+            {
+                _directCompositeShader.SetInt("u_background", 0);
+                _directCompositeShader.SetInt("u_albedo", 1);
+                _directCompositeShader.SetInt("u_emissionMap", 2);
+                _directCompositeSamplersInitialized = true;
+            }
+
+            _directCompositeShader.SetInt("u_mode", (int) blendMode);
+            _directCompositeShader.SetInt("u_useEmission", standardMaterial.EmissionIntensity > 0f ? 1 : 0);
+            _directCompositeShader.SetInt("u_hasEmissionMap", emissionMap != null ? 1 : 0);
+            _directCompositeShader.SetVector3("u_emissionColor", standardMaterial.EmissionColor.X,
+                standardMaterial.EmissionColor.Y, standardMaterial.EmissionColor.Z);
+            _directCompositeShader.SetFloat("u_emissionIntensity", standardMaterial.EmissionIntensity);
+            var glY = target.Height - rect.Y - rect.Height;
+            _directCompositeShader.SetVector2("u_backgroundUvScale",
+                1f / _backgroundRectTextureWidth,
+                1f / _backgroundRectTextureHeight);
+            _directCompositeShader.SetVector2("u_backgroundUvBias",
+                -rect.X / (float) _backgroundRectTextureWidth,
+                -glY / (float) _backgroundRectTextureHeight);
+
+            _gl.ActiveTexture(TextureUnit.Texture0);
+            _gl.BindTexture(TextureTarget.Texture2D, _backgroundRectTextureId);
+            _gl.ActiveTexture(TextureUnit.Texture1);
+            _gl.BindTexture(TextureTarget.Texture2D, albedo.TextureId);
+            _gl.ActiveTexture(TextureUnit.Texture2);
+            _gl.BindTexture(TextureTarget.Texture2D, emissionMap?.TextureId ?? 0u);
+
+            DrawRawSpriteVertices(vertices, vertexCount);
+            FrameStats.AddDrawCall();
+            for (var i = 0; i < spriteCount; i++)
+            {
+                FrameStats.AddSpriteDrawn();
+            }
+            return true;
         }
 
         private void DrawSprite(ReadOnlySpan<float> vertices, int vertexCount, int spriteCount,
@@ -1947,6 +1898,121 @@ void main()
     vec4 background = texture(u_background, bgUv);
     vec4 foreground = texture(u_foreground, fgUv);
 
+    float dstA = clamp(background.a, 0.0, 1.0);
+    float srcA = clamp(foreground.a, 0.0, 1.0);
+    vec3 blended = BlendRgb(background.rgb, foreground.rgb);
+    vec3 outRgb = (1.0 - srcA) * background.rgb + srcA * ((1.0 - dstA) * foreground.rgb + dstA * blended);
+    float outA = srcA + dstA - srcA * dstA;
+
+    FragColor = vec4(outRgb, outA);
+}
+";
+
+        private const string DirectCompositeVertexSource = @"#version 330 core
+layout(location = 0) in vec2 a_pos;
+layout(location = 1) in vec2 a_uv;
+layout(location = 3) in vec4 a_color;
+
+out vec2 v_uv;
+out vec4 v_color;
+
+void main()
+{
+    v_uv = a_uv;
+    v_color = a_color;
+    gl_Position = vec4(a_pos.xy, 0.0, 1.0);
+}
+";
+
+        private const string DirectCompositeFragmentSource = @"#version 330 core
+in vec2 v_uv;
+in vec4 v_color;
+out vec4 FragColor;
+
+uniform sampler2D u_background;
+uniform sampler2D u_albedo;
+uniform sampler2D u_emissionMap;
+uniform int u_mode;
+uniform vec2 u_backgroundUvScale;
+uniform vec2 u_backgroundUvBias;
+uniform int u_useEmission;
+uniform int u_hasEmissionMap;
+uniform vec3 u_emissionColor;
+uniform float u_emissionIntensity;
+
+float BlendSoftLightChannel(float d, float s)
+{
+    if (s <= 0.5)
+    {
+        return d - (1.0 - 2.0 * s) * d * (1.0 - d);
+    }
+
+    float g;
+    if (d <= 0.25)
+    {
+        g = ((16.0 * d - 12.0) * d + 4.0) * d;
+    }
+    else
+    {
+        g = sqrt(max(d, 0.0));
+    }
+
+    return d + (2.0 * s - 1.0) * (g - d);
+}
+
+vec3 BlendRgb(vec3 dst, vec3 src)
+{
+    if (u_mode == 1)
+    {
+        return dst * src;
+    }
+
+    if (u_mode == 2)
+    {
+        return 1.0 - (1.0 - src) * (1.0 - dst);
+    }
+
+    if (u_mode == 3)
+    {
+        return vec3(
+            BlendSoftLightChannel(dst.r, src.r),
+            BlendSoftLightChannel(dst.g, src.g),
+            BlendSoftLightChannel(dst.b, src.b)
+        );
+    }
+
+    if (u_mode == 4)
+    {
+        return vec3(
+            dst.r <= 0.5 ? (2.0 * dst.r * src.r) : (1.0 - 2.0 * (1.0 - dst.r) * (1.0 - src.r)),
+            dst.g <= 0.5 ? (2.0 * dst.g * src.g) : (1.0 - 2.0 * (1.0 - dst.g) * (1.0 - src.g)),
+            dst.b <= 0.5 ? (2.0 * dst.b * src.b) : (1.0 - 2.0 * (1.0 - dst.b) * (1.0 - src.b))
+        );
+    }
+
+    return src;
+}
+
+void main()
+{
+    vec2 bgUv = gl_FragCoord.xy * u_backgroundUvScale + u_backgroundUvBias;
+    vec4 background = texture(u_background, bgUv);
+
+    vec4 baseColor = texture(u_albedo, v_uv) * v_color;
+    vec3 foregroundRgb = baseColor.rgb;
+    if (u_useEmission == 1)
+    {
+        vec3 emissionMask = vec3(1.0);
+        if (u_hasEmissionMap == 1)
+        {
+            emissionMask = texture(u_emissionMap, v_uv).rgb;
+        }
+
+        vec3 emission = u_emissionColor * baseColor.a * u_emissionIntensity * emissionMask * v_color.rgb;
+        foregroundRgb += emission;
+    }
+
+    vec4 foreground = vec4(foregroundRgb, baseColor.a);
     float dstA = clamp(background.a, 0.0, 1.0);
     float srcA = clamp(foreground.a, 0.0, 1.0);
     vec3 blended = BlendRgb(background.rgb, foreground.rgb);
