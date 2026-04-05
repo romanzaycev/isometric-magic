@@ -16,6 +16,7 @@ namespace IsometricMagic
                 .ConfigureScenes(sceneManager =>
                 {
                     sceneManager.SetLoadingScene(new Loading());
+                    sceneManager.Add(new Benchmark());
                     sceneManager.Add(new IsoTest());
                 })
 #if DEBUG

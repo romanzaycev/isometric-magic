@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using IsometricMagic.Engine.App;
 using IsometricMagic.Engine.Assets;
@@ -42,8 +43,98 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
         private OutlineSpriteMaterial _outlineMaterial = null!;
         private long _frameId;
 
+        private const int SpriteVertexCount = 6;
+        private const int SpriteVertexStrideFloats = 10;
+        private const int SpriteFloatCount = SpriteVertexCount * SpriteVertexStrideFloats;
+
         private uint _spriteVao;
         private uint _spriteVbo;
+        private int _spriteBufferCapacityFloats;
+
+        private float[] _singleSpriteVertices = new float[SpriteFloatCount];
+        private float[] _batchedVertices = new float[SpriteFloatCount * 256];
+
+        private enum BlendStateMode
+        {
+            Unknown,
+            Disabled,
+            AlphaBlend,
+        }
+
+        private BlendStateMode _blendState = BlendStateMode.Unknown;
+
+        private readonly struct SpriteBatchKey : IEquatable<SpriteBatchKey>
+        {
+            public readonly uint AlbedoTextureId;
+            public readonly uint NormalTextureId;
+            public readonly uint EmissionTextureId;
+            public readonly int ShadingModel;
+            public readonly int NormalMapMode;
+            public readonly int EmissionColorX;
+            public readonly int EmissionColorY;
+            public readonly int EmissionColorZ;
+            public readonly int EmissionIntensity;
+            public readonly bool ForceUnlitShading;
+
+            public SpriteBatchKey(
+                uint albedoTextureId,
+                uint normalTextureId,
+                uint emissionTextureId,
+                int shadingModel,
+                int normalMapMode,
+                int emissionColorX,
+                int emissionColorY,
+                int emissionColorZ,
+                int emissionIntensity,
+                bool forceUnlitShading)
+            {
+                AlbedoTextureId = albedoTextureId;
+                NormalTextureId = normalTextureId;
+                EmissionTextureId = emissionTextureId;
+                ShadingModel = shadingModel;
+                NormalMapMode = normalMapMode;
+                EmissionColorX = emissionColorX;
+                EmissionColorY = emissionColorY;
+                EmissionColorZ = emissionColorZ;
+                EmissionIntensity = emissionIntensity;
+                ForceUnlitShading = forceUnlitShading;
+            }
+
+            public bool Equals(SpriteBatchKey other)
+            {
+                return AlbedoTextureId == other.AlbedoTextureId
+                       && NormalTextureId == other.NormalTextureId
+                       && EmissionTextureId == other.EmissionTextureId
+                       && ShadingModel == other.ShadingModel
+                       && NormalMapMode == other.NormalMapMode
+                       && EmissionColorX == other.EmissionColorX
+                       && EmissionColorY == other.EmissionColorY
+                       && EmissionColorZ == other.EmissionColorZ
+                       && EmissionIntensity == other.EmissionIntensity
+                       && ForceUnlitShading == other.ForceUnlitShading;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                return obj is SpriteBatchKey other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                var hash = new HashCode();
+                hash.Add(AlbedoTextureId);
+                hash.Add(NormalTextureId);
+                hash.Add(EmissionTextureId);
+                hash.Add(ShadingModel);
+                hash.Add(NormalMapMode);
+                hash.Add(EmissionColorX);
+                hash.Add(EmissionColorY);
+                hash.Add(EmissionColorZ);
+                hash.Add(EmissionIntensity);
+                hash.Add(ForceUnlitShading);
+                return hash.ToHashCode();
+            }
+        }
 
         private GlRenderTarget _sceneTarget;
         private GlRenderTarget _pingTarget;
@@ -294,20 +385,25 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
             _gl.BindVertexArray(_spriteVao);
             _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _spriteVbo);
+            _spriteBufferCapacityFloats = SpriteFloatCount * 256;
             unsafe
             {
-                _gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint) (6 * 6 * sizeof(float)), null,
+                _gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint) (_spriteBufferCapacityFloats * sizeof(float)), null,
                     BufferUsageARB.DynamicDraw);
             }
 
             _gl.EnableVertexAttribArray(0);
-            _gl.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
+            _gl.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, SpriteVertexStrideFloats * sizeof(float),
+                0);
             _gl.EnableVertexAttribArray(1);
-            _gl.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 6 * sizeof(float),
+            _gl.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, SpriteVertexStrideFloats * sizeof(float),
                 2 * sizeof(float));
             _gl.EnableVertexAttribArray(2);
-            _gl.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, 6 * sizeof(float),
+            _gl.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, SpriteVertexStrideFloats * sizeof(float),
                 4 * sizeof(float));
+            _gl.EnableVertexAttribArray(3);
+            _gl.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, SpriteVertexStrideFloats * sizeof(float),
+                6 * sizeof(float));
 
             _gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
             _gl.BindVertexArray(0);
@@ -334,6 +430,11 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
         private void SetAlphaBlendState()
         {
+            if (_blendState == BlendStateMode.AlphaBlend)
+            {
+                return;
+            }
+
             _gl.Enable(EnableCap.Blend);
             _gl.BlendFuncSeparate(
                 BlendingFactor.SrcAlpha,
@@ -341,11 +442,18 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 BlendingFactor.One,
                 BlendingFactor.OneMinusSrcAlpha
             );
+            _blendState = BlendStateMode.AlphaBlend;
         }
 
         private void SetBlendDisabledState()
         {
+            if (_blendState == BlendStateMode.Disabled)
+            {
+                return;
+            }
+
             _gl.Disable(EnableCap.Blend);
+            _blendState = BlendStateMode.Disabled;
         }
 
         private GlRenderTarget SelectPostProcessOutputTarget(GlRenderTarget input)
@@ -453,6 +561,45 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             var target = initialTarget;
             _renderContext.ForceUnlitShading = !isCameraLayer;
 
+            var ndcScaleX = 2f / _viewportWidth;
+            var ndcBiasX = -1f;
+            var ndcScaleY = -2f / _viewportHeight;
+            var ndcBiasY = 1f;
+
+            var hasPendingBatch = false;
+            var pendingBatchKey = default(SpriteBatchKey);
+            var pendingBatchMaterial = default(IGlMaterial)!;
+            var pendingBatchSprite = default(Sprite)!;
+            var pendingBatchAlbedo = default(GlNativeTexture)!;
+            GlNativeTexture? pendingBatchNormal = null;
+            GlNativeTexture? pendingBatchEmission = null;
+            var pendingBatchSpriteCount = 0;
+            var pendingBatchFloatCount = 0;
+
+            void FlushPendingBatch()
+            {
+                if (!hasPendingBatch)
+                {
+                    return;
+                }
+
+                BindTarget(target);
+                SetAlphaBlendState();
+                DrawSprite(
+                    _batchedVertices.AsSpan(0, pendingBatchFloatCount),
+                    pendingBatchFloatCount / SpriteVertexStrideFloats,
+                    pendingBatchSpriteCount,
+                    pendingBatchMaterial,
+                    pendingBatchSprite,
+                    pendingBatchAlbedo,
+                    pendingBatchNormal,
+                    pendingBatchEmission);
+
+                hasPendingBatch = false;
+                pendingBatchSpriteCount = 0;
+                pendingBatchFloatCount = 0;
+            }
+
             foreach (var sprite in layer.Sprites)
             {
                 if (sprite.Texture == null || !sprite.Visible)
@@ -545,12 +692,21 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                     screenSpritePosY -= cameraOffsetY;
                 }
 
-                var vertices = BuildQuadVertices(
+                BuildQuadVertices(
+                    _singleSpriteVertices,
                     canvasSpritePosX, canvasSpritePosY,
                     screenSpritePosX, screenSpritePosY,
                     sprite.Width, sprite.Height,
                     sprite.Transformation.Rotation.Angle,
-                    sprite.Transformation.Rotation.Clockwise
+                    sprite.Transformation.Rotation.Clockwise,
+                    sprite.Color.X,
+                    sprite.Color.Y,
+                    sprite.Color.Z,
+                    sprite.Color.W,
+                    ndcScaleX,
+                    ndcBiasX,
+                    ndcScaleY,
+                    ndcBiasY
                 );
                 var outline = sprite.Outline;
                 var outlineEnabled = outline.Enabled && outline.ThicknessTexels > 0f && outline.Color.W > 0f;
@@ -558,8 +714,9 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
                 if (outlineEnabled && outline.Layering == OutlineLayering.Under)
                 {
+                    FlushPendingBatch();
                     DrawOutline(sprite, albedo, canvasSpritePosX, canvasSpritePosY, screenSpritePosX, screenSpritePosY,
-                        outlineBlendMode, ref target);
+                        outlineBlendMode, ref target, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
                 }
 
                 var material = ResolveMaterial(sprite);
@@ -571,27 +728,108 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 var capabilities = ResolveMaterialCapabilities(material);
                 var normalMap = ResolveNormalMap(sprite, capabilities);
                 var emissionMap = ResolveEmissionMap(capabilities);
-                DrawSpriteWithBlendMode(vertices, material, sprite, albedo, normalMap, emissionMap, sprite.BlendMode,
-                    ref target);
+
+                if (sprite.BlendMode == SpriteBlendMode.Normal
+                    && TryBuildBatchKey(material, albedo, normalMap, emissionMap, out var batchKey))
+                {
+                    if (hasPendingBatch && !pendingBatchKey.Equals(batchKey))
+                    {
+                        FlushPendingBatch();
+                    }
+
+                    if (!hasPendingBatch)
+                    {
+                        pendingBatchKey = batchKey;
+                        pendingBatchMaterial = material;
+                        pendingBatchSprite = sprite;
+                        pendingBatchAlbedo = albedo;
+                        pendingBatchNormal = normalMap;
+                        pendingBatchEmission = emissionMap;
+                        hasPendingBatch = true;
+                    }
+
+                    EnsureBatchVertexCapacity(pendingBatchFloatCount + SpriteFloatCount);
+                    Array.Copy(_singleSpriteVertices, 0, _batchedVertices, pendingBatchFloatCount, SpriteFloatCount);
+                    pendingBatchFloatCount += SpriteFloatCount;
+                    pendingBatchSpriteCount++;
+                }
+                else
+                {
+                    FlushPendingBatch();
+                    DrawSpriteWithBlendMode(
+                        _singleSpriteVertices,
+                        SpriteVertexCount,
+                        1,
+                        material,
+                        sprite,
+                        albedo,
+                        normalMap,
+                        emissionMap,
+                        sprite.BlendMode,
+                        ref target);
+                }
 
                 if (outlineEnabled && outline.Layering == OutlineLayering.Over)
                 {
+                    FlushPendingBatch();
                     DrawOutline(sprite, albedo, canvasSpritePosX, canvasSpritePosY, screenSpritePosX, screenSpritePosY,
-                        outlineBlendMode, ref target);
+                        outlineBlendMode, ref target, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
                 }
             }
+
+            FlushPendingBatch();
 
             return target;
         }
 
-        private void DrawSpriteWithBlendMode(float[] vertices, IGlMaterial material, Sprite sprite, GlNativeTexture albedo,
+        private bool TryBuildBatchKey(IGlMaterial material, GlNativeTexture albedo, GlNativeTexture? normalMap,
+            GlNativeTexture? emissionMap, out SpriteBatchKey key)
+        {
+            if (material is not StandardSpriteMaterial standardMaterial)
+            {
+                key = default;
+                return false;
+            }
+
+            key = new SpriteBatchKey(
+                albedo.TextureId,
+                normalMap?.TextureId ?? 0u,
+                emissionMap?.TextureId ?? 0u,
+                (int) standardMaterial.ShadingModel,
+                (int) standardMaterial.NormalMapMode,
+                BitConverter.SingleToInt32Bits(standardMaterial.EmissionColor.X),
+                BitConverter.SingleToInt32Bits(standardMaterial.EmissionColor.Y),
+                BitConverter.SingleToInt32Bits(standardMaterial.EmissionColor.Z),
+                BitConverter.SingleToInt32Bits(standardMaterial.EmissionIntensity),
+                _renderContext.ForceUnlitShading);
+            return true;
+        }
+
+        private void EnsureBatchVertexCapacity(int requiredFloats)
+        {
+            if (_batchedVertices.Length >= requiredFloats)
+            {
+                return;
+            }
+
+            var newCapacity = _batchedVertices.Length;
+            while (newCapacity < requiredFloats)
+            {
+                newCapacity *= 2;
+            }
+
+            Array.Resize(ref _batchedVertices, newCapacity);
+        }
+
+        private void DrawSpriteWithBlendMode(ReadOnlySpan<float> vertices, int vertexCount, int spriteCount,
+            IGlMaterial material, Sprite sprite, GlNativeTexture albedo,
             GlNativeTexture? normalMap, GlNativeTexture? emissionMap, SpriteBlendMode blendMode, ref GlRenderTarget target)
         {
             if (blendMode == SpriteBlendMode.Normal)
             {
                 BindTarget(target);
                 SetAlphaBlendState();
-                DrawSprite(vertices, material, sprite, albedo, normalMap, emissionMap);
+                DrawSprite(vertices, vertexCount, spriteCount, material, sprite, albedo, normalMap, emissionMap);
                 return;
             }
 
@@ -600,7 +838,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             _gl.ClearColor(0f, 0f, 0f, 0f);
             _gl.Clear(ClearBufferMask.ColorBufferBit);
             SetBlendDisabledState();
-            DrawSprite(vertices, material, sprite, albedo, normalMap, emissionMap);
+            DrawSprite(vertices, vertexCount, spriteCount, material, sprite, albedo, normalMap, emissionMap);
             _gl.ClearColor(0f, 0f, 0f, 1f);
 
             var outputTarget = SelectCompositeOutputTarget(target, foregroundTarget);
@@ -608,7 +846,8 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             target = outputTarget;
         }
 
-        private void DrawSprite(float[] vertices, IGlMaterial material, Sprite sprite, GlNativeTexture albedo,
+        private void DrawSprite(ReadOnlySpan<float> vertices, int vertexCount, int spriteCount,
+            IGlMaterial material, Sprite sprite, GlNativeTexture albedo,
             GlNativeTexture? normalMap, GlNativeTexture? emissionMap)
         {
             UpdateSpriteBuffer(vertices);
@@ -616,18 +855,23 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
             _gl.BindVertexArray(_spriteVao);
             FrameStats.AddDrawCall();
-            FrameStats.AddSpriteDrawn();
-            _gl.DrawArrays(PrimitiveType.Triangles, 0, 6);
-            _gl.BindVertexArray(0);
+            for (var i = 0; i < spriteCount; i++)
+            {
+                FrameStats.AddSpriteDrawn();
+            }
 
-            material.Unbind(_renderContext);
+            _gl.DrawArrays(PrimitiveType.Triangles, 0, (uint) vertexCount);
         }
 
         private void DrawOutline(Sprite sprite, GlNativeTexture albedo,
             float worldSpritePosX, float worldSpritePosY,
             float screenSpritePosX, float screenSpritePosY,
             SpriteBlendMode blendMode,
-            ref GlRenderTarget target)
+            ref GlRenderTarget target,
+            float ndcScaleX,
+            float ndcBiasX,
+            float ndcScaleY,
+            float ndcBiasY)
         {
             var pad = (int) MathF.Ceiling(sprite.Outline.ThicknessTexels);
             if (pad <= 0)
@@ -645,17 +889,27 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             var uvPadX = pad / (float) sprite.Width;
             var uvPadY = pad / (float) sprite.Height;
 
-            var outlineVertices = BuildQuadVertices(
+            BuildQuadVertices(
+                _singleSpriteVertices,
                 outlineWorldX, outlineWorldY,
                 outlineScreenX, outlineScreenY,
                 outlineWidth, outlineHeight,
                 sprite.Transformation.Rotation.Angle,
                 sprite.Transformation.Rotation.Clockwise,
                 -uvPadX, -uvPadY,
-                1f + uvPadX, 1f + uvPadY
+                1f + uvPadX, 1f + uvPadY,
+                sprite.Color.X,
+                sprite.Color.Y,
+                sprite.Color.Z,
+                sprite.Color.W,
+                ndcScaleX,
+                ndcBiasX,
+                ndcScaleY,
+                ndcBiasY
             );
 
-            DrawSpriteWithBlendMode(outlineVertices, _outlineMaterial, sprite, albedo, null, null, blendMode,
+            DrawSpriteWithBlendMode(_singleSpriteVertices, SpriteVertexCount, 1, _outlineMaterial, sprite, albedo,
+                null, null, blendMode,
                 ref target);
         }
 
@@ -753,63 +1007,166 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             public float EmissionIntensity => 0f;
         }
 
-        private float[] BuildQuadVertices(
+        private static void BuildQuadVertices(
+            Span<float> vertices,
             float worldX, float worldY,
             float screenX, float screenY,
             int width, int height,
-            double angle, bool clockwise)
+            double angle,
+            bool clockwise,
+            float tintR,
+            float tintG,
+            float tintB,
+            float tintA,
+            float ndcScaleX,
+            float ndcBiasX,
+            float ndcScaleY,
+            float ndcBiasY)
         {
-            return BuildQuadVertices(worldX, worldY, screenX, screenY, width, height, angle, clockwise, 0f, 0f, 1f, 1f);
+            BuildQuadVertices(vertices, worldX, worldY, screenX, screenY, width, height, angle, clockwise, 0f, 0f,
+                1f, 1f, tintR, tintG, tintB, tintA, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
         }
 
-        private float[] BuildQuadVertices(
-            float worldX, float worldY,
-            float screenX, float screenY,
-            int width, int height,
-            double angle, bool clockwise,
-            float uvMinX, float uvMinY,
-            float uvMaxX, float uvMaxY)
+        private static void BuildQuadVertices(
+            Span<float> vertices,
+            float worldX,
+            float worldY,
+            float screenX,
+            float screenY,
+            int width,
+            int height,
+            double angle,
+            bool clockwise,
+            float uvMinX,
+            float uvMinY,
+            float uvMaxX,
+            float uvMaxY,
+            float tintR,
+            float tintG,
+            float tintB,
+            float tintA,
+            float ndcScaleX,
+            float ndcBiasX,
+            float ndcScaleY,
+            float ndcBiasY)
         {
-            var rotationDeg = MathHelper.NorRotationToDegree(clockwise ? angle : -angle);
-            var rotationRad = (float) (rotationDeg * Math.PI / 180f);
+            float worldTlX;
+            float worldTlY;
+            float worldTrX;
+            float worldTrY;
+            float worldBrX;
+            float worldBrY;
+            float worldBlX;
+            float worldBlY;
 
-            float worldX0 = worldX;
-            float worldY0 = worldY;
-            float worldX1 = worldX + width;
-            float worldY1 = worldY + height;
-            float worldCenterX = worldX + width / 2f;
-            float worldCenterY = worldY + height / 2f;
+            float screenTlX;
+            float screenTlY;
+            float screenTrX;
+            float screenTrY;
+            float screenBrX;
+            float screenBrY;
+            float screenBlX;
+            float screenBlY;
 
-            var worldTl = RotatePoint(worldX0, worldY0, worldCenterX, worldCenterY, rotationRad);
-            var worldTr = RotatePoint(worldX1, worldY0, worldCenterX, worldCenterY, rotationRad);
-            var worldBr = RotatePoint(worldX1, worldY1, worldCenterX, worldCenterY, rotationRad);
-            var worldBl = RotatePoint(worldX0, worldY1, worldCenterX, worldCenterY, rotationRad);
-
-            float screenX0 = screenX;
-            float screenY0 = screenY;
-            float screenX1 = screenX + width;
-            float screenY1 = screenY + height;
-            float screenCenterX = screenX + width / 2f;
-            float screenCenterY = screenY + height / 2f;
-
-            var screenTl = RotatePoint(screenX0, screenY0, screenCenterX, screenCenterY, rotationRad);
-            var screenTr = RotatePoint(screenX1, screenY0, screenCenterX, screenCenterY, rotationRad);
-            var screenBr = RotatePoint(screenX1, screenY1, screenCenterX, screenCenterY, rotationRad);
-            var screenBl = RotatePoint(screenX0, screenY1, screenCenterX, screenCenterY, rotationRad);
-
-            return new float[]
+            if (Math.Abs(angle) < double.Epsilon)
             {
-                ToNdcX(screenTl.X), ToNdcY(screenTl.Y), uvMinX, uvMinY, worldTl.X, worldTl.Y,
-                ToNdcX(screenTr.X), ToNdcY(screenTr.Y), uvMaxX, uvMinY, worldTr.X, worldTr.Y,
-                ToNdcX(screenBr.X), ToNdcY(screenBr.Y), uvMaxX, uvMaxY, worldBr.X, worldBr.Y,
-                ToNdcX(screenTl.X), ToNdcY(screenTl.Y), uvMinX, uvMinY, worldTl.X, worldTl.Y,
-                ToNdcX(screenBr.X), ToNdcY(screenBr.Y), uvMaxX, uvMaxY, worldBr.X, worldBr.Y,
-                ToNdcX(screenBl.X), ToNdcY(screenBl.Y), uvMinX, uvMaxY, worldBl.X, worldBl.Y
-            };
+                worldTlX = worldX;
+                worldTlY = worldY;
+                worldTrX = worldX + width;
+                worldTrY = worldY;
+                worldBrX = worldX + width;
+                worldBrY = worldY + height;
+                worldBlX = worldX;
+                worldBlY = worldY + height;
+
+                screenTlX = screenX;
+                screenTlY = screenY;
+                screenTrX = screenX + width;
+                screenTrY = screenY;
+                screenBrX = screenX + width;
+                screenBrY = screenY + height;
+                screenBlX = screenX;
+                screenBlY = screenY + height;
+            }
+            else
+            {
+                var rotationDeg = MathHelper.NorRotationToDegree(clockwise ? angle : -angle);
+                var rotationRad = (float) (rotationDeg * Math.PI / 180f);
+                var cos = MathF.Cos(rotationRad);
+                var sin = MathF.Sin(rotationRad);
+
+                var worldX0 = worldX;
+                var worldY0 = worldY;
+                var worldX1 = worldX + width;
+                var worldY1 = worldY + height;
+                var worldCenterX = worldX + width / 2f;
+                var worldCenterY = worldY + height / 2f;
+
+                RotatePoint(worldX0, worldY0, worldCenterX, worldCenterY, cos, sin, out worldTlX, out worldTlY);
+                RotatePoint(worldX1, worldY0, worldCenterX, worldCenterY, cos, sin, out worldTrX, out worldTrY);
+                RotatePoint(worldX1, worldY1, worldCenterX, worldCenterY, cos, sin, out worldBrX, out worldBrY);
+                RotatePoint(worldX0, worldY1, worldCenterX, worldCenterY, cos, sin, out worldBlX, out worldBlY);
+
+                var screenX0 = screenX;
+                var screenY0 = screenY;
+                var screenX1 = screenX + width;
+                var screenY1 = screenY + height;
+                var screenCenterX = screenX + width / 2f;
+                var screenCenterY = screenY + height / 2f;
+
+                RotatePoint(screenX0, screenY0, screenCenterX, screenCenterY, cos, sin, out screenTlX,
+                    out screenTlY);
+                RotatePoint(screenX1, screenY0, screenCenterX, screenCenterY, cos, sin, out screenTrX,
+                    out screenTrY);
+                RotatePoint(screenX1, screenY1, screenCenterX, screenCenterY, cos, sin, out screenBrX,
+                    out screenBrY);
+                RotatePoint(screenX0, screenY1, screenCenterX, screenCenterY, cos, sin, out screenBlX,
+                    out screenBlY);
+            }
+
+            WriteSpriteVertex(vertices, 0, screenTlX, screenTlY, uvMinX, uvMinY, worldTlX, worldTlY, tintR, tintG,
+                tintB, tintA, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
+            WriteSpriteVertex(vertices, 1, screenTrX, screenTrY, uvMaxX, uvMinY, worldTrX, worldTrY, tintR, tintG,
+                tintB, tintA, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
+            WriteSpriteVertex(vertices, 2, screenBrX, screenBrY, uvMaxX, uvMaxY, worldBrX, worldBrY, tintR, tintG,
+                tintB, tintA, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
+            WriteSpriteVertex(vertices, 3, screenTlX, screenTlY, uvMinX, uvMinY, worldTlX, worldTlY, tintR, tintG,
+                tintB, tintA, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
+            WriteSpriteVertex(vertices, 4, screenBrX, screenBrY, uvMaxX, uvMaxY, worldBrX, worldBrY, tintR, tintG,
+                tintB, tintA, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
+            WriteSpriteVertex(vertices, 5, screenBlX, screenBlY, uvMinX, uvMaxY, worldBlX, worldBlY, tintR, tintG,
+                tintB, tintA, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
         }
 
-        private void UpdateSpriteBuffer(float[] vertices)
+        private static void RotatePoint(float x, float y, float cx, float cy, float cos, float sin, out float rx,
+            out float ry)
         {
+            var dx = x - cx;
+            var dy = y - cy;
+            rx = dx * cos - dy * sin + cx;
+            ry = dx * sin + dy * cos + cy;
+        }
+
+        private static void WriteSpriteVertex(Span<float> vertices, int index, float screenX, float screenY, float uvX,
+            float uvY, float worldX, float worldY, float tintR, float tintG, float tintB, float tintA,
+            float ndcScaleX, float ndcBiasX, float ndcScaleY, float ndcBiasY)
+        {
+            var offset = index * SpriteVertexStrideFloats;
+            vertices[offset + 0] = screenX * ndcScaleX + ndcBiasX;
+            vertices[offset + 1] = screenY * ndcScaleY + ndcBiasY;
+            vertices[offset + 2] = uvX;
+            vertices[offset + 3] = uvY;
+            vertices[offset + 4] = worldX;
+            vertices[offset + 5] = worldY;
+            vertices[offset + 6] = tintR;
+            vertices[offset + 7] = tintG;
+            vertices[offset + 8] = tintB;
+            vertices[offset + 9] = tintA;
+        }
+
+        private void UpdateSpriteBuffer(ReadOnlySpan<float> vertices)
+        {
+            EnsureSpriteBufferCapacity(vertices.Length);
             _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _spriteVbo);
             unsafe
             {
@@ -819,28 +1176,29 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                         data);
                 }
             }
-            _gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
         }
 
-        private float ToNdcX(float x)
+        private void EnsureSpriteBufferCapacity(int requiredFloats)
         {
-            return (x / _viewportWidth) * 2f - 1f;
-        }
+            if (_spriteBufferCapacityFloats >= requiredFloats)
+            {
+                return;
+            }
 
-        private float ToNdcY(float y)
-        {
-            return 1f - (y / _viewportHeight) * 2f;
-        }
+            var newCapacity = _spriteBufferCapacityFloats;
+            while (newCapacity < requiredFloats)
+            {
+                newCapacity *= 2;
+            }
 
-        private static PointF RotatePoint(float x, float y, float cx, float cy, float angleRad)
-        {
-            var cos = MathF.Cos(angleRad);
-            var sin = MathF.Sin(angleRad);
-            var dx = x - cx;
-            var dy = y - cy;
-            var rx = dx * cos - dy * sin + cx;
-            var ry = dx * sin + dy * cos + cy;
-            return new PointF(rx, ry);
+            _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _spriteVbo);
+            unsafe
+            {
+                _gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint) (newCapacity * sizeof(float)), null,
+                    BufferUsageARB.DynamicDraw);
+            }
+
+            _spriteBufferCapacityFloats = newCapacity;
         }
 
         private void EnsureRenderTargets()
@@ -1036,9 +1394,30 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                     continue;
                 }
 
-                var sprite = new Sprite(width, height);
-                var vertices = BuildQuadVertices(x, y, x, y, width, height, 0d, true);
-                DrawSprite(vertices, _defaultMaterial, sprite, texture, null, null);
+                var sprite = new Sprite(width, height)
+                {
+                    Color = Vector4.One,
+                };
+
+                BuildQuadVertices(
+                    _singleSpriteVertices,
+                    x,
+                    y,
+                    x,
+                    y,
+                    width,
+                    height,
+                    0d,
+                    true,
+                    sprite.Color.X,
+                    sprite.Color.Y,
+                    sprite.Color.Z,
+                    sprite.Color.W,
+                    2f / _viewportWidth,
+                    -1f,
+                    -2f / _viewportHeight,
+                    1f);
+                DrawSprite(_singleSpriteVertices, SpriteVertexCount, 1, _defaultMaterial, sprite, texture, null, null);
                 y += height + lineGap;
 
                 DeleteTexture(texture);
