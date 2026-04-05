@@ -1,13 +1,18 @@
 using System;
 using System.Numerics;
 
+using IsometricMagic.Engine.Diagnostics;
 using IsometricMagic.Engine.SceneGraph;
 
 namespace IsometricMagic.Engine.Spatial
 {
+    [RuntimeEditorInspectable(EditableByDefault = false)]
     public class Transform2D
     {
+        [RuntimeEditorEditable]
         public Vector2 LocalPosition = Vector2.Zero;
+
+        [RuntimeEditorEditable(Step = 0.1)]
         public double LocalRotation = 0.0;
 
         private Entity? _parent;

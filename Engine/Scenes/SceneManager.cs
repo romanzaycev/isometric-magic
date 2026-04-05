@@ -32,6 +32,11 @@ namespace IsometricMagic.Engine.Scenes
             }
         }
 
+        public IReadOnlyList<string> GetSceneNames()
+        {
+            return _scenes.Keys.ToList();
+        }
+
         public Scene GetCurrent()
         {
             if (_currentScene == null)

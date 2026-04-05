@@ -48,7 +48,8 @@ namespace IsometricMagic.Game.Prefabs
             {
                 Radius = _spec.ColliderRadius,
                 IsStatic = false,
-                DebugDraw = _spec.ColliderDebug
+                DebugDraw = _spec.ColliderDebug,
+                Offset = new Vector2(90, -90),
             });
 
             entity.AddComponent(new MotorComponent());

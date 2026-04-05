@@ -7,10 +7,17 @@ namespace IsometricMagic.Game.Components.Collision
     public class WorldColliderComponent : Component
     {
         public float Radius { get; set; } = 20f;
+        
+        [RuntimeEditorEditable]
         public Vector2 Offset { get; set; } = Vector2.Zero;
+        
         public bool IsStatic { get; set; } = false;
+        
+        [RuntimeEditorEditable]
         public bool DebugDraw { get; set; } = false;
+        
         public Vector4 DebugColor { get; set; } = new(1f, 0f, 0f, 0.5f);
+        
         public int DebugSorting { get; set; } = 1_900_000_000;
 
         private IsoWorldPositionComponent? _worldPosition;
@@ -31,15 +38,19 @@ namespace IsometricMagic.Game.Components.Collision
         protected override void OnEnable()
         {
             TryRegister();
+
+            #if DEBUG
             if (DebugDraw)
             {
                 CreateDebugSprite();
             }
+            #endif
         }
 
         protected override void OnDisable()
         {
             UnregisterIfNeeded();
+            
             if (_debugSprite != null)
             {
                 _debugSprite.Visible = false;
@@ -49,11 +60,20 @@ namespace IsometricMagic.Game.Components.Collision
         protected override void LateUpdate(float dt)
         {
             if (_collisionWorld == null) return;
+            
             ResolveWorldPositionComponent();
+            
             if (_worldPosition == null) return;
-
+            
             TryRegister();
 
+            #if DEBUG
+            if (DebugDraw)
+            {
+                CreateDebugSprite();
+            }
+            #endif
+            
             var center = GetWorldCenter();
             var positionChanged = !_hasLastCenter || Vector2.DistanceSquared(center, _lastCenter) > 0.01f;
 
@@ -97,7 +117,7 @@ namespace IsometricMagic.Game.Components.Collision
             if (_debugTexture == null)
             {
                 _debugTexture = new Texture(128, 128);
-                _debugTexture.LoadImage("./resources/data/textures/loading_circle.png");
+                _debugTexture.LoadImage("./resources/data/textures/circle_128.png");
             }
 
             _debugSprite = new Sprite

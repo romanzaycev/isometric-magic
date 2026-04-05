@@ -18,9 +18,6 @@ namespace IsometricMagic.Engine.App
         private static readonly SceneManager SceneManager = SceneManager.GetInstance();
         private static readonly FrameStats FrameStats = FrameStats.GetInstance();
         private static readonly DebugOverlayService DebugOverlay = DebugOverlayService.GetInstance();
-#if DEBUG
-        private static readonly RuntimeEditorService RuntimeEditor = RuntimeEditorService.GetInstance();
-#endif
         private AppConfig _config = null!;
         private bool _isInitialized;
         private Renderer _renderer = null!;
@@ -36,6 +33,7 @@ namespace IsometricMagic.Engine.App
         private IGraphics _graphics = null!;
         private readonly CameraComposer _cameraComposer = new();
         private readonly List<CameraInfluence> _cameraInfluences = new();
+        private readonly List<IApplicationRuntimeService> _runtimeServices = new();
 
         public int ViewportWidth => _viewportWidth;
         public int ViewportHeight => _viewportHeight;
@@ -57,9 +55,11 @@ namespace IsometricMagic.Engine.App
             FrameStats.SetBackend(_config.GraphicsBackend);
             FrameStats.SetVSync(_config.VSync);
             DebugOverlay.Initialize(_config);
-#if DEBUG
-            RuntimeEditor.Initialize(_config);
-#endif
+
+            foreach (var service in _runtimeServices)
+            {
+                service.Initialize(_config);
+            }
             
             var graphicsParams = new GraphicsParams(_config.WindowWidth, _config.WindowHeight)
                 .SetFullscreen(_config.IsFullscreen)
@@ -89,9 +89,12 @@ namespace IsometricMagic.Engine.App
             if (!_isInitialized) return;
 
             SceneManager.GetCurrent().Unload();
-#if DEBUG
-            RuntimeEditor.Stop();
-#endif
+
+            foreach (var service in _runtimeServices)
+            {
+                service.Stop();
+            }
+
             TextureHolder.GetInstance().DestroyAll();
             _graphics.Stop();
             Logger.Info("Application stopped");
@@ -118,9 +121,12 @@ namespace IsometricMagic.Engine.App
             FrameStats.SetSceneName(scene.Name);
             scene.CollectCameraInfluences(_cameraInfluences);
             _cameraComposer.Apply(_renderer.GetCamera(), Time.DeltaTime, _cameraInfluences);
-#if DEBUG
-            RuntimeEditor.Update();
-#endif
+
+            foreach (var service in _runtimeServices)
+            {
+                service.Update();
+            }
+
             _renderer.DrawAll();
             RepaintWindow();
         }
@@ -181,6 +187,12 @@ namespace IsometricMagic.Engine.App
         public AppConfig GetConfig()
         {
             return _config;
+        }
+
+        internal void SetRuntimeServices(IReadOnlyList<IApplicationRuntimeService> services)
+        {
+            _runtimeServices.Clear();
+            _runtimeServices.AddRange(services);
         }
 
         private void RepaintWindow()

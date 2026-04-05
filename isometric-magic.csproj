@@ -19,11 +19,17 @@
       <ProjectReference Include="Engine/IsometricMagic.Engine.csproj" />
     </ItemGroup>
 
+    <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <ProjectReference Include="Editor/IsometricMagic.RuntimeEditor/IsometricMagic.RuntimeEditor.csproj" />
+    </ItemGroup>
+
     <ItemGroup>
       <Compile Remove="Engine\**\*.cs" />
       <Compile Remove="sdl2-cs\**\*.cs" />
       <Compile Remove="tests\**\*.cs" />
+      <Compile Remove="Editor\**\*.cs" />
       <None Remove="tests\**\*" />
+      <None Remove="Editor\**\*" />
     </ItemGroup>
 
     <ItemGroup>

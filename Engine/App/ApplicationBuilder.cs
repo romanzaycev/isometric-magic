@@ -6,6 +6,7 @@ using IsometricMagic.Engine.Core.Logging;
 using IsometricMagic.Engine.Scenes;
 using IsometricMagic.Engine.Inputs;
 using NLog;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using static SDL2.SDL;
 
@@ -15,6 +16,7 @@ namespace IsometricMagic.Engine.App
     {
         private string _configPath = "config.ini";
         private Action<SceneManager>? _sceneConfigurator;
+        private Action<List<IApplicationRuntimeService>>? _runtimeServicesConfigurator;
 
         public static ApplicationBuilder CreateDefault()
         {
@@ -33,9 +35,15 @@ namespace IsometricMagic.Engine.App
             return this;
         }
 
+        public ApplicationBuilder ConfigureRuntimeServices(Action<List<IApplicationRuntimeService>> runtimeServicesConfigurator)
+        {
+            _runtimeServicesConfigurator = runtimeServicesConfigurator;
+            return this;
+        }
+
         public ApplicationHost Build()
         {
-            return new ApplicationHost(_configPath, _sceneConfigurator);
+            return new ApplicationHost(_configPath, _sceneConfigurator, _runtimeServicesConfigurator);
         }
     }
 
@@ -43,12 +51,17 @@ namespace IsometricMagic.Engine.App
     {
         private readonly string _configPath;
         private readonly Action<SceneManager>? _sceneConfigurator;
+        private readonly Action<List<IApplicationRuntimeService>>? _runtimeServicesConfigurator;
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
-        public ApplicationHost(string configPath, Action<SceneManager>? sceneConfigurator)
+        public ApplicationHost(
+            string configPath,
+            Action<SceneManager>? sceneConfigurator,
+            Action<List<IApplicationRuntimeService>>? runtimeServicesConfigurator)
         {
             _configPath = configPath;
             _sceneConfigurator = sceneConfigurator;
+            _runtimeServicesConfigurator = runtimeServicesConfigurator;
         }
 
         public void Run()
@@ -72,6 +85,10 @@ namespace IsometricMagic.Engine.App
 
                 app = Application.GetInstance();
                 IGraphics graphics = new SdlGlGraphics();
+
+                var runtimeServices = new List<IApplicationRuntimeService>();
+                _runtimeServicesConfigurator?.Invoke(runtimeServices);
+                app.SetRuntimeServices(runtimeServices);
 
                 app.Init(appConfig, graphics);
 

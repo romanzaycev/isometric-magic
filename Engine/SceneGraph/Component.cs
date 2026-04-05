@@ -1,5 +1,6 @@
 using System;
 
+using IsometricMagic.Engine.Diagnostics;
 using IsometricMagic.Engine.Scenes;
 
 namespace IsometricMagic.Engine.SceneGraph
@@ -12,6 +13,7 @@ namespace IsometricMagic.Engine.SceneGraph
         public Scene? Scene => _entity?.Scene;
 
         private bool _enabled = true;
+        [RuntimeEditorEditable]
         public bool Enabled
         {
             get => _enabled;

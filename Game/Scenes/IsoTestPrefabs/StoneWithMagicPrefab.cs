@@ -117,7 +117,8 @@ namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
             stone.AddComponent(new WorldColliderComponent
             {
                 Radius = _spec.ColliderRadius,
-                IsStatic = true
+                IsStatic = true,
+                Offset = new Vector2(55, -55),
             });
             
             stone.AddComponent(new Light2DComponent()

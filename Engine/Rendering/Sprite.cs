@@ -1,6 +1,7 @@
 using System.Numerics;
 using IsometricMagic.Engine.Core.Rendering;
 using IsometricMagic.Engine.Assets;
+using IsometricMagic.Engine.Diagnostics;
 using IsometricMagic.Engine.Graphics.Materials;
 
 namespace IsometricMagic.Engine.Rendering
@@ -54,23 +55,39 @@ namespace IsometricMagic.Engine.Rendering
         public Vector2 Translate = Vector2.Zero;
     }
 
+    [RuntimeEditorInspectable(EditableByDefault = false)]
     public class Sprite
     {
         private static readonly SpriteHolder SpriteHolder = SpriteHolder.GetInstance();
         
+        [RuntimeEditorEditable]
         public string Name = string.Empty;
         
+        [RuntimeEditorEditable(Step = 0.1)]
         public Vector2 Position = Vector2.Zero;
+
+        [RuntimeEditorEditable(Step = 0.1)]
         public Vector2 Origin = Vector2.Zero;
+
+        [RuntimeEditorEditable(Step = 0.1)]
         public Vector2 Pivot = Vector2.Zero;
 
+        [RuntimeEditorEditable(Step = 0.05)]
         public Vector4 Color = new(1f, 1f, 1f, 1f);
+
+        [RuntimeEditorEditable]
         public SpriteBlendMode BlendMode = SpriteBlendMode.Normal;
         
+        [RuntimeEditorEditable]
         public PivotMode PivotMode = PivotMode.Centered;
+
+        [RuntimeEditorEditable]
         public OriginPoint OriginPoint = OriginPoint.LeftTop;
 
+        [RuntimeEditorEditable(Step = 1)]
         public int Width;
+
+        [RuntimeEditorEditable(Step = 1)]
         public int Height;
 
         private Texture _texture = null!; 
@@ -94,6 +111,7 @@ namespace IsometricMagic.Engine.Rendering
             }
         }
         
+        [RuntimeEditorEditable]
         public bool Visible = true;
         
         private int _sorting = 0;

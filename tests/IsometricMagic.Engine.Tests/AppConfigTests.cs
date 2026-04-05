@@ -157,6 +157,8 @@ Enabled=true
 ToggleKey=F6
 Port=6123
 OpenBrowser=false
+BrowserAppMode=true
+BrowserExecutable=google-chrome
 """);
 
         try
@@ -168,11 +170,15 @@ OpenBrowser=false
             Assert.Equal(Key.F4, defaults.RuntimeEditorToggleKey);
             Assert.Equal(5057, defaults.RuntimeEditorPort);
             Assert.True(defaults.RuntimeEditorOpenBrowser);
+            Assert.False(defaults.RuntimeEditorBrowserAppMode);
+            Assert.Equal("chromium", defaults.RuntimeEditorBrowserExecutable);
 
             Assert.True(custom.RuntimeEditorEnabled);
             Assert.Equal(Key.F6, custom.RuntimeEditorToggleKey);
             Assert.Equal(6123, custom.RuntimeEditorPort);
             Assert.False(custom.RuntimeEditorOpenBrowser);
+            Assert.True(custom.RuntimeEditorBrowserAppMode);
+            Assert.Equal("google-chrome", custom.RuntimeEditorBrowserExecutable);
         }
         finally
         {

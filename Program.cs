@@ -1,5 +1,8 @@
 using IsometricMagic.Engine.App;
 using IsometricMagic.Game.Scenes;
+#if DEBUG
+using IsometricMagic.RuntimeEditor;
+#endif
 
 namespace IsometricMagic
 {
@@ -15,6 +18,12 @@ namespace IsometricMagic
                     sceneManager.SetLoadingScene(new Loading());
                     sceneManager.Add(new IsoTest());
                 })
+#if DEBUG
+                .ConfigureRuntimeServices(services =>
+                {
+                    services.Add(new RuntimeEditorService());
+                })
+#endif
                 .Build();
 
             host.Run();

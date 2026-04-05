@@ -467,6 +467,57 @@ namespace IsometricMagic.Engine.App
             }
         }
 
+        private bool _runtimeEditorAutostartFetched = false;
+        private bool _runtimeEditorAutostart = false;
+        
+        public bool RuntimeEditorAutostart
+        {
+            get
+            {
+                if (!_runtimeEditorAutostartFetched)
+                {
+                    _runtimeEditorAutostart = GetBool(GetValue("RuntimeEditor", "Autostart"), false);
+                    _runtimeEditorAutostartFetched = true;
+                }
+
+                return _runtimeEditorAutostart;
+            }
+        }
+
+        private bool _runtimeEditorBrowserAppModeFetched = false;
+        private bool _runtimeEditorBrowserAppMode;
+
+        public bool RuntimeEditorBrowserAppMode
+        {
+            get
+            {
+                if (!_runtimeEditorBrowserAppModeFetched)
+                {
+                    _runtimeEditorBrowserAppMode = GetBool(GetValue("RuntimeEditor", "BrowserAppMode"), false);
+                    _runtimeEditorBrowserAppModeFetched = true;
+                }
+
+                return _runtimeEditorBrowserAppMode;
+            }
+        }
+
+        private bool _runtimeEditorBrowserExecutableFetched = false;
+        private string _runtimeEditorBrowserExecutable = string.Empty;
+
+        public string RuntimeEditorBrowserExecutable
+        {
+            get
+            {
+                if (!_runtimeEditorBrowserExecutableFetched)
+                {
+                    _runtimeEditorBrowserExecutable = GetString(GetValue("RuntimeEditor", "BrowserExecutable"), "chromium");
+                    _runtimeEditorBrowserExecutableFetched = true;
+                }
+
+                return _runtimeEditorBrowserExecutable;
+            }
+        }
+
         public AppConfig(string iniFile)
         {
             var parser = new FileIniDataParser();

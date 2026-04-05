@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using IsometricMagic.Engine.Diagnostics;
 using IsometricMagic.Engine.Scenes;
 using IsometricMagic.Engine.Spatial;
 
 namespace IsometricMagic.Engine.SceneGraph
 {
+    [RuntimeEditorInspectable(EditableByDefault = false)]
     public class Entity
     {
         private static readonly ComponentUpdateGroup[] UpdateGroupsInOrder =
@@ -19,7 +21,10 @@ namespace IsometricMagic.Engine.SceneGraph
 
         private static readonly SceneManager SceneManagerInstance = SceneManager.GetInstance();
 
+        [RuntimeEditorEditable]
         public string Name;
+
+        [RuntimeEditorEditable]
         public string Tag = string.Empty;
 
         public Transform2D Transform { get; } = new();
@@ -31,6 +36,7 @@ namespace IsometricMagic.Engine.SceneGraph
         public IReadOnlyList<Entity> Children => _children;
 
         private bool _activeSelf = true;
+        [RuntimeEditorEditable]
         public bool ActiveSelf
         {
             get => _activeSelf;
