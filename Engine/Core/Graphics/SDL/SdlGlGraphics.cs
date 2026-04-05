@@ -16,6 +16,7 @@ using IsometricMagic.Engine.Inputs;
 using IsometricMagic.Engine.Rendering;
 using IsometricMagic.Engine.Scenes;
 using IsometricMagic.Engine.Core.Assets;
+using EngineTexture = IsometricMagic.Engine.Assets.Texture;
 using SDL2;
 using Silk.NET.OpenGL;
 using static SDL2.SDL;
@@ -37,8 +38,9 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
         private GlFullscreenQuad _fullscreenQuad = null!;
         private GlShaderProgram _presentShader = null!;
         private GlShaderProgram _blendCompositeShader = null!;
-        private UnlitSpriteMaterial _defaultMaterial = null!;
+        private StandardSpriteMaterial _defaultMaterial = null!;
         private OutlineSpriteMaterial _outlineMaterial = null!;
+        private long _frameId;
 
         private uint _spriteVao;
         private uint _spriteVbo;
@@ -130,6 +132,8 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             _renderContext.ViewportWidth = _viewportWidth;
             _renderContext.ViewportHeight = _viewportHeight;
             _renderContext.Time += Time.DeltaTime;
+            _renderContext.FrameId = ++_frameId;
+            _renderContext.ForceUnlitShading = false;
 
             BindTarget(_sceneTarget);
             _gl.Clear(ClearBufferMask.ColorBufferBit);
@@ -282,7 +286,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
             _presentShader = new GlShaderProgram(_gl, PresentVertexSource, PresentFragmentSource);
             _blendCompositeShader = new GlShaderProgram(_gl, BlendCompositeVertexSource, BlendCompositeFragmentSource);
-            _defaultMaterial = new UnlitSpriteMaterial(_gl);
+            _defaultMaterial = SpriteMaterialFactory.Unlit();
             _outlineMaterial = new OutlineSpriteMaterial();
 
             _spriteVao = _gl.GenVertexArray();
@@ -447,6 +451,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             var cameraOffsetX = cameraRect.X + camera.SubpixelOffset.X;
             var cameraOffsetY = cameraRect.Y + camera.SubpixelOffset.Y;
             var target = initialTarget;
+            _renderContext.ForceUnlitShading = !isCameraLayer;
 
             foreach (var sprite in layer.Sprites)
             {
@@ -563,8 +568,11 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                     continue;
                 }
 
-                var normalMap = ResolveNormalMap(sprite);
-                DrawSpriteWithBlendMode(vertices, material, sprite, albedo, normalMap, sprite.BlendMode, ref target);
+                var capabilities = ResolveMaterialCapabilities(material);
+                var normalMap = ResolveNormalMap(sprite, capabilities);
+                var emissionMap = ResolveEmissionMap(capabilities);
+                DrawSpriteWithBlendMode(vertices, material, sprite, albedo, normalMap, emissionMap, sprite.BlendMode,
+                    ref target);
 
                 if (outlineEnabled && outline.Layering == OutlineLayering.Over)
                 {
@@ -577,13 +585,13 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
         }
 
         private void DrawSpriteWithBlendMode(float[] vertices, IGlMaterial material, Sprite sprite, GlNativeTexture albedo,
-            GlNativeTexture? normalMap, SpriteBlendMode blendMode, ref GlRenderTarget target)
+            GlNativeTexture? normalMap, GlNativeTexture? emissionMap, SpriteBlendMode blendMode, ref GlRenderTarget target)
         {
             if (blendMode == SpriteBlendMode.Normal)
             {
                 BindTarget(target);
                 SetAlphaBlendState();
-                DrawSprite(vertices, material, sprite, albedo, normalMap);
+                DrawSprite(vertices, material, sprite, albedo, normalMap, emissionMap);
                 return;
             }
 
@@ -592,7 +600,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             _gl.ClearColor(0f, 0f, 0f, 0f);
             _gl.Clear(ClearBufferMask.ColorBufferBit);
             SetBlendDisabledState();
-            DrawSprite(vertices, material, sprite, albedo, normalMap);
+            DrawSprite(vertices, material, sprite, albedo, normalMap, emissionMap);
             _gl.ClearColor(0f, 0f, 0f, 1f);
 
             var outputTarget = SelectCompositeOutputTarget(target, foregroundTarget);
@@ -601,10 +609,10 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
         }
 
         private void DrawSprite(float[] vertices, IGlMaterial material, Sprite sprite, GlNativeTexture albedo,
-            GlNativeTexture? normalMap)
+            GlNativeTexture? normalMap, GlNativeTexture? emissionMap)
         {
             UpdateSpriteBuffer(vertices);
-            material.Bind(_renderContext, sprite, albedo, normalMap);
+            material.Bind(_renderContext, sprite, albedo, normalMap, emissionMap);
 
             _gl.BindVertexArray(_spriteVao);
             FrameStats.AddDrawCall();
@@ -647,7 +655,8 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 1f + uvPadX, 1f + uvPadY
             );
 
-            DrawSpriteWithBlendMode(outlineVertices, _outlineMaterial, sprite, albedo, null, blendMode, ref target);
+            DrawSpriteWithBlendMode(outlineVertices, _outlineMaterial, sprite, albedo, null, null, blendMode,
+                ref target);
         }
 
         private IGlMaterial? ResolveMaterial(Sprite sprite)
@@ -660,17 +669,40 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             return _defaultMaterial;
         }
 
-        private GlNativeTexture? ResolveNormalMap(Sprite sprite)
+        private static ISpriteMaterialCapabilities ResolveMaterialCapabilities(IGlMaterial material)
         {
-            if (sprite.Material is not NormalMappedLitSpriteMaterial &&
-                sprite.Material is not EmissiveNormalMappedLitSpriteMaterial)
+            if (material is ISpriteMaterialCapabilities capabilities)
+            {
+                return capabilities;
+            }
+
+            return DefaultMaterialCapabilities.Instance;
+        }
+
+        private GlNativeTexture? ResolveNormalMap(Sprite sprite, ISpriteMaterialCapabilities capabilities)
+        {
+            if (capabilities.ShadingModel != SpriteShadingModel.Lit || _renderContext.ForceUnlitShading)
             {
                 return null;
             }
 
-            if (sprite.NormalMap != null)
+            switch (capabilities.NormalMapMode)
             {
-                return TextureHolder.GetInstance().GetNativeTexture(sprite.NormalMap) as GlNativeTexture;
+                case SpriteNormalMapMode.None:
+                    return null;
+
+                case SpriteNormalMapMode.UseMaterial:
+                {
+                    if (capabilities.NormalMapTexture != null)
+                    {
+                        return TextureHolder.GetInstance().GetNativeTexture(capabilities.NormalMapTexture) as GlNativeTexture;
+                    }
+
+                    return _neutralNormal;
+                }
+
+                case SpriteNormalMapMode.Neutral:
+                    return _neutralNormal;
             }
 
             var imagePath = sprite.Texture?.ImagePath;
@@ -689,6 +721,36 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             var generated = new GlNativeTexture(textureId, 0, false, width, height);
             _generatedNormalMaps[imagePath] = generated;
             return generated;
+        }
+
+        private static GlNativeTexture? ResolveEmissionMap(ISpriteMaterialCapabilities capabilities)
+        {
+            if (capabilities.EmissionIntensity <= 0f || capabilities.EmissionMapTexture == null)
+            {
+                return null;
+            }
+
+            return TextureHolder.GetInstance().GetNativeTexture(capabilities.EmissionMapTexture) as GlNativeTexture;
+        }
+
+        private sealed class DefaultMaterialCapabilities : ISpriteMaterialCapabilities
+        {
+            public static readonly DefaultMaterialCapabilities Instance = new();
+
+            public bool Enabled
+            {
+                get => true;
+                set
+                {
+                }
+            }
+
+            public SpriteShadingModel ShadingModel => SpriteShadingModel.Unlit;
+            public SpriteNormalMapMode NormalMapMode => SpriteNormalMapMode.None;
+            public EngineTexture? NormalMapTexture => null;
+            public EngineTexture? EmissionMapTexture => null;
+            public System.Numerics.Vector3 EmissionColor => System.Numerics.Vector3.One;
+            public float EmissionIntensity => 0f;
         }
 
         private float[] BuildQuadVertices(
@@ -976,7 +1038,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
                 var sprite = new Sprite(width, height);
                 var vertices = BuildQuadVertices(x, y, x, y, width, height, 0d, true);
-                DrawSprite(vertices, _defaultMaterial, sprite, texture, null);
+                DrawSprite(vertices, _defaultMaterial, sprite, texture, null, null);
                 y += height + lineGap;
 
                 DeleteTexture(texture);

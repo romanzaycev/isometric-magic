@@ -20,6 +20,8 @@ namespace IsometricMagic.Game.Components.Rendering
                 }
             }
         }
+
+        public string Name = string.Empty;
         
         public int Width { get; set; }
         
@@ -86,6 +88,7 @@ namespace IsometricMagic.Game.Components.Rendering
                 OriginPoint = OriginPoint,
                 BlendMode = BlendMode,
                 Sorting = Sorting,
+                Name = Name,
             };
 
             if (Material != null)

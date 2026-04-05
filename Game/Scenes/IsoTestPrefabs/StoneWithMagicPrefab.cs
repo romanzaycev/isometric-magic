@@ -90,12 +90,16 @@ namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
             });
             stone.AddComponent(new IsoWorldToCanvasPositionSyncComponent());
 
-            var stoneMaterial = new EmissiveNormalMappedLitSpriteMaterial
-            {
-                EmissionColor = emissionColor,
-                EmissionIntensity = _spec.StoneEmissionIntensity,
-                EmissionMapPath = "./resources/data/textures/stone0_em.png"
-            };
+            var stoneEmissionMap = Texture.AcquireShared("./resources/data/textures/stone0_em.png", 256, 256);
+            var stoneMaterial = SpriteMaterialFactory.LitEmissiveAutoNormal(
+                emissionColor,
+                _spec.StoneEmissionIntensity,
+                stoneEmissionMap
+            );
+
+            var sharedTextureLease = new SharedTextureLeaseComponent();
+            sharedTextureLease.Add(stoneEmissionMap);
+            stone.AddComponent(sharedTextureLease);
 
             stone.AddComponent(new SpriteRendererComponent
             {
@@ -105,7 +109,7 @@ namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
                 OriginPoint = OriginPoint.BottomCenter,
                 Sorting = 0,
                 Material = stoneMaterial,
-                TargetLayer = scene.MainLayer
+                TargetLayer = scene.MainLayer,
             });
 
             stone.AddComponent(new IsoDepthSortComponent
@@ -182,23 +186,11 @@ namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
             return new[]
             {
                 new ParticleVisualSpec("./resources/data/textures/vfx/particles/star_01.png", 512, 512,
-                    MaterialFactory: () => new EmissiveNormalMappedLitSpriteMaterial
-                    {
-                        EmissionColor = color,
-                        EmissionIntensity = intensity
-                    }),
+                    MaterialFactory: () => SpriteMaterialFactory.LitEmissiveAutoNormal(color, intensity)),
                 new ParticleVisualSpec("./resources/data/textures/vfx/particles/star_02.png", 512, 512,
-                    MaterialFactory: () => new EmissiveNormalMappedLitSpriteMaterial
-                    {
-                        EmissionColor = color,
-                        EmissionIntensity = intensity
-                    }),
+                    MaterialFactory: () => SpriteMaterialFactory.LitEmissiveAutoNormal(color, intensity)),
                 new ParticleVisualSpec("./resources/data/textures/vfx/particles/star_03.png", 512, 512,
-                    MaterialFactory: () => new EmissiveNormalMappedLitSpriteMaterial
-                    {
-                        EmissionColor = color,
-                        EmissionIntensity = intensity
-                    })
+                    MaterialFactory: () => SpriteMaterialFactory.LitEmissiveAutoNormal(color, intensity))
             };
         }
 
@@ -207,23 +199,11 @@ namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
             return new[]
             {
                 new ParticleVisualSpec("./resources/data/textures/vfx/particles/smoke_01.png", 512, 512,
-                    MaterialFactory: () => new EmissiveNormalMappedLitSpriteMaterial
-                    {
-                        EmissionColor = color,
-                        EmissionIntensity = intensity
-                    }),
+                    MaterialFactory: () => SpriteMaterialFactory.LitEmissiveAutoNormal(color, intensity)),
                 new ParticleVisualSpec("./resources/data/textures/vfx/particles/smoke_02.png", 512, 512,
-                    MaterialFactory: () => new EmissiveNormalMappedLitSpriteMaterial
-                    {
-                        EmissionColor = color,
-                        EmissionIntensity = intensity
-                    }),
+                    MaterialFactory: () => SpriteMaterialFactory.LitEmissiveAutoNormal(color, intensity)),
                 new ParticleVisualSpec("./resources/data/textures/vfx/particles/smoke_03.png", 512, 512,
-                    MaterialFactory: () => new EmissiveNormalMappedLitSpriteMaterial
-                    {
-                        EmissionColor = color,
-                        EmissionIntensity = intensity
-                    })
+                    MaterialFactory: () => SpriteMaterialFactory.LitEmissiveAutoNormal(color, intensity))
             };
         }
     }

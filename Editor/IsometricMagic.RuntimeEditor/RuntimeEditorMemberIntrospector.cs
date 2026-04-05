@@ -69,6 +69,8 @@ namespace IsometricMagic.RuntimeEditor
             {
             }
 
+            var valueType = value?.GetType() ?? memberType;
+
             var writable = field != null || (property != null && property.CanWrite && property.SetMethod != null && property.SetMethod.IsPublic);
             var canEditByPolicy = editableAttribute != null || (inspectableAttribute?.EditableByDefault ?? false);
 
@@ -76,7 +78,7 @@ namespace IsometricMagic.RuntimeEditor
             {
                 Name = name,
                 Path = path,
-                Type = ToFriendlyTypeName(memberType),
+                Type = ToFriendlyTypeName(valueType),
                 Editable = writable && canEditByPolicy && IsSupportedSimpleType(memberType),
                 Value = SerializeValue(value, memberType),
                 EnumValues = GetEnumValues(memberType),
@@ -88,8 +90,8 @@ namespace IsometricMagic.RuntimeEditor
 
             if (!IsSupportedSimpleType(memberType)
                 && value != null
-                && ShouldExpandMember(memberType)
-                && (memberType.IsValueType || !cycleGuard.Contains(value)))
+                && ShouldExpandMember(valueType)
+                && (valueType.IsValueType || !cycleGuard.Contains(value)))
             {
                 descriptor.Children = BuildMemberDescriptors(value, path, cycleGuard)
                     .Select(child => child.ToPayload())

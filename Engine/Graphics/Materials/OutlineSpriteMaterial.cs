@@ -11,7 +11,13 @@ namespace IsometricMagic.Engine.Graphics.Materials
 
         private const int MaxSteps = 12;
 
-        public void Bind(GlRenderContext context, Sprite sprite, GlNativeTexture albedo, GlNativeTexture? normalMap)
+        public void Bind(
+            GlRenderContext context,
+            Sprite sprite,
+            GlNativeTexture albedo,
+            GlNativeTexture? normalMap,
+            GlNativeTexture? emissionMap
+        )
         {
             if (_shader == null)
             {

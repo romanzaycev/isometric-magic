@@ -7,7 +7,6 @@ namespace IsometricMagic.Engine.Particles
     public sealed class ParticleVisual
     {
         public Texture Texture { get; }
-        public Texture? NormalMap { get; set; }
         public IMaterial? Material { get; set; }
         public int Width { get; }
         public int Height { get; }
@@ -30,7 +29,6 @@ namespace IsometricMagic.Engine.Particles
 
             return new ParticleVisual(sprite.Texture, sprite.Width, sprite.Height)
             {
-                NormalMap = sprite.NormalMap,
                 Material = sprite.Material,
                 OriginPoint = sprite.OriginPoint,
                 SortingOffset = sprite.Sorting

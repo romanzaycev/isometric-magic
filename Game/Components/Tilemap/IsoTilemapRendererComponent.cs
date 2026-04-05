@@ -188,7 +188,7 @@ namespace IsometricMagic.Game.Components.Tilemap
                 Sorting = CalculateSortIndex(position, layerOffset),
                 OriginPoint = OriginPoint.LeftBottom
             };
-            sprite.Material = new Engine.Graphics.Materials.NormalMappedLitSpriteMaterial();
+            sprite.Material = SpriteMaterialFactory.LitAutoNormal();
 
             return sprite;
         }

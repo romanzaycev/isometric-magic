@@ -11,7 +11,6 @@ namespace IsometricMagic.Game.Prefabs
         int Height,
         int SortingOffset = 0,
         OriginPoint OriginPoint = OriginPoint.Centered,
-        string? NormalMapPath = null,
         Func<IMaterial?>? MaterialFactory = null
     );
 
@@ -80,23 +79,11 @@ namespace IsometricMagic.Game.Prefabs
                 var texture = Texture.AcquireShared(visualSpec.TexturePath, visualSpec.Width, visualSpec.Height);
                 lease.Add(texture);
 
-                Texture? normalMap = null;
-                if (!string.IsNullOrWhiteSpace(visualSpec.NormalMapPath))
-                {
-                    normalMap = Texture.AcquireShared(
-                        visualSpec.NormalMapPath!,
-                        visualSpec.Width,
-                        visualSpec.Height
-                    );
-                    lease.Add(normalMap);
-                }
-
                 visuals[i] = new ParticleVisual(texture, visualSpec.Width, visualSpec.Height)
                 {
                     SortingOffset = visualSpec.SortingOffset,
                     OriginPoint = visualSpec.OriginPoint,
-                    Material = visualSpec.MaterialFactory?.Invoke(),
-                    NormalMap = normalMap
+                    Material = visualSpec.MaterialFactory?.Invoke()
                 };
             }
 

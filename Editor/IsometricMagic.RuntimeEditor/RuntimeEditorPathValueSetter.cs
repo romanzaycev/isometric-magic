@@ -40,19 +40,18 @@ namespace IsometricMagic.RuntimeEditor
                 return false;
             }
 
-            var editableAttribute = field?.GetCustomAttribute<RuntimeEditorEditableAttribute>()
-                ?? property?.GetCustomAttribute<RuntimeEditorEditableAttribute>();
-            var inspectableAttribute = targetType.GetCustomAttribute<RuntimeEditorInspectableAttribute>();
-            var canEditByPolicy = editableAttribute != null || (inspectableAttribute?.EditableByDefault ?? false);
-
-            if (!canEditByPolicy)
-            {
-                error = $"Member '{segment}' is read-only in runtime editor";
-                return false;
-            }
-
             if (segmentIndex == segments.Length - 1)
             {
+                var editableAttribute = field?.GetCustomAttribute<RuntimeEditorEditableAttribute>()
+                    ?? property?.GetCustomAttribute<RuntimeEditorEditableAttribute>();
+                var inspectableAttribute = targetType.GetCustomAttribute<RuntimeEditorInspectableAttribute>();
+                var canEditByPolicy = editableAttribute != null || (inspectableAttribute?.EditableByDefault ?? false);
+                if (!canEditByPolicy)
+                {
+                    error = $"Member '{segment}' is read-only in runtime editor";
+                    return false;
+                }
+
                 if (!IsSupportedSimpleType(memberType))
                 {
                     error = $"Unsupported member type '{memberType.Name}'";
@@ -85,7 +84,8 @@ namespace IsometricMagic.RuntimeEditor
                 return false;
             }
 
-            if (!TrySetPathValueRecursive(memberValue, memberType, segments, segmentIndex + 1, token, out error))
+            var nestedTargetType = memberValue.GetType();
+            if (!TrySetPathValueRecursive(memberValue, nestedTargetType, segments, segmentIndex + 1, token, out error))
             {
                 return false;
             }
