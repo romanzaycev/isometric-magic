@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Text;
 using IsometricMagic.Engine.App;
 using IsometricMagic.Engine.Assets;
 using IsometricMagic.Engine.Diagnostics;
@@ -68,8 +69,22 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
         private int _boundViewportHeight = -1;
 
         private uint _backgroundRectTextureId;
+        private uint _backgroundRectFramebufferId;
         private int _backgroundRectTextureWidth;
         private int _backgroundRectTextureHeight;
+
+        // DEBUG_PROFILING_START: composite/outline counters CSV
+        private const string DebugProfilingDir = "profiling";
+        private const string DebugProfilingFile = "composite_outline_counters.csv";
+        private string? _debugProfilingCsvPath;
+        private bool _debugProfilingHeaderWritten;
+
+        private int _debugCompositeSpriteCount;
+        private int _debugOutlineUnderCount;
+        private int _debugOutlineOverCount;
+        private int _debugBackgroundCaptureCount;
+        private long _debugCompositeRectPixels;
+        // DEBUG_PROFILING_END: composite/outline counters CSV
 
         private readonly struct ScreenRect
         {
@@ -213,6 +228,12 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 _backgroundRectTextureHeight = 0;
             }
 
+            if (_backgroundRectFramebufferId != 0)
+            {
+                _gl.DeleteFramebuffer(_backgroundRectFramebufferId);
+                _backgroundRectFramebufferId = 0;
+            }
+
             if (_glContext != IntPtr.Zero)
             {
                 SDL_GL_DeleteContext(_glContext);
@@ -250,6 +271,10 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 SDL_GL_GetDrawableSize(_sdlWindow, out _viewportWidth, out _viewportHeight);
             }
 
+            // DEBUG_PROFILING_START: composite/outline counters CSV
+            ResetDebugProfilingCounters();
+            // DEBUG_PROFILING_END: composite/outline counters CSV
+
             EnsureRenderTargets();
 
             _renderContext.Scene = scene;
@@ -273,8 +298,98 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             DebugOverlay.Update(Time.DeltaTime);
             DrawDebugOverlay();
 
+            // DEBUG_PROFILING_START: composite/outline counters CSV
+            AppendDebugProfilingCsv(scene);
+            // DEBUG_PROFILING_END: composite/outline counters CSV
+
             SDL_GL_SwapWindow(_sdlWindow);
         }
+
+        // DEBUG_PROFILING_START: composite/outline counters CSV
+        private void ResetDebugProfilingCounters()
+        {
+            _debugCompositeSpriteCount = 0;
+            _debugOutlineUnderCount = 0;
+            _debugOutlineOverCount = 0;
+            _debugBackgroundCaptureCount = 0;
+            _debugCompositeRectPixels = 0;
+        }
+
+        private void AppendDebugProfilingCsv(Scene scene)
+        {
+            EnsureDebugProfilingCsvReady();
+            if (string.IsNullOrEmpty(_debugProfilingCsvPath))
+            {
+                return;
+            }
+
+            var lineBuilder = new StringBuilder(256);
+            lineBuilder.Append(DateTime.UtcNow.ToString("O"));
+            lineBuilder.Append(',');
+            lineBuilder.Append(_frameId);
+            lineBuilder.Append(',');
+            lineBuilder.Append(EscapeCsv(scene.Name));
+            lineBuilder.Append(',');
+            lineBuilder.Append(_viewportWidth);
+            lineBuilder.Append(',');
+            lineBuilder.Append(_viewportHeight);
+            lineBuilder.Append(',');
+            lineBuilder.Append((Time.DeltaTime * 1000f).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture));
+            lineBuilder.Append(',');
+            lineBuilder.Append(FrameStats.DrawCalls);
+            lineBuilder.Append(',');
+            lineBuilder.Append(FrameStats.SpritesDrawn);
+            lineBuilder.Append(',');
+            lineBuilder.Append(FrameStats.SpritesCulled);
+            lineBuilder.Append(',');
+            lineBuilder.Append(_debugCompositeSpriteCount);
+            lineBuilder.Append(',');
+            lineBuilder.Append(_debugOutlineUnderCount);
+            lineBuilder.Append(',');
+            lineBuilder.Append(_debugOutlineOverCount);
+            lineBuilder.Append(',');
+            lineBuilder.Append(_debugBackgroundCaptureCount);
+            lineBuilder.Append(',');
+            lineBuilder.Append(_debugCompositeRectPixels);
+
+            File.AppendAllText(_debugProfilingCsvPath, lineBuilder.AppendLine().ToString(), Encoding.UTF8);
+        }
+
+        private void EnsureDebugProfilingCsvReady()
+        {
+            if (_debugProfilingHeaderWritten)
+            {
+                return;
+            }
+
+            var dirPath = Path.Combine(Environment.CurrentDirectory, DebugProfilingDir);
+            Directory.CreateDirectory(dirPath);
+            _debugProfilingCsvPath = Path.Combine(dirPath, DebugProfilingFile);
+
+            if (!File.Exists(_debugProfilingCsvPath))
+            {
+                var header = "utc_ts,frame_id,scene,viewport_w,viewport_h,frame_ms,draw_calls,sprites_drawn,sprites_culled,composite_sprites,outline_under,outline_over,background_captures,composite_rect_pixels";
+                File.WriteAllText(_debugProfilingCsvPath, header + Environment.NewLine, Encoding.UTF8);
+            }
+
+            _debugProfilingHeaderWritten = true;
+        }
+
+        private static string EscapeCsv(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
+            if (!value.Contains(',') && !value.Contains('"') && !value.Contains('\n') && !value.Contains('\r'))
+            {
+                return value;
+            }
+
+            return '"' + value.Replace("\"", "\"\"") + '"';
+        }
+        // DEBUG_PROFILING_END: composite/outline counters CSV
 
         public NativeTexture CreateTexture(PixelFormat format, TextureAccess access, int width, int height)
         {
@@ -550,6 +665,11 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             EnsureBackgroundRectTexture(rect.Width, rect.Height);
             CaptureBackgroundRect(target, rect);
 
+            // DEBUG_PROFILING_START: composite/outline counters CSV
+            _debugBackgroundCaptureCount++;
+            _debugCompositeRectPixels += (long) rect.Width * rect.Height;
+            // DEBUG_PROFILING_END: composite/outline counters CSV
+
             BuildCompositeRectVertices(_singleSpriteVertices, rect.X, rect.Y, rect.Width, rect.Height,
                 2f / target.Width,
                 -1f,
@@ -788,6 +908,9 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
                 if (outlineEnabled && outline.Layering == OutlineLayering.Under)
                 {
+                    // DEBUG_PROFILING_START: composite/outline counters CSV
+                    _debugOutlineUnderCount++;
+                    // DEBUG_PROFILING_END: composite/outline counters CSV
                     FlushPendingBatch();
                     DrawOutline(sprite, albedo, canvasSpritePosX, canvasSpritePosY, screenSpritePosX, screenSpritePosY,
                         outlineBlendMode, ref target, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
@@ -845,6 +968,9 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
                 if (outlineEnabled && outline.Layering == OutlineLayering.Over)
                 {
+                    // DEBUG_PROFILING_START: composite/outline counters CSV
+                    _debugOutlineOverCount++;
+                    // DEBUG_PROFILING_END: composite/outline counters CSV
                     FlushPendingBatch();
                     DrawOutline(sprite, albedo, canvasSpritePosX, canvasSpritePosY, screenSpritePosX, screenSpritePosY,
                         outlineBlendMode, ref target, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
@@ -906,6 +1032,10 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 DrawSprite(vertices, vertexCount, spriteCount, material, sprite, albedo, normalMap, emissionMap);
                 return;
             }
+
+            // DEBUG_PROFILING_START: composite/outline counters CSV
+            _debugCompositeSpriteCount += spriteCount;
+            // DEBUG_PROFILING_END: composite/outline counters CSV
 
             if (!TryGetScreenRect(vertices, vertexCount, target.Width, target.Height, out var rect))
             {
@@ -1016,17 +1146,53 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             _backgroundRectTextureId = CreateHdrTexture(width, height);
             _backgroundRectTextureWidth = width;
             _backgroundRectTextureHeight = height;
+
+            if (_backgroundRectFramebufferId == 0)
+            {
+                _backgroundRectFramebufferId = _gl.GenFramebuffer();
+            }
+
+            _gl.BindFramebuffer(FramebufferTarget.Framebuffer, _backgroundRectFramebufferId);
+            _boundFramebufferId = _backgroundRectFramebufferId;
+            _gl.FramebufferTexture2D(
+                FramebufferTarget.Framebuffer,
+                FramebufferAttachment.ColorAttachment0,
+                TextureTarget.Texture2D,
+                _backgroundRectTextureId,
+                0);
+
+            var status = _gl.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
+            if (status != GLEnum.FramebufferComplete)
+            {
+                throw new InvalidOperationException($"Background framebuffer incomplete: {status}");
+            }
+
+            _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            _boundFramebufferId = 0;
         }
 
         private void CaptureBackgroundRect(GlRenderTarget target, ScreenRect rect)
         {
-            BindTarget(target);
-            _gl.ReadBuffer(ReadBufferMode.ColorAttachment0);
-            _gl.BindTexture(TextureTarget.Texture2D, _backgroundRectTextureId);
-
             var glY = target.Height - rect.Y - rect.Height;
-            _gl.CopyTexSubImage2D(GLEnum.Texture2D, 0, 0, 0, rect.X, glY, (uint) rect.Width,
-                (uint) rect.Height);
+
+            _gl.BindFramebuffer(FramebufferTarget.ReadFramebuffer, target.FramebufferId);
+            _gl.BindFramebuffer(FramebufferTarget.DrawFramebuffer, _backgroundRectFramebufferId);
+            _gl.ReadBuffer(ReadBufferMode.ColorAttachment0);
+            _gl.DrawBuffer(DrawBufferMode.ColorAttachment0);
+            _gl.BlitFramebuffer(
+                rect.X,
+                glY,
+                rect.X + rect.Width,
+                glY + rect.Height,
+                0,
+                0,
+                rect.Width,
+                rect.Height,
+                ClearBufferMask.ColorBufferBit,
+                BlitFramebufferFilter.Nearest);
+
+            _boundFramebufferId = uint.MaxValue;
+            BindTarget(target);
         }
 
         private void EnableScissor(ScreenRect rect, int targetHeight)
