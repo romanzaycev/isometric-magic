@@ -6,6 +6,7 @@ namespace IsometricMagic.Game.Components.Rendering
     {
         public SceneLayer? TargetLayer { get; set; }
         private string _imagePath = string.Empty;
+        
         public string ImagePath
         {
             get => _imagePath;
@@ -19,17 +20,29 @@ namespace IsometricMagic.Game.Components.Rendering
                 }
             }
         }
+        
         public int Width { get; set; }
+        
         public int Height { get; set; }
+        
         public int TextureWidth { get; set; }
+        
         public int TextureHeight { get; set; }
+        
         public OriginPoint OriginPoint { get; set; } = OriginPoint.LeftTop;
+        
         public SpriteBlendMode BlendMode { get; set; } = SpriteBlendMode.Normal;
+        
         public bool OutlineForceAlphaBlend { get; set; }
+        
         public int Sorting { get; set; } = 0;
+        
         public IMaterial? Material { get; set; }
+        
         public Vector4? Color { get; set; }
+        
         private Sprite? _sprite;
+        
         private Texture? _texture;
 
         public override ComponentUpdateGroup UpdateGroup => ComponentUpdateGroup.Late;

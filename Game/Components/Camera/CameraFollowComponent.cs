@@ -4,8 +4,13 @@ namespace IsometricMagic.Game.Components.Camera
 {
     public class CameraFollowComponent : CameraInfluenceComponent
     {
+        [RuntimeEditorEditable(Step = 1)]
         public int MinX { get; set; } = -200;
+        
+        [RuntimeEditorEditable(Step = 1)]
         public int MinY { get; set; } = -200;
+        
+        [RuntimeEditorEditable(Step = 1)]
         public int CenterYOffset { get; set; } = -100;
 
         public override ComponentUpdateGroup UpdateGroup => ComponentUpdateGroup.Late;

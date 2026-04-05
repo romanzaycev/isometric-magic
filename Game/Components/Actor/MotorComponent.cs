@@ -14,7 +14,9 @@ namespace IsometricMagic.Game.Components.Actor
         public WorldDirection Direction => _direction;
         public LocomotionState State => _state;
 
+        [RuntimeEditorEditable(Step = 1)]
         public int MaxMove { get; set; } = 5;
+        
         public IsoWorldPositionConverter? Converter => _converter;
         public IsoWorldPositionComponent? PositionComponent => _positionComponent;
         public IsoWorldPosition PreciseWorldPosition

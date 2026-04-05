@@ -4,7 +4,10 @@ namespace IsometricMagic.Game.Components.Camera
 {
     public class CameraShakeComponent : CameraInfluenceComponent
     {
+        [RuntimeEditorEditable(Step = 0.1f)]
         public float Amplitude { get; private set; }
+        
+        [RuntimeEditorEditable(Step = 0.1f)]
         public float Frequency { get; private set; } = 12f;
 
         private float _duration;

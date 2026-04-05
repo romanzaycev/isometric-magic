@@ -16,18 +16,21 @@ namespace IsometricMagic.Game.Components.Movement
 
         public override int UpdateOrder => 50;
 
+        [RuntimeEditorEditable]
         public CanvasPosition Center
         {
             get => _center;
             set => _center = value;
         }
-
+        
+        [RuntimeEditorEditable(Step = 0.1f)]
         public float Radius
         {
             get => _radius;
             set => _radius = value;
         }
 
+        [RuntimeEditorEditable(Step = 0.1f)]
         public float Speed
         {
             get => _speed;
