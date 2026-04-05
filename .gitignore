@@ -56,5 +56,6 @@ Folder.DotSettings.user
 logs/
 *.log
 
-/Editor/IsometricMagic.RuntimeEditor/Web/dist/
-/Editor/IsometricMagic.RuntimeEditor/Web/spa/node_modules/
+Editor/IsometricMagic.RuntimeEditor/Web/dist/
+Editor/IsometricMagic.RuntimeEditor/Web/spa/node_modules/
+artifacts/

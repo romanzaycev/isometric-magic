@@ -6,28 +6,55 @@ A C# isometric 2D game engine built on SDL2 and OpenGL, targeting .NET 10.0.
 ## Build Commands
 
 ```bash
-# Build the project
-dotnet build
+# Show available commands
+make
 
-# Run unit tests
-dotnet test tests/IsometricMagic.Engine.Tests/IsometricMagic.Engine.Tests.csproj
+# Restore all dependencies (NuGet + npm)
+make restore
 
-# Build in Release mode
-dotnet build -c Release
+# Build the project (Debug by default)
+make build
 
 # Run the game
-dotnet run
+make run
 
-# Clean build artifacts
+# Run tests
+make test-engine
+make test-editor
+make test
+
+# Publish game
+make publish
+make publish-linux-x64
+make publish-win-x64
+
+# Clean .NET build artifacts
+make clean
+
+# Full required validation
+make verify
+
+# Optional direct .NET commands
+dotnet build
+dotnet test tests/IsometricMagic.Engine.Tests/IsometricMagic.Engine.Tests.csproj
+dotnet test tests/IsometricMagic.RuntimeEditor.Tests/IsometricMagic.RuntimeEditor.Tests.csproj
+dotnet publish
+dotnet publish -r linux-x64
+dotnet publish -r win-x64
 dotnet clean
-
-# Restore dependencies
 dotnet restore
 ```
 
+## Runtime Editor SPA Notes
+
+- Debug game build includes RuntimeEditor and requires SPA bundle in `Editor/IsometricMagic.RuntimeEditor/Web/dist/`.
+- `make build`/`make run` (Debug) and `make test-editor` automatically run SPA build.
+- SPA dependencies are installed only with `npm ci` via `make restore` or `make restore-spa`.
+
 ## Mandatory Verification
 
-- Any code change MUST be validated with both `dotnet build` and run tests before considering the task done.
+- Any code change MUST be validated with `make verify` before considering the task done.
+- `make verify` enforces both `dotnet build` and all test suites (`engine` + `runtime editor`).
 - This is a hard requirement and applies even if only non-engine files were changed.
 
 ## Architecture
