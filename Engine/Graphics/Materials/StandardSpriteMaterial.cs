@@ -11,6 +11,7 @@ namespace IsometricMagic.Engine.Graphics.Materials
     {
         private static GlShaderProgram? _shader;
         private static long _lightingUniformFrameId = -1;
+        private static bool _samplersInitialized;
 
         public bool Enabled { get; set; } = true;
 
@@ -45,24 +46,27 @@ namespace IsometricMagic.Engine.Graphics.Materials
             if (_shader == null)
             {
                 _shader = new GlShaderProgram(context.Gl, VertexSource, FragmentSource);
+                _samplersInitialized = false;
             }
 
             _shader.Use();
 
+            if (!_samplersInitialized)
+            {
+                _shader.SetInt("u_albedo", 0);
+                _shader.SetInt("u_normalMap", 1);
+                _shader.SetInt("u_emissionMap", 2);
+                _samplersInitialized = true;
+            }
+
             context.Gl.ActiveTexture(TextureUnit.Texture0);
             context.Gl.BindTexture(TextureTarget.Texture2D, albedo.TextureId);
-            _shader.SetInt("u_albedo", 0);
 
             context.Gl.ActiveTexture(TextureUnit.Texture1);
             context.Gl.BindTexture(TextureTarget.Texture2D, normalMap?.TextureId ?? 0u);
-            _shader.SetInt("u_normalMap", 1);
 
             context.Gl.ActiveTexture(TextureUnit.Texture2);
             context.Gl.BindTexture(TextureTarget.Texture2D, emissionMap?.TextureId ?? 0u);
-            _shader.SetInt("u_emissionMap", 2);
-
-            var tint = sprite.Color;
-            _shader.SetVector4("u_tint", tint.X, tint.Y, tint.Z, tint.W);
 
             var useLighting = ShadingModel == SpriteShadingModel.Lit && !context.ForceUnlitShading;
             _shader.SetInt("u_useLighting", useLighting ? 1 : 0);
@@ -83,12 +87,6 @@ namespace IsometricMagic.Engine.Graphics.Materials
 
         public void Unbind(GlRenderContext context)
         {
-            context.Gl.ActiveTexture(TextureUnit.Texture2);
-            context.Gl.BindTexture(TextureTarget.Texture2D, 0);
-            context.Gl.ActiveTexture(TextureUnit.Texture1);
-            context.Gl.BindTexture(TextureTarget.Texture2D, 0);
-            context.Gl.ActiveTexture(TextureUnit.Texture0);
-            context.Gl.BindTexture(TextureTarget.Texture2D, 0);
         }
 
         private static void UploadLightingUniforms(GlRenderContext context)
@@ -138,14 +136,17 @@ namespace IsometricMagic.Engine.Graphics.Materials
 layout(location = 0) in vec2 a_pos;
 layout(location = 1) in vec2 a_uv;
 layout(location = 2) in vec2 a_world;
+layout(location = 3) in vec4 a_color;
 
 out vec2 v_uv;
 out vec2 v_world;
+out vec4 v_color;
 
 void main()
 {
     v_uv = a_uv;
     v_world = a_world;
+    v_color = a_color;
     gl_Position = vec4(a_pos.xy, 0.0, 1.0);
 }
 ";
@@ -153,13 +154,13 @@ void main()
         private const string FragmentSource = @"#version 330 core
 in vec2 v_uv;
 in vec2 v_world;
+in vec4 v_color;
 out vec4 FragColor;
 
 uniform sampler2D u_albedo;
 uniform sampler2D u_normalMap;
 uniform sampler2D u_emissionMap;
 
-uniform vec4 u_tint;
 uniform int u_useLighting;
 uniform int u_useNormalMap;
 uniform int u_lightCount;
@@ -187,7 +188,7 @@ uniform Light u_lights[8];
 
 void main()
 {
-    vec4 baseColor = texture(u_albedo, v_uv) * u_tint;
+    vec4 baseColor = texture(u_albedo, v_uv) * v_color;
 
     vec3 litColor = baseColor.rgb;
     if (u_useLighting == 1) {
@@ -230,7 +231,7 @@ void main()
         if (u_hasEmissionMap == 1) {
             emissionMask = texture(u_emissionMap, v_uv).rgb;
         }
-        vec3 emission = u_emissionColor * baseColor.a * u_emissionIntensity * emissionMask * u_tint.rgb;
+        vec3 emission = u_emissionColor * baseColor.a * u_emissionIntensity * emissionMask * v_color.rgb;
         litColor += emission;
     }
 
