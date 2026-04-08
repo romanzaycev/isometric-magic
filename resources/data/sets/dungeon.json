@@ -1,12 +1,13 @@
 {
   "name": "dungeon",
+  "atlas": "atlases/ts1.json",
   "tiles": [
     {
       "id": 1,
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/dirt_W.png"
+        "source": "dirt_W.png"
       }
     },
     {
@@ -14,7 +15,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/dirt_E.png"
+        "source": "dirt_E.png"
       }
     },
     {
@@ -22,7 +23,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/dirt_N.png"
+        "source": "dirt_N.png"
       }
     },
     {
@@ -30,7 +31,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/dirt_S.png"
+        "source": "dirt_S.png"
       }
     },
     {
@@ -38,7 +39,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stone_E.png"
+        "source": "stone_E.png"
       }
     },
     {
@@ -46,7 +47,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stone_N.png"
+        "source": "stone_N.png"
       }
     },
     {
@@ -54,7 +55,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stone_S.png"
+        "source": "stone_S.png"
       }
     },
     {
@@ -62,7 +63,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stone_W.png"
+        "source": "stone_W.png"
       }
     },
     {
@@ -70,7 +71,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneCorner_E.png"
+        "source": "stoneCorner_E.png"
       }
     },
     {
@@ -78,7 +79,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneCorner_N.png"
+        "source": "stoneCorner_N.png"
       }
     },
     {
@@ -86,7 +87,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneCorner_S.png"
+        "source": "stoneCorner_S.png"
       }
     },
     {
@@ -94,7 +95,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneCorner_W.png"
+        "source": "stoneCorner_W.png"
       }
     },
     {
@@ -102,7 +103,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneLeft_E.png"
+        "source": "stoneLeft_E.png"
       }
     },
     {
@@ -110,7 +111,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneLeft_N.png"
+        "source": "stoneLeft_N.png"
       }
     },
     {
@@ -118,7 +119,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneLeft_S.png"
+        "source": "stoneLeft_S.png"
       }
     },
     {
@@ -126,7 +127,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneLeft_W.png"
+        "source": "stoneLeft_W.png"
       }
     },
     {
@@ -134,7 +135,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneMissingTiles_E.png"
+        "source": "stoneMissingTiles_E.png"
       }
     },
     {
@@ -142,7 +143,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneMissingTiles_N.png"
+        "source": "stoneMissingTiles_N.png"
       }
     },
     {
@@ -150,7 +151,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneMissingTiles_S.png"
+        "source": "stoneMissingTiles_S.png"
       }
     },
     {
@@ -158,7 +159,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneMissingTiles_W.png"
+        "source": "stoneMissingTiles_W.png"
       }
     },
     {
@@ -166,7 +167,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneRight_E.png"
+        "source": "stoneRight_E.png"
       }
     },
     {
@@ -174,7 +175,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneRight_N.png"
+        "source": "stoneRight_N.png"
       }
     },
     {
@@ -182,7 +183,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneRight_S.png"
+        "source": "stoneRight_S.png"
       }
     },
     {
@@ -190,7 +191,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneRight_W.png"
+        "source": "stoneRight_W.png"
       }
     },
     {
@@ -198,7 +199,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneSide_E.png"
+        "source": "stoneSide_E.png"
       }
     },
     {
@@ -206,7 +207,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneSide_N.png"
+        "source": "stoneSide_N.png"
       }
     },
     {
@@ -214,7 +215,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneSide_S.png"
+        "source": "stoneSide_S.png"
       }
     },
     {
@@ -222,7 +223,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneSide_W.png"
+        "source": "stoneSide_W.png"
       }
     },
     {
@@ -230,7 +231,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneSideUneven_E.png"
+        "source": "stoneSideUneven_E.png"
       }
     },
     {
@@ -238,7 +239,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneSideUneven_N.png"
+        "source": "stoneSideUneven_N.png"
       }
     },
     {
@@ -246,7 +247,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneSideUneven_S.png"
+        "source": "stoneSideUneven_S.png"
       }
     },
     {
@@ -254,7 +255,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneSideUneven_W.png"
+        "source": "stoneSideUneven_W.png"
       }
     },
     {
@@ -262,7 +263,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneStep_E.png"
+        "source": "stoneStep_E.png"
       }
     },
     {
@@ -270,7 +271,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneStep_N.png"
+        "source": "stoneStep_N.png"
       }
     },
     {
@@ -278,7 +279,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneStep_S.png"
+        "source": "stoneStep_S.png"
       }
     },
     {
@@ -286,7 +287,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneStep_W.png"
+        "source": "stoneStep_W.png"
       }
     },
     {
@@ -294,7 +295,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneSteps_E.png"
+        "source": "stoneSteps_E.png"
       }
     },
     {
@@ -302,7 +303,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneSteps_N.png"
+        "source": "stoneSteps_N.png"
       }
     },
     {
@@ -310,7 +311,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneSteps_S.png"
+        "source": "stoneSteps_S.png"
       }
     },
     {
@@ -318,7 +319,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneSteps_W.png"
+        "source": "stoneSteps_W.png"
       }
     },
     {
@@ -326,7 +327,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneTile_E.png"
+        "source": "stoneTile_E.png"
       }
     },
     {
@@ -334,7 +335,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneTile_N.png"
+        "source": "stoneTile_N.png"
       }
     },
     {
@@ -342,7 +343,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneTile_S.png"
+        "source": "stoneTile_S.png"
       }
     },
     {
@@ -350,7 +351,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneTile_W.png"
+        "source": "stoneTile_W.png"
       }
     },
     {
@@ -358,7 +359,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneUneven_E.png"
+        "source": "stoneUneven_E.png"
       }
     },
     {
@@ -366,7 +367,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneUneven_N.png"
+        "source": "stoneUneven_N.png"
       }
     },
     {
@@ -374,7 +375,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneUneven_S.png"
+        "source": "stoneUneven_S.png"
       }
     },
     {
@@ -382,7 +383,7 @@
       "image": {
         "width": 256,
         "height": 512,
-        "source": "ts1/stoneUneven_W.png"
+        "source": "stoneUneven_W.png"
       }
     }
   ]

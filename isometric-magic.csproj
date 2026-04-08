@@ -28,8 +28,10 @@
       <Compile Remove="sdl2-cs\**\*.cs" />
       <Compile Remove="tests\**\*.cs" />
       <Compile Remove="Editor\**\*.cs" />
+      <Compile Remove="Tools\**\*.cs" />
       <None Remove="tests\**\*" />
       <None Remove="Editor\**\*" />
+      <None Remove="Tools\**\*" />
     </ItemGroup>
 
     <ItemGroup>

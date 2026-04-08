@@ -699,6 +699,8 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                     continue;
                 }
 
+                var spriteUvBounds = TextureUvMapper.Resolve(sprite.Region, albedo.Width, albedo.Height);
+
                 var spriteTransformation = sprite.Transformation;
                 var offsetX = spriteTransformation.Translate.X;
                 var offsetY = spriteTransformation.Translate.Y;
@@ -784,6 +786,10 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                     sprite.Width, sprite.Height,
                     sprite.Transformation.Rotation.Angle,
                     sprite.Transformation.Rotation.Clockwise,
+                    spriteUvBounds.MinX,
+                    spriteUvBounds.MinY,
+                    spriteUvBounds.MaxX,
+                    spriteUvBounds.MaxY,
                     sprite.Color.X,
                     sprite.Color.Y,
                     sprite.Color.Z,
@@ -801,7 +807,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 {
                     FlushPendingBatch();
                     DrawOutline(sprite, albedo, canvasSpritePosX, canvasSpritePosY, screenSpritePosX, screenSpritePosY,
-                        outlineBlendMode, ref target, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
+                        outlineBlendMode, ref target, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY, spriteUvBounds);
                 }
 
                 var material = ResolveMaterial(sprite);
@@ -858,7 +864,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 {
                     FlushPendingBatch();
                     DrawOutline(sprite, albedo, canvasSpritePosX, canvasSpritePosY, screenSpritePosX, screenSpritePosY,
-                        outlineBlendMode, ref target, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY);
+                        outlineBlendMode, ref target, ndcScaleX, ndcBiasX, ndcScaleY, ndcBiasY, spriteUvBounds);
                 }
             }
 
@@ -1166,7 +1172,8 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             float ndcScaleX,
             float ndcBiasX,
             float ndcScaleY,
-            float ndcBiasY)
+            float ndcBiasY,
+            TextureUvBounds spriteUvBounds)
         {
             var pad = (int) MathF.Ceiling(sprite.Outline.ThicknessTexels);
             if (pad <= 0)
@@ -1181,8 +1188,9 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             var outlineScreenX = screenSpritePosX - pad;
             var outlineScreenY = screenSpritePosY - pad;
 
-            var uvPadX = pad / (float) sprite.Width;
-            var uvPadY = pad / (float) sprite.Height;
+            var uvPadX = pad / (float) albedo.Width;
+            var uvPadY = pad / (float) albedo.Height;
+            var expandedUvBounds = TextureUvMapper.Expand(spriteUvBounds, uvPadX, uvPadY);
 
             BuildQuadVertices(
                 _singleSpriteVertices,
@@ -1191,8 +1199,8 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 outlineWidth, outlineHeight,
                 sprite.Transformation.Rotation.Angle,
                 sprite.Transformation.Rotation.Clockwise,
-                -uvPadX, -uvPadY,
-                1f + uvPadX, 1f + uvPadY,
+                expandedUvBounds.MinX, expandedUvBounds.MinY,
+                expandedUvBounds.MaxX, expandedUvBounds.MaxY,
                 sprite.Color.X,
                 sprite.Color.Y,
                 sprite.Color.Z,
@@ -1252,6 +1260,11 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
                 case SpriteNormalMapMode.Neutral:
                     return _neutralNormal;
+            }
+
+            if (sprite.Region.HasValue)
+            {
+                return _neutralNormal;
             }
 
             var imagePath = sprite.Texture?.ImagePath;

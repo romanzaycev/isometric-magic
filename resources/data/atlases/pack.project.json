@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "defaults": {
+    "maxSize": 4096,
+    "padding": 2,
+    "extrude": 1
+  },
+  "atlases": [
+    {
+      "input": "../textures/ts1",
+      "out": "ts1"
+    }
+  ]
+}

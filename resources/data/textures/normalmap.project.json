@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "defaults": {
+    "strength": 1.0,
+    "suffix": "_normal",
+    "overwrite": false
+  },
+  "jobs": [
+    {
+      "input": "ts1",
+      "overwrite": false
+    }
+  ]
+}

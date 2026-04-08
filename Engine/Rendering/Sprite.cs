@@ -93,6 +93,7 @@ namespace IsometricMagic.Engine.Rendering
         private Texture _texture = null!; 
         public IMaterial? Material;
         public SpriteOutline Outline { get; } = new();
+        public TextureRegion? Region { get; set; }
 
         public Texture Texture
         {

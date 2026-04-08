@@ -20,6 +20,7 @@ namespace IsometricMagic.Game.Components.Tilemap
 
         private readonly Dictionary<string, LayerState> _layerStates = new();
         private readonly Dictionary<string, Texture> _textureCache = new();
+        private TextureAtlas? _atlas;
 
         public void Load(Map map, TileSet tileSet, IsoWorldPositionConverter converter, SceneLayer targetLayer)
         {
@@ -28,6 +29,13 @@ namespace IsometricMagic.Game.Components.Tilemap
             _converter = converter;
             _targetLayer = targetLayer;
             _layerStride = IsoSort.CalculateLayerStride(map.Width, map.Height, map.TileWidth, map.TileHeight);
+
+            _atlas = null;
+            if (!string.IsNullOrWhiteSpace(_tileSet.Atlas))
+            {
+                var atlasPath = ResolveAtlasPath(_tileSet.Atlas);
+                _atlas = TextureAtlasLoader.Load(atlasPath);
+            }
         }
 
         public void BuildAll()
@@ -59,7 +67,7 @@ namespace IsometricMagic.Game.Components.Tilemap
             state.Sprites = new Sprite?[layer.Data.Length];
 
             var layerOffset = CalculateLayerBase(layerIndex);
-            var mat = SpriteMaterialFactory.LitAutoNormal();
+            var mat = CreateTileMaterial();
 
             for (var y = 0; y < _map.Height; y++)
             {
@@ -103,7 +111,7 @@ namespace IsometricMagic.Game.Components.Tilemap
             if (sprite == null)
             {
                 var layerOffset = CalculateLayerBase(GetLayerIndex(layerName));
-                var mat = SpriteMaterialFactory.LitAutoNormal();
+                var mat = CreateTileMaterial();
                 sprite = CreateTileSprite(tileId, x, y, layerOffset, mat);
                 state.Sprites[index] = sprite;
                 _targetLayer.Add(sprite);
@@ -113,8 +121,10 @@ namespace IsometricMagic.Game.Components.Tilemap
                 var layerOffset = CalculateLayerBase(GetLayerIndex(layerName));
                 var tile = _tileSet.Tiles[tileId];
                 var tex = GetOrLoadTexture(tile);
+                var region = GetTextureRegion(tile);
 
                 sprite.Texture = tex;
+                sprite.Region = region;
                 sprite.Width = tile.Image.Width;
                 sprite.Height = tile.Image.Height;
                 var canvasPos = _converter.ToIsoTileCanvas(x, y);
@@ -164,6 +174,7 @@ namespace IsometricMagic.Game.Components.Tilemap
         {
             var tile = _tileSet.Tiles[tileId];
             var tex = GetOrLoadTexture(tile);
+            var region = GetTextureRegion(tile);
 
             var position = _converter.ToIsoTileCanvas(tileX, tileY);
             var sprite = new Sprite
@@ -172,6 +183,7 @@ namespace IsometricMagic.Game.Components.Tilemap
                 Height = tile.Image.Height,
                 Position = position.ToVector2(),
                 Texture = tex,
+                Region = region,
                 Sorting = CalculateSortIndex(position, layerOffset),
                 OriginPoint = OriginPoint.LeftBottom
             };
@@ -182,6 +194,11 @@ namespace IsometricMagic.Game.Components.Tilemap
 
         private Texture GetOrLoadTexture(Tile tile)
         {
+            if (_atlas != null)
+            {
+                return _atlas.AlbedoTexture;
+            }
+
             if (_textureCache.TryGetValue(tile.Image.Source, out var cached))
             {
                 return cached;
@@ -193,9 +210,60 @@ namespace IsometricMagic.Game.Components.Tilemap
             return tex;
         }
 
+        private TextureRegion? GetTextureRegion(Tile tile)
+        {
+            if (_atlas == null)
+            {
+                return null;
+            }
+
+            if (_atlas.TryGetRegion(tile.Image.Source, out var region))
+            {
+                return region;
+            }
+
+            throw new InvalidOperationException(
+                $"Atlas region '{tile.Image.Source}' is missing for tileset '{_tileSet.Name}'.");
+        }
+
+        private StandardSpriteMaterial CreateTileMaterial()
+        {
+            if (_atlas == null)
+            {
+                return SpriteMaterialFactory.LitAutoNormal();
+            }
+
+            var material = _atlas.NormalTexture != null
+                ? SpriteMaterialFactory.LitWithNormal(_atlas.NormalTexture)
+                : SpriteMaterialFactory.LitNeutralNormal();
+
+            if (_atlas.EmissiveTexture != null)
+            {
+                material.EmissionMapTexture = _atlas.EmissiveTexture;
+            }
+
+            return material;
+        }
+
+        private static string ResolveAtlasPath(string atlasPath)
+        {
+            if (Path.IsPathRooted(atlasPath))
+            {
+                return atlasPath;
+            }
+
+            return Path.GetFullPath(Path.Combine("./resources/data", atlasPath));
+        }
+
         protected override void OnDestroy()
         {
-            
+            foreach (var texture in _textureCache.Values)
+            {
+                texture.Destroy();
+            }
+
+            _atlas?.Destroy();
+            _atlas = null;
             _layerStates.Clear();
             _textureCache.Clear();
         }

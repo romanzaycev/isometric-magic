@@ -29,7 +29,7 @@ PUBLISH_LINUX_X64_DIR := $(PUBLISH_DIR)/linux-x64
 PUBLISH_WIN_X64_DIR := $(PUBLISH_DIR)/win-x64
 
 .PHONY: help restore restore-dotnet restore-spa spa-build build run clean \
-	test-engine test-editor test verify publish publish-linux-x64 publish-win-x64
+	test-engine test-editor test verify normals atlases assets publish publish-linux-x64 publish-win-x64
 
 help: ## Show available Makefile targets
 	@printf "Available targets:\n"
@@ -67,6 +67,14 @@ test-editor: ## Run runtime editor tests
 test: test-engine test-editor ## Run all tests
 
 verify: build test ## Build and run all tests
+
+normals: ## Generate normal maps from normalmap project
+	dotnet run --project Tools/IsometricMagic.NormalMapGenerator -- --project resources/data/textures/normalmap.project.json
+
+atlases: ## Pack atlases from atlas project
+	dotnet run --project Tools/IsometricMagic.AtlasPacker -- --project resources/data/atlases/pack.project.json
+
+assets: normals atlases ## Generate normals then atlases
 
 publish: ## Publish game (Release, framework-dependent)
 	dotnet publish -c Release $(GAME_PROJECT) -o "$(PUBLISH_DEFAULT_DIR)"

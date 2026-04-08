@@ -1,0 +1,303 @@
+{
+  "version": 1,
+  "size": {
+    "w": 3902,
+    "h": 2066
+  },
+  "layers": {
+    "albedo": "ts1.png",
+    "normal": "ts1_normal.png"
+  },
+  "padding": 2,
+  "extrude": 1,
+  "regions": {
+    "stoneSide_E.png": {
+      "x": 3,
+      "y": 3,
+      "w": 256,
+      "h": 512
+    },
+    "stoneStep_W.png": {
+      "x": 263,
+      "y": 3,
+      "w": 256,
+      "h": 512
+    },
+    "stoneSteps_N.png": {
+      "x": 523,
+      "y": 3,
+      "w": 256,
+      "h": 512
+    },
+    "dirt_N.png": {
+      "x": 783,
+      "y": 3,
+      "w": 256,
+      "h": 512
+    },
+    "stoneSideUneven_N.png": {
+      "x": 1043,
+      "y": 3,
+      "w": 256,
+      "h": 512
+    },
+    "stone_W.png": {
+      "x": 1303,
+      "y": 3,
+      "w": 256,
+      "h": 512
+    },
+    "stoneLeft_N.png": {
+      "x": 1563,
+      "y": 3,
+      "w": 256,
+      "h": 512
+    },
+    "stoneCorner_E.png": {
+      "x": 1823,
+      "y": 3,
+      "w": 256,
+      "h": 512
+    },
+    "stoneSide_W.png": {
+      "x": 2083,
+      "y": 3,
+      "w": 256,
+      "h": 512
+    },
+    "stone_S.png": {
+      "x": 2343,
+      "y": 3,
+      "w": 256,
+      "h": 512
+    },
+    "stoneSteps_E.png": {
+      "x": 2603,
+      "y": 3,
+      "w": 256,
+      "h": 512
+    },
+    "stoneTile_S.png": {
+      "x": 2863,
+      "y": 3,
+      "w": 256,
+      "h": 512
+    },
+    "stoneSide_S.png": {
+      "x": 3123,
+      "y": 3,
+      "w": 256,
+      "h": 512
+    },
+    "stoneRight_E.png": {
+      "x": 3383,
+      "y": 3,
+      "w": 256,
+      "h": 512
+    },
+    "stoneSideUneven_S.png": {
+      "x": 3643,
+      "y": 3,
+      "w": 256,
+      "h": 512
+    },
+    "stoneUneven_E.png": {
+      "x": 3,
+      "y": 519,
+      "w": 256,
+      "h": 512
+    },
+    "stoneRight_W.png": {
+      "x": 263,
+      "y": 519,
+      "w": 256,
+      "h": 512
+    },
+    "stone_E.png": {
+      "x": 523,
+      "y": 519,
+      "w": 256,
+      "h": 512
+    },
+    "stoneUneven_S.png": {
+      "x": 783,
+      "y": 519,
+      "w": 256,
+      "h": 512
+    },
+    "stoneSideUneven_E.png": {
+      "x": 1043,
+      "y": 519,
+      "w": 256,
+      "h": 512
+    },
+    "stoneSide_N.png": {
+      "x": 1303,
+      "y": 519,
+      "w": 256,
+      "h": 512
+    },
+    "stoneStep_S.png": {
+      "x": 1563,
+      "y": 519,
+      "w": 256,
+      "h": 512
+    },
+    "stone_N.png": {
+      "x": 1823,
+      "y": 519,
+      "w": 256,
+      "h": 512
+    },
+    "dirt_E.png": {
+      "x": 2083,
+      "y": 519,
+      "w": 256,
+      "h": 512
+    },
+    "stoneLeft_W.png": {
+      "x": 2343,
+      "y": 519,
+      "w": 256,
+      "h": 512
+    },
+    "stoneMissingTiles_E.png": {
+      "x": 2603,
+      "y": 519,
+      "w": 256,
+      "h": 512
+    },
+    "stoneCorner_W.png": {
+      "x": 2863,
+      "y": 519,
+      "w": 256,
+      "h": 512
+    },
+    "stoneUneven_N.png": {
+      "x": 3123,
+      "y": 519,
+      "w": 256,
+      "h": 512
+    },
+    "stoneSteps_S.png": {
+      "x": 3383,
+      "y": 519,
+      "w": 256,
+      "h": 512
+    },
+    "stoneSideUneven_W.png": {
+      "x": 3643,
+      "y": 519,
+      "w": 256,
+      "h": 512
+    },
+    "stoneTile_E.png": {
+      "x": 3,
+      "y": 1035,
+      "w": 256,
+      "h": 512
+    },
+    "stoneMissingTiles_N.png": {
+      "x": 263,
+      "y": 1035,
+      "w": 256,
+      "h": 512
+    },
+    "stoneTile_N.png": {
+      "x": 523,
+      "y": 1035,
+      "w": 256,
+      "h": 512
+    },
+    "stoneLeft_E.png": {
+      "x": 783,
+      "y": 1035,
+      "w": 256,
+      "h": 512
+    },
+    "stoneStep_E.png": {
+      "x": 1043,
+      "y": 1035,
+      "w": 256,
+      "h": 512
+    },
+    "stoneMissingTiles_W.png": {
+      "x": 1303,
+      "y": 1035,
+      "w": 256,
+      "h": 512
+    },
+    "stoneSteps_W.png": {
+      "x": 1563,
+      "y": 1035,
+      "w": 256,
+      "h": 512
+    },
+    "stoneRight_S.png": {
+      "x": 1823,
+      "y": 1035,
+      "w": 256,
+      "h": 512
+    },
+    "dirt_W.png": {
+      "x": 2083,
+      "y": 1035,
+      "w": 256,
+      "h": 512
+    },
+    "stoneStep_N.png": {
+      "x": 2343,
+      "y": 1035,
+      "w": 256,
+      "h": 512
+    },
+    "stoneTile_W.png": {
+      "x": 2603,
+      "y": 1035,
+      "w": 256,
+      "h": 512
+    },
+    "stoneUneven_W.png": {
+      "x": 2863,
+      "y": 1035,
+      "w": 256,
+      "h": 512
+    },
+    "stoneCorner_N.png": {
+      "x": 3123,
+      "y": 1035,
+      "w": 256,
+      "h": 512
+    },
+    "stoneRight_N.png": {
+      "x": 3383,
+      "y": 1035,
+      "w": 256,
+      "h": 512
+    },
+    "stoneMissingTiles_S.png": {
+      "x": 3643,
+      "y": 1035,
+      "w": 256,
+      "h": 512
+    },
+    "stoneLeft_S.png": {
+      "x": 3,
+      "y": 1551,
+      "w": 256,
+      "h": 512
+    },
+    "dirt_S.png": {
+      "x": 263,
+      "y": 1551,
+      "w": 256,
+      "h": 512
+    },
+    "stoneCorner_S.png": {
+      "x": 523,
+      "y": 1551,
+      "w": 256,
+      "h": 512
+    }
+  }
+}

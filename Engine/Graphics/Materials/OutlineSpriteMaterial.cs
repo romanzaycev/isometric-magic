@@ -1,4 +1,5 @@
 using System;
+using IsometricMagic.Engine.Assets;
 using IsometricMagic.Engine.Graphics.OpenGL;
 using Silk.NET.OpenGL;
 
@@ -40,10 +41,13 @@ namespace IsometricMagic.Engine.Graphics.Materials
             var clampedThickness = MathF.Max(0f, MathF.Min(outline.ThicknessTexels, MaxSteps));
             var texelX = albedo.Width > 0 ? 1f / albedo.Width : 0f;
             var texelY = albedo.Height > 0 ? 1f / albedo.Height : 0f;
+            var uvBounds = TextureUvMapper.Resolve(sprite.Region, albedo.Width, albedo.Height);
 
             _shader.SetVector4("u_outlineColor", outline.Color.X, outline.Color.Y, outline.Color.Z, outline.Color.W);
             _shader.SetFloat("u_thickness", clampedThickness);
             _shader.SetVector2("u_texelSize", texelX, texelY);
+            _shader.SetVector2("u_uvMin", uvBounds.MinX, uvBounds.MinY);
+            _shader.SetVector2("u_uvMax", uvBounds.MaxX, uvBounds.MaxY);
         }
 
         public void Unbind(GlRenderContext context)
@@ -75,12 +79,14 @@ uniform sampler2D u_texture;
 uniform vec4 u_outlineColor;
 uniform vec2 u_texelSize;
 uniform float u_thickness;
+uniform vec2 u_uvMin;
+uniform vec2 u_uvMax;
 
 const int MAX_STEPS = 12;
 
 float SampleAlpha(vec2 uv)
 {
-    vec2 inside = step(vec2(0.0), uv) * step(uv, vec2(1.0));
+    vec2 inside = step(u_uvMin, uv) * step(uv, u_uvMax);
     float mask = inside.x * inside.y;
     return texture(u_texture, uv).a * mask;
 }
