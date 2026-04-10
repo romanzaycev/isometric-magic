@@ -679,8 +679,8 @@ static void PrintUsage()
     Console.WriteLine("  dotnet run --project Tools/IsometricMagic.AtlasPacker -- --project <project.json>");
     Console.WriteLine();
     Console.WriteLine("Example:");
-    Console.WriteLine("  dotnet run --project Tools/IsometricMagic.AtlasPacker -- --input resources/data/textures/ts1 --out resources/data/atlases/ts1");
-    Console.WriteLine("  dotnet run --project Tools/IsometricMagic.AtlasPacker -- --project resources/data/atlases/pack.project.json");
+    Console.WriteLine("  dotnet run --project Tools/IsometricMagic.AtlasPacker -- --input resources/data/textures/ts1 --out resources/_gen/atlases/ts1");
+    Console.WriteLine("  dotnet run --project Tools/IsometricMagic.AtlasPacker -- --project resources/pipeline/atlases/pack.project.json");
 }
 
 internal sealed record InvocationOptions(

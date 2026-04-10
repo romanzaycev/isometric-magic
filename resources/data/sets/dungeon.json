@@ -1,6 +1,6 @@
 {
   "name": "dungeon",
-  "atlas": "atlases/ts1.json",
+  "atlas": "_gen/atlases/ts1.json",
   "tiles": [
     {
       "id": 1,

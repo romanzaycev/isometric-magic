@@ -7,8 +7,8 @@
   },
   "atlases": [
     {
-      "input": "../textures/ts1",
-      "out": "ts1"
+      "input": "../../data/textures/ts1",
+      "out": "../../_gen/atlases/ts1"
     }
   ]
 }

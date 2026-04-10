@@ -252,7 +252,7 @@ namespace IsometricMagic.Game.Components.Tilemap
                 return atlasPath;
             }
 
-            return Path.GetFullPath(Path.Combine("./resources/data", atlasPath));
+            return Path.GetFullPath(Path.Combine("./resources", atlasPath));
         }
 
         protected override void OnDestroy()

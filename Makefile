@@ -51,6 +51,7 @@ build: ## Build game project (Debug by default)
 	dotnet build -c $(CONFIG) $(GAME_PROJECT)
 
 run: ## Run game project (Debug by default)
+	$(MAKE) atlases
 	@if [ "$(CONFIG)" = "Debug" ]; then $(MAKE) spa-build; fi
 	dotnet run -c $(CONFIG) --project $(GAME_PROJECT)
 
@@ -69,10 +70,10 @@ test: test-engine test-editor ## Run all tests
 verify: build test ## Build and run all tests
 
 normals: ## Generate normal maps from normalmap project
-	dotnet run --project Tools/IsometricMagic.NormalMapGenerator -- --project resources/data/textures/normalmap.project.json
+	dotnet run --project Tools/IsometricMagic.NormalMapGenerator -- --project resources/pipeline/normalmaps/normalmap.project.json
 
 atlases: ## Pack atlases from atlas project
-	dotnet run --project Tools/IsometricMagic.AtlasPacker -- --project resources/data/atlases/pack.project.json
+	dotnet run --project Tools/IsometricMagic.AtlasPacker -- --project resources/pipeline/atlases/pack.project.json
 
 assets: normals atlases ## Generate normals then atlases
 

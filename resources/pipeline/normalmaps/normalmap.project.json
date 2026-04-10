@@ -7,7 +7,7 @@
   },
   "jobs": [
     {
-      "input": "ts1",
+      "input": "../../data/textures/ts1",
       "overwrite": false
     }
   ]

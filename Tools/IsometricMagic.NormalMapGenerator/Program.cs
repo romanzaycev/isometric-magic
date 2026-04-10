@@ -516,7 +516,7 @@ static void PrintUsage()
     Console.WriteLine("Example:");
     Console.WriteLine("  dotnet run --project Tools/IsometricMagic.NormalMapGenerator -- --input resources/data/textures/ts1");
     Console.WriteLine("  dotnet run --project Tools/IsometricMagic.NormalMapGenerator -- --input resources/data/textures/ts1/tree.png --strength 2");
-    Console.WriteLine("  dotnet run --project Tools/IsometricMagic.NormalMapGenerator -- --project resources/data/textures/normalmap.project.json");
+    Console.WriteLine("  dotnet run --project Tools/IsometricMagic.NormalMapGenerator -- --project resources/pipeline/normalmaps/normalmap.project.json");
 }
 
 internal sealed record InvocationOptions(
