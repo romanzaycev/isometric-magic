@@ -136,6 +136,63 @@ public sealed class Transform2DTests
         Assert.InRange(child.Transform.CanvasPosition.Y, 9.999f, 10.001f);
     }
 
+    [Fact]
+    public void SetParent_WithCanvasPositionStaysTrue_AndUnparent_PreservesCanvasTransform()
+    {
+        var parent = new Entity("parent");
+        parent.Transform.LocalPosition = new Vector2(5f, 6f);
+        parent.Transform.LocalRotation = 0.25d;
+
+        var child = new Entity("child");
+        child.Transform.LocalPosition = new Vector2(2f, 3f);
+        child.Transform.LocalRotation = 0.2d;
+        child.SetParent(parent, canvasPositionStays: false);
+
+        var canvasPosBefore = child.Transform.CanvasPosition;
+        var canvasRotBefore = child.Transform.CanvasRotation;
+
+        child.SetParent(null, canvasPositionStays: true);
+
+        AssertVector2Near(canvasPosBefore, child.Transform.CanvasPosition);
+        Assert.Equal(canvasRotBefore, child.Transform.CanvasRotation, 9);
+        AssertVector2Near(canvasPosBefore, child.Transform.LocalPosition);
+        Assert.Equal(canvasRotBefore, child.Transform.LocalRotation, 9);
+    }
+
+    [Fact]
+    public void CanvasPosition_WhenParentChanges_RecomputesFromCache()
+    {
+        var parent = new Entity("parent");
+        parent.Transform.LocalPosition = new Vector2(10f, 20f);
+
+        var child = new Entity("child");
+        child.Transform.LocalPosition = new Vector2(1f, 2f);
+        child.SetParent(parent, canvasPositionStays: false);
+
+        Assert.Equal(new Vector2(11f, 22f), child.Transform.CanvasPosition);
+
+        parent.Transform.LocalPosition = new Vector2(30f, 40f);
+
+        Assert.Equal(new Vector2(31f, 42f), child.Transform.CanvasPosition);
+    }
+
+    [Fact]
+    public void CanvasRotation_WhenParentChanges_RecomputesFromCache()
+    {
+        var parent = new Entity("parent");
+        parent.Transform.LocalRotation = 0.1d;
+
+        var child = new Entity("child");
+        child.Transform.LocalRotation = 0.2d;
+        child.SetParent(parent, canvasPositionStays: false);
+
+        Assert.Equal(0.3d, child.Transform.CanvasRotation, 10);
+
+        parent.Transform.LocalRotation = 0.4d;
+
+        Assert.Equal(0.6d, child.Transform.CanvasRotation, 10);
+    }
+
     [Theory]
     [InlineData(0.0, 0.0)]
     [InlineData(0.25, 0.25)]

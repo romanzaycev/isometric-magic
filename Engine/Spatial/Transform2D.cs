@@ -10,32 +10,57 @@ namespace IsometricMagic.Engine.Spatial
     public class Transform2D
     {
         [RuntimeEditorEditable]
-        public Vector2 LocalPosition = Vector2.Zero;
+        public Vector2 LocalPosition
+        {
+            get => _localPosition;
+            set
+            {
+                if (_localPosition == value)
+                {
+                    return;
+                }
+
+                _localPosition = value;
+                _localVersion++;
+            }
+        }
 
         [RuntimeEditorEditable(Step = 0.1)]
-        public double LocalRotation = 0.0;
+        public double LocalRotation
+        {
+            get => _localRotation;
+            set
+            {
+                if (_localRotation == value)
+                {
+                    return;
+                }
+
+                _localRotation = value;
+                _localVersion++;
+            }
+        }
+
+        private Vector2 _localPosition = Vector2.Zero;
+        private double _localRotation;
 
         private Entity? _parent;
         public Entity? Parent => _parent;
+
+        private Vector2 _cachedCanvasPosition;
+        private double _cachedCanvasRotation;
+        private ulong _localVersion;
+        private ulong _cachedLocalVersion = ulong.MaxValue;
+        private Transform2D? _cachedParent;
+        private ulong _cachedParentWorldVersion = ulong.MaxValue;
+        private ulong _worldVersion;
 
         public Vector2 CanvasPosition
         {
             get
             {
-                if (_parent == null || _parent.Transform == null)
-                {
-                    return LocalPosition;
-                }
-
-                var parentRot = _parent.Transform.CanvasRotation;
-                if (parentRot != 0.0)
-                {
-                    var rotated = RotateVector(LocalPosition, parentRot);
-                    
-                    return _parent.Transform.CanvasPosition + rotated;
-                }
-                
-                return _parent.Transform.CanvasPosition + LocalPosition;
+                EnsureCanvasUpToDate();
+                return _cachedCanvasPosition;
             }
         }
 
@@ -43,12 +68,8 @@ namespace IsometricMagic.Engine.Spatial
         {
             get
             {
-                if (_parent == null || _parent.Transform == null)
-                {
-                    return LocalRotation;
-                }
-
-                return _parent.Transform.CanvasRotation + LocalRotation;
+                EnsureCanvasUpToDate();
+                return _cachedCanvasRotation;
             }
         }
 
@@ -116,11 +137,59 @@ namespace IsometricMagic.Engine.Spatial
                 }
                 LocalRotation = MathHelper.NormalizeNor(oldCanvasRot - parentRot);
             }
+            else if (canvasPositionStays)
+            {
+                LocalPosition = oldCanvasPos;
+                LocalRotation = oldCanvasRot;
+            }
             else if (parent != null)
             {
                 LocalPosition = oldCanvasPos;
                 LocalRotation = oldCanvasRot;
             }
+        }
+
+        private void EnsureCanvasUpToDate()
+        {
+            var parentTransform = _parent?.Transform;
+            if (parentTransform != null)
+            {
+                parentTransform.EnsureCanvasUpToDate();
+            }
+
+            var parentWorldVersion = parentTransform?._worldVersion ?? 0UL;
+            if (_cachedLocalVersion == _localVersion
+                && ReferenceEquals(_cachedParent, parentTransform)
+                && _cachedParentWorldVersion == parentWorldVersion)
+            {
+                return;
+            }
+
+            if (parentTransform == null)
+            {
+                _cachedCanvasPosition = _localPosition;
+                _cachedCanvasRotation = _localRotation;
+            }
+            else
+            {
+                var parentRotation = parentTransform._cachedCanvasRotation;
+                if (parentRotation == 0.0)
+                {
+                    _cachedCanvasPosition = parentTransform._cachedCanvasPosition + _localPosition;
+                }
+                else
+                {
+                    var rotated = RotateVector(_localPosition, parentRotation);
+                    _cachedCanvasPosition = parentTransform._cachedCanvasPosition + rotated;
+                }
+
+                _cachedCanvasRotation = parentTransform._cachedCanvasRotation + _localRotation;
+            }
+
+            _cachedLocalVersion = _localVersion;
+            _cachedParent = parentTransform;
+            _cachedParentWorldVersion = parentWorldVersion;
+            _worldVersion++;
         }
     }
 }
