@@ -57,6 +57,7 @@ namespace IsometricMagic.Engine.Scenes
         public Entity Root { get; }
 
         private readonly List<Entity> _entityDestroyQueue = new();
+        private readonly List<CameraInfluenceComponent> _activeCameraInfluenceComponents = new();
 
         public Scene(string name)
         {
@@ -152,7 +153,32 @@ namespace IsometricMagic.Engine.Scenes
         internal void CollectCameraInfluences(List<CameraInfluence> buffer)
         {
             buffer.Clear();
-            CollectCameraInfluencesRecursive(Root, buffer);
+            for (var i = _activeCameraInfluenceComponents.Count - 1; i >= 0; i--)
+            {
+                var component = _activeCameraInfluenceComponents[i];
+                if (component.Scene != this || !component.IsActiveAndEnabled)
+                {
+                    _activeCameraInfluenceComponents.RemoveAt(i);
+                    continue;
+                }
+
+                component.CollectInfluence(buffer);
+            }
+        }
+
+        internal void RegisterCameraInfluence(CameraInfluenceComponent component)
+        {
+            if (component.Scene != this || _activeCameraInfluenceComponents.Contains(component))
+            {
+                return;
+            }
+
+            _activeCameraInfluenceComponents.Add(component);
+        }
+
+        internal void UnregisterCameraInfluence(CameraInfluenceComponent component)
+        {
+            _activeCameraInfluenceComponents.Remove(component);
         }
 
         private static IEnumerable<T> FindComponentRecursive<T>(Entity parent) where T : Component
@@ -168,22 +194,6 @@ namespace IsometricMagic.Engine.Scenes
                 {
                     yield return deeper;
                 }
-            }
-        }
-
-        private static void CollectCameraInfluencesRecursive(Entity entity, List<CameraInfluence> buffer)
-        {
-            foreach (var component in entity.Components)
-            {
-                if (component is CameraInfluenceComponent influenceComponent && influenceComponent.IsActiveAndEnabled)
-                {
-                    influenceComponent.CollectInfluence(buffer);
-                }
-            }
-
-            foreach (var child in entity.Children)
-            {
-                CollectCameraInfluencesRecursive(child, buffer);
             }
         }
 

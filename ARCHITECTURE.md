@@ -28,6 +28,11 @@ This split is not cosmetic. It is the primary encapsulation mechanism: engine in
 - Backend replacement from game code is intentionally unsupported.
 - Runtime timing is exposed through `Time.DeltaTime` (read-only for game code; engine-owned updates).
 
+### Scene Graph Invariants
+
+- Entities do not move between scenes at runtime.
+- Cross-scene entity reparenting/migration is unsupported by design.
+
 ## Project Structure
 - `Engine/` - engine library source and architecture layers (`Core` internal + public API namespaces)
 - `Game/` - game-specific code using engine public API
