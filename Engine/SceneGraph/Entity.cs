@@ -11,16 +11,6 @@ namespace IsometricMagic.Engine.SceneGraph
     [RuntimeEditorInspectable(EditableByDefault = false)]
     public class Entity
     {
-        private static readonly ComponentUpdateGroup[] UpdateGroupsInOrder =
-        {
-            ComponentUpdateGroup.Critical,
-            ComponentUpdateGroup.Early,
-            ComponentUpdateGroup.Default,
-            ComponentUpdateGroup.Late
-        };
-
-        private static readonly SceneManager SceneManagerInstance = SceneManager.GetInstance();
-
         [RuntimeEditorEditable]
         public string Name;
 
@@ -47,6 +37,7 @@ namespace IsometricMagic.Engine.SceneGraph
                 var newHierarchy = CalculateActiveInHierarchy();
                 _activeInHierarchy = newHierarchy;
                 PropagateActiveChange(newHierarchy);
+                Scene?.MarkActiveEntitiesDirty();
             }
         }
 
@@ -54,7 +45,11 @@ namespace IsometricMagic.Engine.SceneGraph
         public bool ActiveInHierarchy => _activeInHierarchy;
 
         private readonly List<Component> _components = new();
-        private readonly List<Component> _orderedComponentsBuffer = new();
+        private readonly List<Component> _activeCriticalComponents = new();
+        private readonly List<Component> _activeEarlyComponents = new();
+        private readonly List<Component> _activeDefaultComponents = new();
+        private readonly List<Component> _activeLateComponents = new();
+        private readonly List<Component> _executionBuffer = new();
         public IReadOnlyList<Component> Components => _components;
 
         internal Scene? Scene { get; set; }
@@ -64,6 +59,7 @@ namespace IsometricMagic.Engine.SceneGraph
             if (_activeInHierarchy == value) return;
             _activeInHierarchy = value;
             PropagateActiveChange(value);
+            Scene?.MarkActiveEntitiesDirty();
         }
 
         private bool _destroyRequested;
@@ -98,6 +94,8 @@ namespace IsometricMagic.Engine.SceneGraph
                 {
                     component.CallOnEnable();
                 }
+
+                RebuildActiveComponentLists();
             }
         }
 
@@ -168,6 +166,8 @@ namespace IsometricMagic.Engine.SceneGraph
         {
             if (_parent == newParent) return;
 
+            var previousScene = Scene;
+
             if (_parent != null)
             {
                 _parent._children.Remove(this);
@@ -201,6 +201,9 @@ namespace IsometricMagic.Engine.SceneGraph
                     PropagateActiveChange(newHierarchy);
                 }
             }
+
+            previousScene?.MarkActiveEntitiesDirty();
+            Scene?.MarkActiveEntitiesDirty();
         }
 
         private void SetSceneRecursive(Scene? scene)
@@ -236,6 +239,8 @@ namespace IsometricMagic.Engine.SceneGraph
                 }
             }
 
+            RebuildActiveComponentLists();
+
             foreach (var child in _children)
             {
                 if (child._activeSelf)
@@ -246,7 +251,17 @@ namespace IsometricMagic.Engine.SceneGraph
             }
         }
 
-        internal void CallUpdate(float dt)
+        internal void NotifyComponentEnabledStateChanged()
+        {
+            if (!_activeInHierarchy)
+            {
+                return;
+            }
+
+            RebuildActiveComponentLists();
+        }
+
+        internal void CallSelfUpdate(float dt)
         {
             if (!_activeInHierarchy) return;
 
@@ -259,54 +274,79 @@ namespace IsometricMagic.Engine.SceneGraph
                 }
             }
 
-            CallOrderedUpdate(dt, isLateUpdate: false);
-
-            foreach (var child in _children)
-            {
-                child.CallUpdate(dt);
-            }
+            CallGroupUpdate(_activeCriticalComponents, dt, isLateUpdate: false);
+            CallGroupUpdate(_activeEarlyComponents, dt, isLateUpdate: false);
+            CallGroupUpdate(_activeDefaultComponents, dt, isLateUpdate: false);
+            CallGroupUpdate(_activeLateComponents, dt, isLateUpdate: false);
         }
 
-        internal void CallLateUpdate(float dt)
+        internal void CallSelfLateUpdate(float dt)
         {
             if (!_activeInHierarchy) return;
 
-            CallOrderedUpdate(dt, isLateUpdate: true);
+            CallGroupUpdate(_activeCriticalComponents, dt, isLateUpdate: true);
+            CallGroupUpdate(_activeEarlyComponents, dt, isLateUpdate: true);
+            CallGroupUpdate(_activeDefaultComponents, dt, isLateUpdate: true);
+            CallGroupUpdate(_activeLateComponents, dt, isLateUpdate: true);
+        }
 
-            foreach (var child in _children)
+        private void CallGroupUpdate(List<Component> components, float dt, bool isLateUpdate)
+        {
+            _executionBuffer.Clear();
+            _executionBuffer.AddRange(components);
+
+            for (var i = 0; i < _executionBuffer.Count; i++)
             {
-                child.CallLateUpdate(dt);
+                var component = _executionBuffer[i];
+                if (isLateUpdate)
+                {
+                    component.CallLateUpdate(dt);
+                }
+                else
+                {
+                    component.CallUpdate(dt);
+                }
             }
         }
 
-        private void CallOrderedUpdate(float dt, bool isLateUpdate)
+        private void RebuildActiveComponentLists()
         {
-            foreach (var group in UpdateGroupsInOrder)
+            _activeCriticalComponents.Clear();
+            _activeEarlyComponents.Clear();
+            _activeDefaultComponents.Clear();
+            _activeLateComponents.Clear();
+
+            if (!_activeInHierarchy)
             {
-                _orderedComponentsBuffer.Clear();
-
-                foreach (var component in _components)
-                {
-                    if (component.UpdateGroup == group)
-                    {
-                        _orderedComponentsBuffer.Add(component);
-                    }
-                }
-
-                StableSortByUpdateOrder(_orderedComponentsBuffer);
-
-                foreach (var component in _orderedComponentsBuffer)
-                {
-                    if (isLateUpdate)
-                    {
-                        component.CallLateUpdate(dt);
-                    }
-                    else
-                    {
-                        component.CallUpdate(dt);
-                    }
-                }
+                return;
             }
+
+            foreach (var component in _components)
+            {
+                if (!component.Enabled)
+                {
+                    continue;
+                }
+
+                GetGroupList(component.UpdateGroup).Add(component);
+            }
+
+            StableSortByUpdateOrder(_activeCriticalComponents);
+            StableSortByUpdateOrder(_activeEarlyComponents);
+            StableSortByUpdateOrder(_activeDefaultComponents);
+            StableSortByUpdateOrder(_activeLateComponents);
+        }
+
+        private List<Component> GetGroupList(ComponentUpdateGroup group)
+        {
+            return group switch
+            {
+                ComponentUpdateGroup.Critical => _activeCriticalComponents,
+                ComponentUpdateGroup.Early => _activeEarlyComponents,
+                ComponentUpdateGroup.Default => _activeDefaultComponents,
+                ComponentUpdateGroup.Late => _activeLateComponents,
+                _ => _activeDefaultComponents
+            };
         }
 
         private static void StableSortByUpdateOrder(List<Component> components)
@@ -336,20 +376,38 @@ namespace IsometricMagic.Engine.SceneGraph
         internal void ProcessDestroy()
         {
             if (!_destroyRequested) return;
+            DestroyRecursive();
+        }
+
+        private void DestroyRecursive()
+        {
             _destroyRequested = false;
+            var previousScene = Scene;
 
             foreach (var component in _components)
             {
                 component.CallOnDestroy();
             }
             _components.Clear();
+            RebuildActiveComponentLists();
 
             var childrenCopy = _children.ToList();
-            _children.Clear();
             foreach (var child in childrenCopy)
             {
-                child.ProcessDestroy();
+                child.DestroyRecursive();
             }
+            _children.Clear();
+
+            if (_parent != null)
+            {
+                _parent._children.Remove(this);
+                _parent = null;
+            }
+
+            Scene = null;
+            _activeInHierarchy = false;
+
+            previousScene?.MarkActiveEntitiesDirty();
         }
 
         public void Destroy()

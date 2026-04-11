@@ -122,6 +122,29 @@ public sealed class SceneGraphLifecycleTests
     }
 
     [Fact]
+    public void Destroy_RemovesEntityFromParentAndDestroysChildren()
+    {
+        var scene = new Scene("test_scene");
+        var parent = scene.CreateEntity("parent");
+        var child = scene.CreateEntity("child", parent);
+        var grandChild = scene.CreateEntity("grand", child);
+        var childComponent = new ProbeComponent();
+        var grandChildComponent = new ProbeComponent();
+        child.AddComponent(childComponent);
+        grandChild.AddComponent(grandChildComponent);
+
+        child.Destroy();
+        scene.InternalUpdate();
+
+        Assert.DoesNotContain(child, parent.Children);
+        Assert.Null(child.Parent);
+        Assert.False(child.ActiveInHierarchy);
+        Assert.Null(child.Scene);
+        Assert.Equal(1, childComponent.DestroyCalls);
+        Assert.Equal(1, grandChildComponent.DestroyCalls);
+    }
+
+    [Fact]
     public void SetParent_PropagatesSceneRecursively()
     {
         var scene = new Scene("test_scene");

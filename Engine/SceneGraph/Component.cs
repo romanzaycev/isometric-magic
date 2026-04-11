@@ -32,6 +32,8 @@ namespace IsometricMagic.Engine.SceneGraph
                 {
                     OnDisable();
                 }
+
+                _entity.NotifyComponentEnabledStateChanged();
             }
         }
 

@@ -40,6 +40,30 @@ public sealed class ComponentUpdateOrderTests
         );
     }
 
+    [Fact]
+    public void InternalUpdate_PreservesDepthFirstOrderingAcrossEntities()
+    {
+        var scene = new Scene("test_scene");
+        var parent = scene.CreateEntity("parent");
+        var child = scene.CreateEntity("child", parent);
+        var calls = new List<string>();
+
+        parent.AddComponent(new OrderedProbeComponent("parent_default", calls, ComponentUpdateGroup.Default, 0));
+        child.AddComponent(new OrderedProbeComponent("child_critical", calls, ComponentUpdateGroup.Critical, 0));
+
+        scene.InternalUpdate();
+
+        Assert.Equal(
+            [
+                "U:parent_default",
+                "U:child_critical",
+                "L:parent_default",
+                "L:child_critical"
+            ],
+            calls
+        );
+    }
+
     private sealed class OrderedProbeComponent : Component
     {
         private readonly string _name;

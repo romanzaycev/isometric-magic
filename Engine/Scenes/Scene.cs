@@ -58,6 +58,8 @@ namespace IsometricMagic.Engine.Scenes
 
         private readonly List<Entity> _entityDestroyQueue = new();
         private readonly List<CameraInfluenceComponent> _activeCameraInfluenceComponents = new();
+        private readonly List<Entity> _activeEntitiesPreorder = new();
+        private bool _activeEntitiesDirty = true;
 
         public Scene(string name)
         {
@@ -92,10 +94,50 @@ namespace IsometricMagic.Engine.Scenes
             var dt = Time.DeltaTime;
             Tweens.Update(dt);
             Update();
-            Root.CallUpdate(dt);
-            Root.CallLateUpdate(dt);
+
+            EnsureActiveEntitiesPreorder();
+            foreach (var entity in _activeEntitiesPreorder)
+            {
+                entity.CallSelfUpdate(dt);
+            }
+
+            foreach (var entity in _activeEntitiesPreorder)
+            {
+                entity.CallSelfLateUpdate(dt);
+            }
 
             ProcessDestroyQueue();
+        }
+
+        internal void MarkActiveEntitiesDirty()
+        {
+            _activeEntitiesDirty = true;
+        }
+
+        private void EnsureActiveEntitiesPreorder()
+        {
+            if (!_activeEntitiesDirty)
+            {
+                return;
+            }
+
+            _activeEntitiesDirty = false;
+            _activeEntitiesPreorder.Clear();
+            CollectActiveEntitiesPreorder(Root, _activeEntitiesPreorder);
+        }
+
+        private static void CollectActiveEntitiesPreorder(Entity entity, List<Entity> buffer)
+        {
+            if (!entity.ActiveInHierarchy)
+            {
+                return;
+            }
+
+            buffer.Add(entity);
+            foreach (var child in entity.Children)
+            {
+                CollectActiveEntitiesPreorder(child, buffer);
+            }
         }
 
         private void ProcessDestroyQueue()
