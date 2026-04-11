@@ -319,41 +319,52 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
         public void LoadImageToTexture(out NativeTexture nativeTexture, string imagePath)
         {
-            var surface = IMG_Load(imagePath);
-            if (surface == IntPtr.Zero)
-            {
-                throw new InvalidOperationException($"IMG_Load error: {IMG_GetError()}");
-            }
-
-            var targetFormat = BitConverter.IsLittleEndian ? SDL_PIXELFORMAT_ABGR8888 : SDL_PIXELFORMAT_RGBA8888;
-            var converted = SDL_ConvertSurfaceFormat(surface, targetFormat, 0);
-            SDL_FreeSurface(surface);
-            if (converted == IntPtr.Zero)
-            {
-                throw new InvalidOperationException($"SDL_ConvertSurfaceFormat error: {SDL_GetError()}");
-            }
-
-            var surfaceInfo = Marshal.PtrToStructure<SDL_Surface>(converted);
-            var width = surfaceInfo.w;
-            var height = surfaceInfo.h;
-            var pitch = surfaceInfo.pitch;
-
-            var data = new byte[width * height * 4];
-            SDL_LockSurface(converted);
+            var imageBytes = IsometricMagic.Engine.Assets.ResourceFileSystem.ReadAllBytes(imagePath);
             unsafe
             {
-                var src = (byte*) surfaceInfo.pixels;
-                for (var y = 0; y < height; y++)
+                fixed (byte* ptr = imageBytes)
                 {
-                    var row = src + (y * pitch);
-                    Marshal.Copy((IntPtr) row, data, y * width * 4, width * 4);
+                    var rw = SDL_RWFromConstMem((IntPtr) ptr, imageBytes.Length);
+                    if (rw == IntPtr.Zero)
+                    {
+                        throw new InvalidOperationException($"SDL_RWFromConstMem error: {SDL_GetError()}");
+                    }
+
+                    var loaded = IMG_Load_RW(rw, 1);
+                    if (loaded == IntPtr.Zero)
+                    {
+                        throw new InvalidOperationException($"IMG_Load_RW error: {IMG_GetError()}");
+                    }
+
+                    var targetFormat = BitConverter.IsLittleEndian ? SDL_PIXELFORMAT_ABGR8888 : SDL_PIXELFORMAT_RGBA8888;
+                    var convertedSurface = SDL_ConvertSurfaceFormat(loaded, targetFormat, 0);
+                    SDL_FreeSurface(loaded);
+                    if (convertedSurface == IntPtr.Zero)
+                    {
+                        throw new InvalidOperationException($"SDL_ConvertSurfaceFormat error: {SDL_GetError()}");
+                    }
+
+                    var surfaceInfo = Marshal.PtrToStructure<SDL_Surface>(convertedSurface);
+                    var width = surfaceInfo.w;
+                    var height = surfaceInfo.h;
+                    var pitch = surfaceInfo.pitch;
+
+                    var data = new byte[width * height * 4];
+                    SDL_LockSurface(convertedSurface);
+                    var src = (byte*) surfaceInfo.pixels;
+                    for (var y = 0; y < height; y++)
+                    {
+                        var row = src + (y * pitch);
+                        Marshal.Copy((IntPtr) row, data, y * width * 4, width * 4);
+                    }
+
+                    SDL_UnlockSurface(convertedSurface);
+                    SDL_FreeSurface(convertedSurface);
+
+                    var textureId = CreateTextureFromData(width, height, data);
+                    nativeTexture = new GlNativeTexture(textureId, 0, false, width, height);
                 }
             }
-            SDL_UnlockSurface(converted);
-            SDL_FreeSurface(converted);
-
-            var textureId = CreateTextureFromData(width, height, data);
-            nativeTexture = new GlNativeTexture(textureId, 0, false, width, height);
         }
 
         private void InitWindow()

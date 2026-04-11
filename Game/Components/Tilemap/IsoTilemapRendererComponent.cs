@@ -247,12 +247,13 @@ namespace IsometricMagic.Game.Components.Tilemap
 
         private static string ResolveAtlasPath(string atlasPath)
         {
-            if (Path.IsPathRooted(atlasPath))
+            if (atlasPath.StartsWith("resources/", StringComparison.OrdinalIgnoreCase)
+                || atlasPath.StartsWith("./resources/", StringComparison.OrdinalIgnoreCase))
             {
-                return atlasPath;
+                return ResourceFileSystem.NormalizePath(atlasPath);
             }
 
-            return Path.GetFullPath(Path.Combine("./resources", atlasPath));
+            return ResourceFileSystem.NormalizePath($"resources/{atlasPath}");
         }
 
         protected override void OnDestroy()

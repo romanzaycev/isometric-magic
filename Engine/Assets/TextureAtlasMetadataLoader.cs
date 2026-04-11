@@ -6,7 +6,7 @@ namespace IsometricMagic.Engine.Assets
     {
         public static TextureAtlasMetadata Load(string atlasMetadataPath)
         {
-            var json = File.ReadAllText(atlasMetadataPath);
+            var json = ResourceFileSystem.ReadAllText(atlasMetadataPath);
             return Parse(json);
         }
 

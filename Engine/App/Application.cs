@@ -6,6 +6,7 @@ using IsometricMagic.Engine.Inputs;
 using IsometricMagic.Engine.Scenes;
 using IsometricMagic.Engine.Rendering;
 using IsometricMagic.Engine.Core.Assets;
+using IsometricMagic.Engine.Assets;
 using NLog;
 using static SDL2.SDL;
 
@@ -52,6 +53,7 @@ namespace IsometricMagic.Engine.App
 
             _config = config;
             _graphics = graphics;
+            ResourceFileSystem.InitializeDefault();
             FrameStats.SetBackend(_config.GraphicsBackend);
             FrameStats.SetVSync(_config.VSync);
             DebugOverlay.Initialize(_config);
@@ -96,6 +98,7 @@ namespace IsometricMagic.Engine.App
             }
 
             TextureHolder.GetInstance().DestroyAll();
+            ResourceFileSystem.Shutdown();
             _graphics.Stop();
             Logger.Info("Application stopped");
         }

@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using IsometricMagic.Engine.Assets;
 
 namespace IsometricMagic.Game.Tiles
 {
@@ -6,7 +7,7 @@ namespace IsometricMagic.Game.Tiles
     {
         public static TileSet Load(string name)
         {
-            var jsonMapData = File.ReadAllText($"./resources/data/sets/{name}.json");
+            var jsonMapData = ResourceFileSystem.ReadAllText($"resources/data/sets/{name}.json");
             
             return JsonConvert.DeserializeObject<TileSet>(jsonMapData)!;
         }

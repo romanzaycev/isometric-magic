@@ -65,6 +65,14 @@ The project expects a `./resources/` directory at runtime (relative to the worki
 - Atlas outputs live under `resources/_gen/atlases/` (e.g. `_gen/atlases/<name>.json` plus textures).
 - If a tileset declares `atlas`, missing atlas files or missing atlas regions are treated as errors.
 
+### Pak Files and VFS
+
+- Pak files are discovered automatically from `resources/paks/*.pak` at startup.
+- Pak mount order is natural filename sort; later files override earlier files.
+- Disk files under `resources/**` are mounted as a higher-priority layer and override pak entries.
+- Pak input scope is `resources/data/**` and `resources/_gen/**`; `resources/engine/**` remains disk-only.
+- Pak format header starts with ASCII magic `1MPAQ!`; header is plain, while index and file blobs use XOR obfuscation.
+
 ## Coordinate Semantics (Game)
 - `IsoWorldPosition` and `CanvasPosition` are distinct value types in `Game/Model` and must not be mixed implicitly.
 - `CanvasPosition` is the primary game-facing positioning API for rendering, camera, and VFX.

@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using IsometricMagic.Engine.Assets;
 
 namespace IsometricMagic.Game.Maps
 {
@@ -6,7 +7,7 @@ namespace IsometricMagic.Game.Maps
     {
         public static Map Load(string name)
         {
-            var jsonMapData = File.ReadAllText($"./resources/data/maps/{name}.json");
+            var jsonMapData = ResourceFileSystem.ReadAllText($"resources/data/maps/{name}.json");
             
             return JsonConvert.DeserializeObject<Map>(jsonMapData)!;
         }

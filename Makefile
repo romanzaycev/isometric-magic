@@ -17,6 +17,12 @@ GAME_PROJECT := isometric-magic.csproj
 ENGINE_TEST_PROJECT := tests/IsometricMagic.Engine.Tests/IsometricMagic.Engine.Tests.csproj
 EDITOR_TEST_PROJECT := tests/IsometricMagic.RuntimeEditor.Tests/IsometricMagic.RuntimeEditor.Tests.csproj
 SPA_DIR := Editor/IsometricMagic.RuntimeEditor/Web/spa
+PAK_TOOL_PROJECT := Tools/IsometricMagic.PakTool/IsometricMagic.PakTool.csproj
+RESOURCES_DIR := resources
+PAKS_DIR := resources/paks
+PAK_OUT ?= $(PAKS_DIR)/base.pak
+PAK_IN ?= $(PAK_OUT)
+PAK_UNPACK_DIR ?= artifacts/pak-unpacked
 
 # Build configuration (can be overridden: make build CONFIG=Release).
 CONFIG ?= Debug
@@ -29,7 +35,7 @@ PUBLISH_LINUX_X64_DIR := $(PUBLISH_DIR)/linux-x64
 PUBLISH_WIN_X64_DIR := $(PUBLISH_DIR)/win-x64
 
 .PHONY: help restore restore-dotnet restore-spa spa-build build run clean \
-	test-engine test-editor test verify normals atlases assets publish publish-linux-x64 publish-win-x64
+	test-engine test-editor test verify normals atlases assets pak pak-list pak-unpack publish publish-linux-x64 publish-win-x64
 
 help: ## Show available Makefile targets
 	@printf "Available targets:\n"
@@ -76,6 +82,17 @@ atlases: ## Pack atlases from atlas project
 	dotnet run --project Tools/IsometricMagic.AtlasPacker -- --project resources/pipeline/atlases/pack.project.json
 
 assets: normals atlases ## Generate normals then atlases
+
+pak: ## Build pak from resources/data + resources/_gen (PAK_OUT=...)
+	@mkdir -p "$(PAKS_DIR)"
+	dotnet run --project "$(PAK_TOOL_PROJECT)" -- pack --input "$(RESOURCES_DIR)" --out "$(PAK_OUT)"
+
+pak-list: ## List entries from pak file (PAK_IN=...)
+	dotnet run --project "$(PAK_TOOL_PROJECT)" -- list --input "$(PAK_IN)"
+
+pak-unpack: ## Unpack pak file to directory (PAK_IN=..., PAK_UNPACK_DIR=...)
+	@mkdir -p "$(PAK_UNPACK_DIR)"
+	dotnet run --project "$(PAK_TOOL_PROJECT)" -- unpack --input "$(PAK_IN)" --out "$(PAK_UNPACK_DIR)"
 
 publish: ## Publish game (Release, framework-dependent)
 	dotnet publish -c Release $(GAME_PROJECT) -o "$(PUBLISH_DEFAULT_DIR)"

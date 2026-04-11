@@ -5,25 +5,23 @@ namespace IsometricMagic.Engine.Assets
         public static TextureAtlas Load(string atlasMetadataPath)
         {
             var metadata = TextureAtlasMetadataLoader.Load(atlasMetadataPath);
-            var baseDirectory = Path.GetDirectoryName(Path.GetFullPath(atlasMetadataPath))
-                ?? throw new InvalidOperationException("Failed to resolve texture atlas metadata directory.");
 
             var atlasWidth = metadata.Size.Width;
             var atlasHeight = metadata.Size.Height;
-            var albedoPath = ResolveLayerPath(baseDirectory, metadata.Layers.Albedo);
+            var albedoPath = ResolveLayerPath(atlasMetadataPath, metadata.Layers.Albedo);
             var albedoTexture = Texture.AcquireShared(albedoPath, atlasWidth, atlasHeight);
 
             Texture? normalTexture = null;
             if (!string.IsNullOrWhiteSpace(metadata.Layers.Normal))
             {
-                var normalPath = ResolveLayerPath(baseDirectory, metadata.Layers.Normal);
+                var normalPath = ResolveLayerPath(atlasMetadataPath, metadata.Layers.Normal);
                 normalTexture = Texture.AcquireShared(normalPath, atlasWidth, atlasHeight);
             }
 
             Texture? emissiveTexture = null;
             if (!string.IsNullOrWhiteSpace(metadata.Layers.Emissive))
             {
-                var emissivePath = ResolveLayerPath(baseDirectory, metadata.Layers.Emissive);
+                var emissivePath = ResolveLayerPath(atlasMetadataPath, metadata.Layers.Emissive);
                 emissiveTexture = Texture.AcquireShared(emissivePath, atlasWidth, atlasHeight);
             }
 
@@ -37,14 +35,9 @@ namespace IsometricMagic.Engine.Assets
             return new TextureAtlas(albedoTexture, normalTexture, emissiveTexture, regions);
         }
 
-        private static string ResolveLayerPath(string baseDirectory, string layerPath)
+        private static string ResolveLayerPath(string atlasMetadataPath, string layerPath)
         {
-            if (Path.IsPathRooted(layerPath))
-            {
-                return layerPath;
-            }
-
-            return Path.GetFullPath(Path.Combine(baseDirectory, layerPath));
+            return ResourcePath.ResolveFromFile(atlasMetadataPath, layerPath);
         }
     }
 }
