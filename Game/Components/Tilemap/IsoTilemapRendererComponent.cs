@@ -19,7 +19,7 @@ namespace IsometricMagic.Game.Components.Tilemap
         public int WorldLayerBase => _layerStride * _map.Layers.Length;
 
         private readonly Dictionary<string, LayerState> _layerStates = new();
-        private readonly Dictionary<string, Texture> _textureCache = new();
+        private readonly Dictionary<string, Texture> _textureCache = new(StringComparer.Ordinal);
         private TextureAtlas? _atlas;
 
         public void Load(Map map, TileSet tileSet, IsoWorldPositionConverter converter, SceneLayer targetLayer)
@@ -33,7 +33,7 @@ namespace IsometricMagic.Game.Components.Tilemap
             _atlas = null;
             if (!string.IsNullOrWhiteSpace(_tileSet.Atlas))
             {
-                var atlasPath = ResolveAtlasPath(_tileSet.Atlas);
+                var atlasPath = ResourceFileSystem.Path(_tileSet.Atlas);
                 _atlas = TextureAtlasLoader.Load(atlasPath);
             }
         }
@@ -199,14 +199,15 @@ namespace IsometricMagic.Game.Components.Tilemap
                 return _atlas.AlbedoTexture;
             }
 
-            if (_textureCache.TryGetValue(tile.Image.Source, out var cached))
+            var texturePath = ResourceFileSystem.Data($"textures/{tile.Image.Source}");
+            if (_textureCache.TryGetValue(texturePath, out var cached))
             {
                 return cached;
             }
 
             var tex = new Texture(tile.Image.Width, tile.Image.Height);
-            tex.LoadImage($"./resources/data/textures/{tile.Image.Source}");
-            _textureCache[tile.Image.Source] = tex;
+            tex.LoadImage(texturePath);
+            _textureCache[texturePath] = tex;
             return tex;
         }
 
@@ -243,17 +244,6 @@ namespace IsometricMagic.Game.Components.Tilemap
             }
 
             return material;
-        }
-
-        private static string ResolveAtlasPath(string atlasPath)
-        {
-            if (atlasPath.StartsWith("resources/", StringComparison.OrdinalIgnoreCase)
-                || atlasPath.StartsWith("./resources/", StringComparison.OrdinalIgnoreCase))
-            {
-                return ResourceFileSystem.NormalizePath(atlasPath);
-            }
-
-            return ResourceFileSystem.NormalizePath($"resources/{atlasPath}");
         }
 
         protected override void OnDestroy()

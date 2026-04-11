@@ -34,6 +34,9 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
         private IntPtr _sdlWindow;
         private IntPtr _glContext;
         private IntPtr _debugFont = IntPtr.Zero;
+        private byte[]? _debugFontBytes;
+        private GCHandle _debugFontBytesHandle;
+        private bool _debugFontBytesPinned;
         private GL _gl = null!;
         private GlRenderContext _renderContext = null!;
         private GlFullscreenQuad _fullscreenQuad = null!;
@@ -237,6 +240,14 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 TTF_CloseFont(_debugFont);
                 _debugFont = IntPtr.Zero;
             }
+
+            if (_debugFontBytesPinned)
+            {
+                _debugFontBytesHandle.Free();
+                _debugFontBytesPinned = false;
+            }
+
+            _debugFontBytes = null;
         }
 
         public void RepaintWindow(out int width, out int height)
@@ -1714,12 +1725,32 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 return;
             }
 
-            if (!File.Exists(DebugOverlay.FontPath))
+            var fontPath = ResourceFileSystem.ResolveFromDirectory(ResourcePath.EntryPoint, DebugOverlay.FontPath);
+            if (!ResourceFileSystem.Exists(fontPath))
             {
                 return;
             }
 
-            _debugFont = TTF_OpenFont(DebugOverlay.FontPath, DebugOverlay.FontSize);
+            _debugFontBytes = ResourceFileSystem.ReadAllBytes(fontPath);
+            _debugFontBytesHandle = GCHandle.Alloc(_debugFontBytes, GCHandleType.Pinned);
+            _debugFontBytesPinned = true;
+
+            var rw = SDL_RWFromConstMem(_debugFontBytesHandle.AddrOfPinnedObject(), _debugFontBytes.Length);
+            if (rw == IntPtr.Zero)
+            {
+                _debugFontBytesHandle.Free();
+                _debugFontBytesPinned = false;
+                _debugFontBytes = null;
+                return;
+            }
+
+            _debugFont = TTF_OpenFontRW(rw, 1, DebugOverlay.FontSize);
+            if (_debugFont == IntPtr.Zero)
+            {
+                _debugFontBytesHandle.Free();
+                _debugFontBytesPinned = false;
+                _debugFontBytes = null;
+            }
         }
 
         private void DrawDebugOverlay()

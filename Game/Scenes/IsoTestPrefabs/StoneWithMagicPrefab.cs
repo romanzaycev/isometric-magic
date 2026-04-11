@@ -90,7 +90,7 @@ namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
             });
             stone.AddComponent(new IsoWorldToCanvasPositionSyncComponent());
 
-            var stoneEmissionMap = Texture.AcquireShared("./resources/data/textures/stone0_em.png", 256, 256);
+            var stoneEmissionMap = Texture.AcquireShared("data/textures/stone0_em.png", 256, 256);
             var stoneMaterial = SpriteMaterialFactory.LitEmissiveAutoNormal(
                 emissionColor,
                 _spec.StoneEmissionIntensity,
@@ -103,7 +103,7 @@ namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
 
             stone.AddComponent(new SpriteRendererComponent
             {
-                ImagePath = "./resources/data/textures/stone0.png",
+                ImagePath = "data/textures/stone0.png",
                 Width = 256,
                 Height = 256,
                 OriginPoint = OriginPoint.BottomCenter,
@@ -185,11 +185,11 @@ namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
         {
             return new[]
             {
-                new ParticleVisualSpec("./resources/data/textures/vfx/particles/star_01.png", 512, 512,
+                new ParticleVisualSpec("data/textures/vfx/particles/star_01.png", 512, 512,
                     MaterialFactory: () => SpriteMaterialFactory.LitEmissiveAutoNormal(color, intensity)),
-                new ParticleVisualSpec("./resources/data/textures/vfx/particles/star_02.png", 512, 512,
+                new ParticleVisualSpec("data/textures/vfx/particles/star_02.png", 512, 512,
                     MaterialFactory: () => SpriteMaterialFactory.LitEmissiveAutoNormal(color, intensity)),
-                new ParticleVisualSpec("./resources/data/textures/vfx/particles/star_03.png", 512, 512,
+                new ParticleVisualSpec("data/textures/vfx/particles/star_03.png", 512, 512,
                     MaterialFactory: () => SpriteMaterialFactory.LitEmissiveAutoNormal(color, intensity))
             };
         }
@@ -198,11 +198,11 @@ namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
         {
             return new[]
             {
-                new ParticleVisualSpec("./resources/data/textures/vfx/particles/smoke_01.png", 512, 512,
+                new ParticleVisualSpec("data/textures/vfx/particles/smoke_01.png", 512, 512,
                     MaterialFactory: () => SpriteMaterialFactory.LitEmissiveAutoNormal(color, intensity)),
-                new ParticleVisualSpec("./resources/data/textures/vfx/particles/smoke_02.png", 512, 512,
+                new ParticleVisualSpec("data/textures/vfx/particles/smoke_02.png", 512, 512,
                     MaterialFactory: () => SpriteMaterialFactory.LitEmissiveAutoNormal(color, intensity)),
-                new ParticleVisualSpec("./resources/data/textures/vfx/particles/smoke_03.png", 512, 512,
+                new ParticleVisualSpec("data/textures/vfx/particles/smoke_03.png", 512, 512,
                     MaterialFactory: () => SpriteMaterialFactory.LitEmissiveAutoNormal(color, intensity))
             };
         }

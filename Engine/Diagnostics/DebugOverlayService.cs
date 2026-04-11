@@ -17,7 +17,7 @@ namespace IsometricMagic.Engine.Diagnostics
         private float _refreshInterval = 0.25f;
         private float _refreshTimer;
 
-        private string _fontPath = "./resources/engine/vt323-regular.ttf";
+        private string _fontPath = "engine/vt323-regular.ttf";
         private int _fontSize = 20;
         private int _posX = 12;
         private int _posY = 12;

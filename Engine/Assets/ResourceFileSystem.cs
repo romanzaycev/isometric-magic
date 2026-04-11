@@ -16,8 +16,9 @@ namespace IsometricMagic.Engine.Assets
             lock (Sync)
             {
                 Vfs.Reset();
-                MountAutoPaksInternal();
-                Vfs.MountDirectory($"./{ResourcePath.EntryPoint}", DiskPriority);
+                var resourcesRoot = GetResourcesRoot();
+                MountAutoPaksInternal(resourcesRoot);
+                Vfs.MountDirectory(resourcesRoot, DiskPriority);
             }
         }
 
@@ -59,6 +60,36 @@ namespace IsometricMagic.Engine.Assets
             return ResourcePath.NormalizeResourcePath(path);
         }
 
+        public static string Path(string path)
+        {
+            return NormalizePath(path);
+        }
+
+        public static string Data(string relativePath)
+        {
+            return NormalizePath($"data/{relativePath}");
+        }
+
+        public static string Gen(string relativePath)
+        {
+            return NormalizePath($"_gen/{relativePath}");
+        }
+
+        public static string Engine(string relativePath)
+        {
+            return NormalizePath($"engine/{relativePath}");
+        }
+
+        public static string ResolveFromFile(string referrerFilePath, string referencedPath)
+        {
+            return ResourcePath.ResolveFromFile(referrerFilePath, referencedPath);
+        }
+
+        public static string ResolveFromDirectory(string baseDirectoryPath, string referencedPath)
+        {
+            return ResourcePath.ResolveFromDirectory(baseDirectoryPath, referencedPath);
+        }
+
         public static void Shutdown()
         {
             lock (Sync)
@@ -72,9 +103,14 @@ namespace IsometricMagic.Engine.Assets
             Shutdown();
         }
 
-        private static void MountAutoPaksInternal()
+        private static string GetResourcesRoot()
         {
-            var paksDirectory = Path.GetFullPath($"./{ResourcePath.EntryPoint}/paks");
+            return System.IO.Path.Combine(AppContext.BaseDirectory, ResourcePath.EntryPoint);
+        }
+
+        private static void MountAutoPaksInternal(string resourcesRoot)
+        {
+            var paksDirectory = System.IO.Path.Combine(resourcesRoot, "paks");
             if (!Directory.Exists(paksDirectory))
             {
                 return;
@@ -82,7 +118,7 @@ namespace IsometricMagic.Engine.Assets
 
             var pakFiles = Directory.GetFiles(paksDirectory, "*.pak", SearchOption.TopDirectoryOnly);
             Array.Sort(pakFiles, static (left, right) =>
-                NaturalFileNameComparer.Instance.Compare(Path.GetFileName(left), Path.GetFileName(right)));
+                NaturalFileNameComparer.Instance.Compare(System.IO.Path.GetFileName(left), System.IO.Path.GetFileName(right)));
 
             foreach (var pakFile in pakFiles)
             {

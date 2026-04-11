@@ -23,7 +23,7 @@ public class FireCircleComponent : Component
         if (TargetLayer == null) return;
 
         const int totalFrames = 61;
-        const string animationPath = "./resources/data/textures/vfx/fire_circle_01/fire_circle_{0}.png";
+        const string animationPath = "data/textures/vfx/fire_circle_01/fire_circle_{0}.png";
         
         for (var i = 0; i < totalFrames; i++)
         {

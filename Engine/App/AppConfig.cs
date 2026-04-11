@@ -322,7 +322,7 @@ namespace IsometricMagic.Engine.App
                 {
                     _debugOverlayFontPath = GetString(
                         GetValue("DebugOverlay", "FontPath"),
-                        "./resources/engine/vt323-regular.ttf"
+                        "engine/vt323-regular.ttf"
                     );
                     _debugOverlayFontPathFetched = true;
                 }

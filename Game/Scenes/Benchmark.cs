@@ -45,29 +45,29 @@ namespace IsometricMagic.Game.Scenes
 
         private readonly TextureSpec[] _throughputTextures =
         {
-            new("./resources/data/textures/circle_128.png", 128, 128),
-            new("./resources/data/textures/loading_circle.png", 128, 128),
-            new("./resources/data/textures/loading_text.png", 288, 49),
-            new("./resources/data/textures/vfx/particles/circle_02.png", 512, 512),
-            new("./resources/data/textures/ts1/stone_E.png", 256, 512)
+            new("data/textures/circle_128.png", 128, 128),
+            new("data/textures/loading_circle.png", 128, 128),
+            new("data/textures/loading_text.png", 288, 49),
+            new("data/textures/vfx/particles/circle_02.png", 512, 512),
+            new("data/textures/ts1/stone_E.png", 256, 512)
         };
 
         private readonly TextureSpec[] _litTextures =
         {
-            new("./resources/data/textures/stone0.png", 256, 256),
-            new("./resources/data/textures/characters/man/animations/running/135/Frame0.png", 256, 256),
-            new("./resources/data/textures/characters/man/animations/dying/315/Frame4.png", 256, 256),
-            new("./resources/data/textures/vfx/particles/smoke_01.png", 512, 512),
-            new("./resources/data/textures/vfx/particles/star_01.png", 512, 512)
+            new("data/textures/stone0.png", 256, 256),
+            new("data/textures/characters/man/animations/running/135/Frame0.png", 256, 256),
+            new("data/textures/characters/man/animations/dying/315/Frame4.png", 256, 256),
+            new("data/textures/vfx/particles/smoke_01.png", 512, 512),
+            new("data/textures/vfx/particles/star_01.png", 512, 512)
         };
 
         private readonly TextureSpec[] _compositeTextures =
         {
-            new("./resources/data/textures/vfx/particles/flame_01.png", 512, 512),
-            new("./resources/data/textures/vfx/particles/spark_01.png", 512, 512),
-            new("./resources/data/textures/vfx/particles/smoke_03.png", 512, 512),
-            new("./resources/data/textures/vfx/particles/window_02.png", 512, 512),
-            new("./resources/data/textures/vfx/particles/trace_07.png", 512, 512)
+            new("data/textures/vfx/particles/flame_01.png", 512, 512),
+            new("data/textures/vfx/particles/spark_01.png", 512, 512),
+            new("data/textures/vfx/particles/smoke_03.png", 512, 512),
+            new("data/textures/vfx/particles/window_02.png", 512, 512),
+            new("data/textures/vfx/particles/trace_07.png", 512, 512)
         };
 
         private static readonly SizeSpec[] ThroughputSizes =
@@ -429,7 +429,7 @@ namespace IsometricMagic.Game.Scenes
             Lighting.AmbientColor = new Vector3(0.9f, 0.95f, 1f);
             Lighting.AmbientIntensity = 0.22f;
 
-            _emissionMap = Texture.AcquireShared("./resources/data/textures/stone0_em.png", 256, 256);
+            _emissionMap = Texture.AcquireShared("data/textures/stone0_em.png", 256, 256);
             _emissiveMaterial = SpriteMaterialFactory.LitEmissiveAutoNormal(
                 new Vector3(0.35f, 0.9f, 0.55f),
                 2.25f,

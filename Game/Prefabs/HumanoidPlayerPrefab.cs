@@ -83,7 +83,7 @@ namespace IsometricMagic.Game.Prefabs
             lightEf.SetParent(entity, false);
             lightEf.AddComponent(new SpriteRendererComponent
             {
-                ImagePath = "./resources/data/textures/vfx/particles/circle_05.png",
+                ImagePath = "data/textures/vfx/particles/circle_05.png",
                 Width = 2048,
                 Height = 1024,
                 TextureWidth = 512,

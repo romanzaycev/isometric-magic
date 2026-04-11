@@ -117,7 +117,7 @@ namespace IsometricMagic.Game.Components.Collision
             if (_debugTexture == null)
             {
                 _debugTexture = new Texture(128, 128);
-                _debugTexture.LoadImage("./resources/data/textures/circle_128.png");
+                _debugTexture.LoadImage(ResourceFileSystem.Data("textures/circle_128.png"));
             }
 
             _debugSprite = new Sprite

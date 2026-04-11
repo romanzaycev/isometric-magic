@@ -7,7 +7,7 @@ namespace IsometricMagic.Game.Maps
     {
         public static Map Load(string name)
         {
-            var jsonMapData = ResourceFileSystem.ReadAllText($"resources/data/maps/{name}.json");
+            var jsonMapData = ResourceFileSystem.ReadAllText(ResourceFileSystem.Data($"maps/{name}.json"));
             
             return JsonConvert.DeserializeObject<Map>(jsonMapData)!;
         }

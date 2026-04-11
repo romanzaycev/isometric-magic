@@ -28,9 +28,10 @@ namespace IsometricMagic.Engine.Assets
 
         public void LoadImage(string imagePath)
         {
-            _image = imagePath;
+            var normalizedPath = ResourceFileSystem.NormalizePath(imagePath);
+            _image = normalizedPath;
             TextureHolder.PushTexture(this);
-            TextureHolder.LoadImage(this, imagePath);
+            TextureHolder.LoadImage(this, normalizedPath);
         }
 
         public void Destroy()
@@ -40,7 +41,8 @@ namespace IsometricMagic.Engine.Assets
 
         public static Texture AcquireShared(string imagePath, int width, int height)
         {
-            return TextureHolder.GetInstance().AcquireSharedTexture(imagePath, width, height);
+            var normalizedPath = ResourceFileSystem.NormalizePath(imagePath);
+            return TextureHolder.GetInstance().AcquireSharedTexture(normalizedPath, width, height);
         }
     }
 }

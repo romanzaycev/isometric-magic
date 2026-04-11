@@ -7,7 +7,7 @@ namespace IsometricMagic.Game.Tiles
     {
         public static TileSet Load(string name)
         {
-            var jsonMapData = ResourceFileSystem.ReadAllText($"resources/data/sets/{name}.json");
+            var jsonMapData = ResourceFileSystem.ReadAllText(ResourceFileSystem.Data($"sets/{name}.json"));
             
             return JsonConvert.DeserializeObject<TileSet>(jsonMapData)!;
         }

@@ -19,7 +19,7 @@ namespace IsometricMagic.Game.Scenes
             Camera.Rect.Y = 0;
             
             var textTex = new Texture(288, 49);
-            textTex.LoadImage("./resources/data/textures/loading_text.png");
+            textTex.LoadImage(ResourceFileSystem.Data("textures/loading_text.png"));
 
             _loadingText = new Sprite
             {
@@ -31,7 +31,7 @@ namespace IsometricMagic.Game.Scenes
             UiLayer.Add(_loadingText);
 
             var circleTex = new Texture(128, 128);
-            circleTex.LoadImage("./resources/data/textures/loading_circle.png");
+            circleTex.LoadImage(ResourceFileSystem.Data("textures/loading_circle.png"));
 
             _loadingCircle = new Sprite
             {

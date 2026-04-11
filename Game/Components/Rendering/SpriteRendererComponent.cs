@@ -12,8 +12,9 @@ namespace IsometricMagic.Game.Components.Rendering
             get => _imagePath;
             set
             {
-                if (_imagePath == value) return;
-                _imagePath = value;
+                var normalized = ResourceFileSystem.Path(value);
+                if (_imagePath == normalized) return;
+                _imagePath = normalized;
                 if (_sprite != null)
                 {
                     ReloadTexture();

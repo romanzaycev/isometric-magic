@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using IsometricMagic.Engine.Assets;
 using static SDL2.SDL;
 using static SDL2.SDL_image;
 
@@ -11,10 +12,26 @@ namespace IsometricMagic.Engine.Graphics.Utilities
 
         public static byte[] GenerateFromImage(string imagePath, out int width, out int height, float strength = 1f)
         {
-            var surface = IMG_Load(imagePath);
+            var imageBytes = ResourceFileSystem.ReadAllBytes(imagePath);
+
+            IntPtr surface;
+            unsafe
+            {
+                fixed (byte* ptr = imageBytes)
+                {
+                    var rw = SDL_RWFromConstMem((IntPtr) ptr, imageBytes.Length);
+                    if (rw == IntPtr.Zero)
+                    {
+                        throw new InvalidOperationException($"SDL_RWFromConstMem error: {SDL_GetError()}");
+                    }
+
+                    surface = IMG_Load_RW(rw, 1);
+                }
+            }
+
             if (surface == IntPtr.Zero)
             {
-                throw new InvalidOperationException($"IMG_Load error: {IMG_GetError()}");
+                throw new InvalidOperationException($"IMG_Load_RW error: {IMG_GetError()}");
             }
 
             var targetFormat = BitConverter.IsLittleEndian ? SDL_PIXELFORMAT_ABGR8888 : SDL_PIXELFORMAT_RGBA8888;

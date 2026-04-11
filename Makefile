@@ -61,8 +61,9 @@ run: ## Run game project (Debug by default)
 	@if [ "$(CONFIG)" = "Debug" ]; then $(MAKE) spa-build; fi
 	dotnet run -c $(CONFIG) --project $(GAME_PROJECT)
 
-clean: ## Clean .NET build artifacts only
+clean: ## Clean project
 	dotnet clean -c $(CONFIG) $(GAME_PROJECT)
+	@rm -rf artifacts bin logs obj Editor/bin Editor/obj Editor/Web/dist Engine/bin Engine/obj
 
 test-engine: ## Run engine tests
 	dotnet test -c $(CONFIG) $(ENGINE_TEST_PROJECT)

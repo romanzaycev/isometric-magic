@@ -94,7 +94,7 @@ namespace IsometricMagic.Game.Components.Character.Humanoid
             const int totalFrames = 10;
             const string frameName = "Frame";
             const string extension = ".png";
-            const string animationPath = "./resources/data/textures/characters/man/animations/{0}";
+            const string animationPath = "data/textures/characters/man/animations/{0}";
 
             foreach (var animationName in availableAnimations)
             {
