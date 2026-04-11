@@ -11,19 +11,21 @@ namespace IsometricMagic.Engine.Scenes
 
         private readonly Scene _scene;
         private readonly string _name;
+        private readonly string _spriteGroupKey;
         public string Name => _name;
 
-        public IReadOnlyList<Sprite> Sprites => SpriteHolder.GetSprites($"scene_{_scene.Name}_{_name}");
+        public IReadOnlyList<Sprite> Sprites => SpriteHolder.GetSprites(_spriteGroupKey);
 
         public SceneLayer(Scene scene, string name)
         {
             _scene = scene;
             _name = name;
+            _spriteGroupKey = $"scene_{_scene.Name}_{_name}";
         }
 
         public void Add(Sprite sprite)
         {
-            SpriteHolder.Add(sprite, $"scene_{_scene.Name}_{_name}");
+            SpriteHolder.Add(sprite, _spriteGroupKey);
         }
 
         public void Remove(Sprite sprite)
