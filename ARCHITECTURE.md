@@ -34,6 +34,37 @@ This split is not cosmetic. It is the primary encapsulation mechanism: engine in
 - `resources/` - game assets (textures, configs)
 - Root level: `Program.cs`, project files, `config.ini`
 
+## Resources Layout
+
+The project expects a `./resources/` directory at runtime (relative to the working directory).
+
+- `resources/data/`:
+  Hand-authored, source-controlled game content loaded by the game at runtime.
+  Examples: `resources/data/maps/*.json`, `resources/data/sets/*.json`, `resources/data/textures/**`.
+
+- `resources/data/textures/**`:
+  Source textures used during development. Normal maps live next to their albedo textures as `*_normal.png`
+  (they are not treated as generated assets, and not all textures will have them).
+
+- `resources/_gen/`:
+  Generated artifacts produced by the asset pipeline (e.g. packed texture atlases).
+  This directory must be gitignored. If game data references an asset under `_gen/`, it must exist at runtime
+  (no fallback behavior is allowed).
+
+- `resources/pipeline/`:
+  Source-controlled pipeline configuration files (atlas packing, normal map generation, etc).
+  Pipeline jobs should read inputs from `resources/data/` and write outputs to `resources/_gen/`.
+
+- `resources/engine/`:
+  Engine-owned runtime assets (e.g. fonts) used by engine services.
+
+### Resource Referencing Rules
+
+- Game-authored JSON in `resources/data/**` may reference generated assets by paths starting with `_gen/...`
+  (paths are resolved relative to `./resources`).
+- Atlas outputs live under `resources/_gen/atlases/` (e.g. `_gen/atlases/<name>.json` plus textures).
+- If a tileset declares `atlas`, missing atlas files or missing atlas regions are treated as errors.
+
 ## Coordinate Semantics (Game)
 - `IsoWorldPosition` and `CanvasPosition` are distinct value types in `Game/Model` and must not be mixed implicitly.
 - `CanvasPosition` is the primary game-facing positioning API for rendering, camera, and VFX.
