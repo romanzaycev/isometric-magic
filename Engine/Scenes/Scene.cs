@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using IsometricMagic.Engine.App;
+using IsometricMagic.Engine.Diagnostics;
 using IsometricMagic.Engine.Graphics.Effects;
 using IsometricMagic.Engine.Graphics.Lighting;
 using IsometricMagic.Engine.Rendering;
@@ -19,6 +20,7 @@ namespace IsometricMagic.Engine.Scenes
 
         protected static SceneManager SceneManager => SceneManager.GetInstance();
         protected static Application Application => Application.GetInstance();
+        private static readonly FrameStats FrameStats = FrameStats.GetInstance();
 
         private static readonly Camera FallbackCamera = new(0, 0);
         protected static Camera Camera
@@ -103,6 +105,7 @@ namespace IsometricMagic.Engine.Scenes
             Update();
 
             EnsureActiveEntitiesPreorder();
+            FrameStats.SetActiveEntities(_activeEntitiesPreorder.Count);
             foreach (var entity in _activeEntitiesPreorder)
             {
                 entity.CallSelfUpdate(dt);

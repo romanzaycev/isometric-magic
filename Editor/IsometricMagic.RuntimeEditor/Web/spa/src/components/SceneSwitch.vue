@@ -9,6 +9,7 @@ defineProps<{
 defineEmits<{
   switchScene: []
   openLighting: []
+  openFrameStats: []
 }>()
 </script>
 
@@ -20,6 +21,7 @@ defineEmits<{
     </select>
     <button @click="$emit('switchScene')">Load Scene</button>
     <button @click="$emit('openLighting')">Lighting</button>
+    <button @click="$emit('openFrameStats')">Frame Stats</button>
     <span class="muted">Current: {{ currentScene }}</span>
   </section>
 </template>

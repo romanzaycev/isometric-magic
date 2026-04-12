@@ -1,5 +1,6 @@
 using System;
 using IsometricMagic.Engine.Assets;
+using IsometricMagic.Engine.Diagnostics;
 using IsometricMagic.Engine.Graphics.OpenGL;
 using Silk.NET.OpenGL;
 
@@ -7,6 +8,7 @@ namespace IsometricMagic.Engine.Graphics.Materials
 {
     public sealed class OutlineSpriteMaterial : IGlMaterial
     {
+        private static readonly FrameStats FrameStats = FrameStats.GetInstance();
         private GlShaderProgram? _shader;
         private bool _samplerInitialized;
         public bool Enabled { get; set; } = true;
@@ -36,6 +38,7 @@ namespace IsometricMagic.Engine.Graphics.Materials
 
             context.Gl.ActiveTexture(TextureUnit.Texture0);
             context.Gl.BindTexture(TextureTarget.Texture2D, albedo.TextureId);
+            FrameStats.AddTextureBind(albedo.TextureId);
 
             var outline = sprite.Outline;
             var clampedThickness = MathF.Max(0f, MathF.Min(outline.ThicknessTexels, MaxSteps));

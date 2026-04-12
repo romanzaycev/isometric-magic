@@ -7,6 +7,7 @@ namespace IsometricMagic.Engine.SceneGraph
 {
     public abstract class Component
     {
+        private static readonly FrameStats FrameStats = FrameStats.GetInstance();
         private Entity? _entity;
         public Entity? Entity => _entity;
 
@@ -66,12 +67,14 @@ namespace IsometricMagic.Engine.SceneGraph
         internal void CallUpdate(float dt)
         {
             if (!IsActiveAndEnabled) return;
+            FrameStats.AddComponentUpdated();
             Update(dt);
         }
 
         internal void CallLateUpdate(float dt)
         {
             if (!IsActiveAndEnabled) return;
+            FrameStats.AddComponentLateUpdated();
             LateUpdate(dt);
         }
 

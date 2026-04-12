@@ -53,6 +53,7 @@ namespace IsometricMagic.Engine.App
         private readonly Action<SceneManager>? _sceneConfigurator;
         private readonly Action<List<IApplicationRuntimeService>>? _runtimeServicesConfigurator;
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+        private static readonly FrameStats FrameStats = FrameStats.GetInstance();
 
         public ApplicationHost(
             string configPath,
@@ -101,6 +102,7 @@ namespace IsometricMagic.Engine.App
                     app.StartTick();
 
                     Input.BeginFrame();
+                    var eventLoopStart = SDL_GetPerformanceCounter();
 
                     SDL_Event sdlEvent;
                     while (SDL_PollEvent(out sdlEvent) != 0)
@@ -136,6 +138,14 @@ namespace IsometricMagic.Engine.App
                                 Input.HandleEvent(sdlEvent);
                                 break;
                         }
+                    }
+
+                    var eventLoopEnd = SDL_GetPerformanceCounter();
+                    var eventLoopFrequency = SDL_GetPerformanceFrequency();
+                    if (eventLoopFrequency > 0 && eventLoopEnd >= eventLoopStart)
+                    {
+                        var eventLoopMs = (float) ((double) (eventLoopEnd - eventLoopStart) * 1000.0 / eventLoopFrequency);
+                        FrameStats.SetEventLoopMs(eventLoopMs);
                     }
 
                     app.Update();

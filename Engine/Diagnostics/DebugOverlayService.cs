@@ -85,6 +85,11 @@ namespace IsometricMagic.Engine.Diagnostics
             _lines.Add("DEBUG PANEL");
             _lines.Add($"FPS: {Stats.FpsAvg:0.0}   Frame: {Stats.FrameMs:0.00} ms (avg {Stats.FrameMsAvg:0.00})");
             _lines.Add($"DrawCalls: {Stats.DrawCalls}   Drawn: {Stats.SpritesDrawn}   Culled: {Stats.SpritesCulled}");
+#if DEBUG
+            _lines.Add($"CPU ms  Ev: {Stats.EventLoopMs:0.00}  Upd: {Stats.UpdateCpuMs:0.00}  Ren: {Stats.RenderCpuMs:0.00}  Slp: {Stats.SleepMs:0.00}");
+            _lines.Add($"Visited: {Stats.SpritesVisited}   Skipped: {Stats.SpritesSkipped}   Binds: {Stats.TextureBinds}   Loads: {Stats.TextureLoads}");
+            _lines.Add($"Entities: {Stats.ActiveEntities}   CmpUpd: {Stats.ComponentsUpdated}   CmpLate: {Stats.ComponentsLateUpdated}   GC/frame: {Stats.GcAllocBytes / 1024f:0.0} KB");
+#endif
             _lines.Add($"Viewport: {Stats.ViewportWidth}x{Stats.ViewportHeight}");
             _lines.Add($"Backend: {Stats.Backend}   VSync: {(Stats.VSync ? "On" : "Off")}");
             _lines.Add($"Scene: {Stats.SceneName}");

@@ -1,10 +1,12 @@
 using IsometricMagic.Engine.Graphics.OpenGL;
+using IsometricMagic.Engine.Diagnostics;
 using Silk.NET.OpenGL;
 
 namespace IsometricMagic.Engine.Graphics.Effects
 {
     public sealed class VignetteEffect : IGlPostProcessEffect
     {
+        private static readonly FrameStats FrameStats = FrameStats.GetInstance();
         private GlShaderProgram? _shader;
         public bool Enabled { get; set; } = true;
 
@@ -32,6 +34,7 @@ namespace IsometricMagic.Engine.Graphics.Effects
 
             gl.ActiveTexture(TextureUnit.Texture0);
             gl.BindTexture(TextureTarget.Texture2D, input.TextureId);
+            FrameStats.AddTextureBind(input.TextureId);
             context.FullscreenQuad.Draw();
             gl.BindTexture(TextureTarget.Texture2D, 0);
         }

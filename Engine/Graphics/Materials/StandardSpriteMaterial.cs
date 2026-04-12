@@ -9,6 +9,7 @@ namespace IsometricMagic.Engine.Graphics.Materials
     [RuntimeEditorInspectable(EditableByDefault = false)]
     public sealed class StandardSpriteMaterial : IGlMaterial, ISpriteMaterialCapabilities
     {
+        private static readonly FrameStats FrameStats = FrameStats.GetInstance();
         private static GlShaderProgram? _shader;
         private static long _lightingUniformFrameId = -1;
         private static bool _samplersInitialized;
@@ -61,12 +62,15 @@ namespace IsometricMagic.Engine.Graphics.Materials
 
             context.Gl.ActiveTexture(TextureUnit.Texture0);
             context.Gl.BindTexture(TextureTarget.Texture2D, albedo.TextureId);
+            FrameStats.AddTextureBind(albedo.TextureId);
 
             context.Gl.ActiveTexture(TextureUnit.Texture1);
             context.Gl.BindTexture(TextureTarget.Texture2D, normalMap?.TextureId ?? 0u);
+            FrameStats.AddTextureBind(normalMap?.TextureId ?? 0u);
 
             context.Gl.ActiveTexture(TextureUnit.Texture2);
             context.Gl.BindTexture(TextureTarget.Texture2D, emissionMap?.TextureId ?? 0u);
+            FrameStats.AddTextureBind(emissionMap?.TextureId ?? 0u);
 
             var useLighting = ShadingModel == SpriteShadingModel.Lit && !context.ForceUnlitShading;
             _shader.SetInt("u_useLighting", useLighting ? 1 : 0);

@@ -23,6 +23,42 @@ export type EntityNode = {
   children: EntityNode[]
 }
 
+export type FrameStatsPayload = {
+  timing: {
+    frameMs: number
+    frameMsAvg: number
+    fpsAvg: number
+    eventLoopMs: number
+    updateCpuMs: number
+    renderCpuMs: number
+    sleepMs: number
+  }
+  update: {
+    activeEntities: number
+    componentsUpdated: number
+    componentsLateUpdated: number
+  }
+  render: {
+    spritesVisited: number
+    spritesSkipped: number
+    spritesDrawn: number
+    spritesCulled: number
+    drawCalls: number
+    textureBinds: number
+    textureLoads: number
+  }
+  memory: {
+    gcAllocBytes: number
+  }
+  meta: {
+    sceneName: string
+    viewportWidth: number
+    viewportHeight: number
+    backend: string
+    vsync: boolean
+  }
+}
+
 export function useRuntimeEditorState() {
   const status = ref('Ready')
   const currentScene = ref('')
@@ -47,12 +83,17 @@ export function useRuntimeEditorState() {
   const spriteModalOpen = ref(false)
 
   const lightingModalOpen = ref(false)
+  const frameStatsModalOpen = ref(false)
+  const frameStats = ref<FrameStatsPayload | null>(null)
 
   const inspectorFieldFilter = ref('')
 
   const autoRefreshEnabled = ref(false)
   const autoRefreshSeconds = ref(1.5)
   let autoRefreshTimer: number | null = null
+  let frameStatsTimer: number | null = null
+
+  const frameStatsRefreshHz = 4
 
   async function api<T>(path: string, init?: RequestInit): Promise<T> {
     const response = await fetch(path, init)
@@ -272,6 +313,19 @@ export function useRuntimeEditorState() {
     lightingModalOpen.value = false
   }
 
+  async function loadFrameStats(): Promise<void> {
+    frameStats.value = await api<FrameStatsPayload>('/api/frame-stats')
+  }
+
+  async function openFrameStatsModal(): Promise<void> {
+    await loadFrameStats()
+    frameStatsModalOpen.value = true
+  }
+
+  function closeFrameStatsModal(): void {
+    frameStatsModalOpen.value = false
+  }
+
   async function setValue(payload: unknown): Promise<void> {
     const result = await api<{ ok: boolean; error?: string }>('/api/set', {
       method: 'POST',
@@ -372,7 +426,30 @@ export function useRuntimeEditorState() {
     }
   }
 
+  function startFrameStatsRefresh(): void {
+    stopFrameStatsRefresh()
+    const intervalMs = Math.max(100, Math.floor(1000 / frameStatsRefreshHz))
+    frameStatsTimer = window.setInterval(() => {
+      void loadFrameStats()
+    }, intervalMs)
+  }
+
+  function stopFrameStatsRefresh(): void {
+    if (frameStatsTimer !== null) {
+      window.clearInterval(frameStatsTimer)
+      frameStatsTimer = null
+    }
+  }
+
   watch([autoRefreshEnabled, autoRefreshSeconds], () => startAutoRefresh())
+  watch(frameStatsModalOpen, (open) => {
+    if (open) {
+      startFrameStatsRefresh()
+      return
+    }
+
+    stopFrameStatsRefresh()
+  })
 
   onMounted(async () => {
     try {
@@ -383,7 +460,10 @@ export function useRuntimeEditorState() {
     }
   })
 
-  onBeforeUnmount(() => stopAutoRefresh())
+  onBeforeUnmount(() => {
+    stopAutoRefresh()
+    stopFrameStatsRefresh()
+  })
 
   return {
     status,
@@ -397,6 +477,8 @@ export function useRuntimeEditorState() {
     autoRefreshSeconds,
     spriteLayers,
     lightingModalOpen,
+    frameStatsModalOpen,
+    frameStats,
     spriteModalOpen,
     inspectorFieldFilter,
     lights,
@@ -418,6 +500,9 @@ export function useRuntimeEditorState() {
     switchScene,
     openLightingModal,
     closeLightingModal,
+    openFrameStatsModal,
+    closeFrameStatsModal,
+    loadFrameStats,
     loadLighting,
     addLight,
     removeLight,

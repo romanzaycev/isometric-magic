@@ -374,6 +374,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
                     var textureId = CreateTextureFromData(width, height, data);
                     nativeTexture = new GlNativeTexture(textureId, 0, false, width, height);
+                    FrameStats.AddTextureLoad();
                 }
             }
         }
@@ -488,6 +489,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             _presentShader.SetInt("u_texture", 0);
             _gl.ActiveTexture(TextureUnit.Texture0);
             _gl.BindTexture(TextureTarget.Texture2D, textureId);
+            FrameStats.AddTextureBind(textureId);
             _fullscreenQuad.Draw();
             _gl.BindTexture(TextureTarget.Texture2D, 0);
         }
@@ -614,8 +616,10 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
             _gl.ActiveTexture(TextureUnit.Texture0);
             _gl.BindTexture(TextureTarget.Texture2D, _backgroundRectTextureId);
+            FrameStats.AddTextureBind(_backgroundRectTextureId);
             _gl.ActiveTexture(TextureUnit.Texture1);
             _gl.BindTexture(TextureTarget.Texture2D, foreground.TextureId);
+            FrameStats.AddTextureBind(foreground.TextureId);
 
             DrawRawSpriteVertices(_singleSpriteVertices, SpriteVertexCount);
             FrameStats.AddDrawCall();
@@ -709,8 +713,10 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
             foreach (var sprite in layer.Sprites)
             {
+                FrameStats.AddSpriteVisited();
                 if (sprite.Texture == null || !sprite.Visible)
                 {
+                    FrameStats.AddSpriteSkipped();
                     continue;
                 }
 
@@ -718,6 +724,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 var albedo = TextureHolder.GetInstance().GetNativeTexture(tex) as GlNativeTexture;
                 if (albedo == null)
                 {
+                    FrameStats.AddSpriteSkipped();
                     continue;
                 }
 
@@ -835,6 +842,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
                 var material = ResolveMaterial(sprite);
                 if (material == null)
                 {
+                    FrameStats.AddSpriteSkipped();
                     continue;
                 }
 
@@ -1020,10 +1028,13 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
             _gl.ActiveTexture(TextureUnit.Texture0);
             _gl.BindTexture(TextureTarget.Texture2D, _backgroundRectTextureId);
+            FrameStats.AddTextureBind(_backgroundRectTextureId);
             _gl.ActiveTexture(TextureUnit.Texture1);
             _gl.BindTexture(TextureTarget.Texture2D, albedo.TextureId);
+            FrameStats.AddTextureBind(albedo.TextureId);
             _gl.ActiveTexture(TextureUnit.Texture2);
             _gl.BindTexture(TextureTarget.Texture2D, emissionMap?.TextureId ?? 0u);
+            FrameStats.AddTextureBind(emissionMap?.TextureId ?? 0u);
 
             DrawRawSpriteVertices(vertices, vertexCount);
             FrameStats.AddDrawCall();
@@ -1654,6 +1665,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
         {
             var textureId = _gl.GenTexture();
             _gl.BindTexture(TextureTarget.Texture2D, textureId);
+            FrameStats.AddTextureBind(textureId);
             _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int) GLEnum.Linear);
             _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int) GLEnum.Linear);
             _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int) GLEnum.ClampToEdge);
@@ -1677,6 +1689,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
         {
             var textureId = _gl.GenTexture();
             _gl.BindTexture(TextureTarget.Texture2D, textureId);
+            FrameStats.AddTextureBind(textureId);
             _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int) GLEnum.Linear);
             _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int) GLEnum.Linear);
             _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int) GLEnum.ClampToEdge);

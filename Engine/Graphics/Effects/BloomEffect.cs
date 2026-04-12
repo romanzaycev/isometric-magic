@@ -1,4 +1,5 @@
 using System;
+using IsometricMagic.Engine.Diagnostics;
 using IsometricMagic.Engine.Graphics.OpenGL;
 using Silk.NET.OpenGL;
 
@@ -6,6 +7,7 @@ namespace IsometricMagic.Engine.Graphics.Effects
 {
     public sealed class BloomEffect : IGlPostProcessEffect
     {
+        private static readonly FrameStats FrameStats = FrameStats.GetInstance();
         private GlShaderProgram? _prefilterShader;
         private GlShaderProgram? _blurShader;
         private GlShaderProgram? _compositeShader;
@@ -44,6 +46,7 @@ namespace IsometricMagic.Engine.Graphics.Effects
             _prefilterShader.SetFloat("u_knee", Knee);
             gl.ActiveTexture(TextureUnit.Texture0);
             gl.BindTexture(TextureTarget.Texture2D, input.TextureId);
+            FrameStats.AddTextureBind(input.TextureId);
             context.FullscreenQuad.Draw();
 
             var iterations = BlurIterations < 1 ? 1 : BlurIterations;
@@ -57,6 +60,7 @@ namespace IsometricMagic.Engine.Graphics.Effects
                 _blurShader.SetVector2("u_direction", 1f, 0f);
                 gl.ActiveTexture(TextureUnit.Texture0);
                 gl.BindTexture(TextureTarget.Texture2D, _pingTarget.TextureId);
+                FrameStats.AddTextureBind(_pingTarget.TextureId);
                 context.FullscreenQuad.Draw();
 
                 gl.BindFramebuffer(FramebufferTarget.Framebuffer, _pingTarget.FramebufferId);
@@ -65,6 +69,7 @@ namespace IsometricMagic.Engine.Graphics.Effects
                 _blurShader.SetVector2("u_direction", 0f, 1f);
                 gl.ActiveTexture(TextureUnit.Texture0);
                 gl.BindTexture(TextureTarget.Texture2D, _pongTarget.TextureId);
+                FrameStats.AddTextureBind(_pongTarget.TextureId);
                 context.FullscreenQuad.Draw();
             }
 
@@ -76,8 +81,10 @@ namespace IsometricMagic.Engine.Graphics.Effects
             _compositeShader.SetFloat("u_intensity", Intensity);
             gl.ActiveTexture(TextureUnit.Texture0);
             gl.BindTexture(TextureTarget.Texture2D, input.TextureId);
+            FrameStats.AddTextureBind(input.TextureId);
             gl.ActiveTexture(TextureUnit.Texture1);
             gl.BindTexture(TextureTarget.Texture2D, _pingTarget.TextureId);
+            FrameStats.AddTextureBind(_pingTarget.TextureId);
             context.FullscreenQuad.Draw();
 
             gl.ActiveTexture(TextureUnit.Texture1);
@@ -143,6 +150,7 @@ namespace IsometricMagic.Engine.Graphics.Effects
         {
             var textureId = gl.GenTexture();
             gl.BindTexture(TextureTarget.Texture2D, textureId);
+            FrameStats.AddTextureBind(textureId);
             gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int) GLEnum.Linear);
             gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int) GLEnum.Linear);
             gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int) GLEnum.ClampToEdge);

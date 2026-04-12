@@ -277,6 +277,52 @@ namespace IsometricMagic.RuntimeEditor
             return JsonConvert.SerializeObject(payload);
         }
 
+        internal string BuildFrameStatsJson()
+        {
+            var stats = FrameStats.GetInstance();
+            return JsonConvert.SerializeObject(new
+            {
+                timing = new
+                {
+                    frameMs = stats.FrameMs,
+                    frameMsAvg = stats.FrameMsAvg,
+                    fpsAvg = stats.FpsAvg,
+                    eventLoopMs = stats.LastEventLoopMs,
+                    updateCpuMs = stats.LastUpdateCpuMs,
+                    renderCpuMs = stats.LastRenderCpuMs,
+                    sleepMs = stats.LastSleepMs
+                },
+                update = new
+                {
+                    activeEntities = stats.LastActiveEntities,
+                    componentsUpdated = stats.LastComponentsUpdated,
+                    componentsLateUpdated = stats.LastComponentsLateUpdated
+                },
+                render = new
+                {
+                    spritesVisited = stats.LastSpritesVisited,
+                    spritesSkipped = stats.LastSpritesSkipped,
+                    spritesDrawn = stats.LastSpritesDrawn,
+                    spritesCulled = stats.LastSpritesCulled,
+                    drawCalls = stats.LastDrawCalls,
+                    textureBinds = stats.LastTextureBinds,
+                    textureLoads = stats.LastTextureLoads
+                },
+                memory = new
+                {
+                    gcAllocBytes = stats.LastGcAllocBytes
+                },
+                meta = new
+                {
+                    sceneName = stats.SceneName,
+                    viewportWidth = stats.ViewportWidth,
+                    viewportHeight = stats.ViewportHeight,
+                    backend = stats.Backend.ToString(),
+                    vsync = stats.VSync
+                }
+            });
+        }
+
         internal string BuildSpritesJson()
         {
             EnsureSceneState();

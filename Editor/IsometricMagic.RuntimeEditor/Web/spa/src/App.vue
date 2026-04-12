@@ -4,6 +4,7 @@ import EntityTreePanel from './components/EntityTreePanel.vue'
 import SceneSwitch from './components/SceneSwitch.vue'
 import SpriteLayersPanel from './components/SpriteLayersPanel.vue'
 import TopBar from './components/TopBar.vue'
+import FrameStatsModal from './components/modals/FrameStatsModal.vue'
 import LightingModal from './components/modals/LightingModal.vue'
 import SpriteInspectorModal from './components/modals/SpriteInspectorModal.vue'
 import { useRuntimeEditorState } from './composables/useRuntimeEditorState'
@@ -23,6 +24,8 @@ const {
   autoRefreshSeconds,
   spriteLayers,
   lightingModalOpen,
+  frameStatsModalOpen,
+  frameStats,
   spriteModalOpen,
   inspectorFieldFilter,
   lights,
@@ -41,6 +44,9 @@ const {
   switchScene,
   openLightingModal,
   closeLightingModal,
+  openFrameStatsModal,
+  closeFrameStatsModal,
+  loadFrameStats,
   loadLighting,
   addLight,
   removeLight,
@@ -94,6 +100,7 @@ function editSprite(member: MemberRow, value: unknown): void {
       :current-scene="currentScene"
       @switch-scene="switchScene"
       @open-lighting="openLightingModal"
+      @open-frame-stats="openFrameStatsModal"
     />
 
     <main class="layout">
@@ -140,6 +147,13 @@ function editSprite(member: MemberRow, value: unknown): void {
       @remove-light="removeLight"
       @edit-ambient="editAmbient"
       @edit-light="editLight"
+    />
+
+    <FrameStatsModal
+      :open="frameStatsModalOpen"
+      :stats="frameStats"
+      @close="closeFrameStatsModal"
+      @refresh="loadFrameStats"
     />
 
     <SpriteInspectorModal
@@ -357,8 +371,17 @@ button:hover {
 
 .actions {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 8px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 6px 10px;
+  margin-bottom: 10px;
 }
 
 .tiny {

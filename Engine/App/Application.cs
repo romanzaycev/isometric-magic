@@ -105,6 +105,9 @@ namespace IsometricMagic.Engine.App
 
         public void Update()
         {
+            var perfFreq = SDL_GetPerformanceFrequency();
+            var updateStart = SDL_GetPerformanceCounter();
+
             var nowCounter = SDL_GetPerformanceCounter();
             var freq = SDL_GetPerformanceFrequency();
             if (freq > 0 && nowCounter >= _dtLastCounter)
@@ -130,7 +133,13 @@ namespace IsometricMagic.Engine.App
                 service.Update();
             }
 
+            var updateEnd = SDL_GetPerformanceCounter();
+            FrameStats.SetUpdateCpuMs(CalculateElapsedMs(updateStart, updateEnd, perfFreq));
+
+            var renderStart = SDL_GetPerformanceCounter();
             _renderer.DrawAll();
+            var renderEnd = SDL_GetPerformanceCounter();
+            FrameStats.SetRenderCpuMs(CalculateElapsedMs(renderStart, renderEnd, perfFreq));
             RepaintWindow();
         }
 
@@ -163,6 +172,7 @@ namespace IsometricMagic.Engine.App
             var end = SDL_GetPerformanceCounter();
             var freq = SDL_GetPerformanceFrequency();
 
+            var sleepStart = SDL_GetPerformanceCounter();
             if (_desiredDelta > 0 && freq > 0)
             {
                 var delta = end - _startTick;
@@ -183,6 +193,9 @@ namespace IsometricMagic.Engine.App
                     SDL_Delay(1);
                 }
             }
+
+            var sleepEnd = SDL_GetPerformanceCounter();
+            FrameStats.SetSleepMs(CalculateElapsedMs(sleepStart, sleepEnd, freq));
 
             FrameStats.EndFrame(Time.DeltaTime);
         }
@@ -271,6 +284,16 @@ namespace IsometricMagic.Engine.App
         internal IGraphics GetGraphics()
         {
             return _graphics;
+        }
+
+        private static float CalculateElapsedMs(ulong startCounter, ulong endCounter, ulong frequency)
+        {
+            if (frequency == 0 || endCounter < startCounter)
+            {
+                return 0f;
+            }
+
+            return (float) ((double) (endCounter - startCounter) * 1000.0 / frequency);
         }
     }
 }

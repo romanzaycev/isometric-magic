@@ -150,6 +150,13 @@ namespace IsometricMagic.RuntimeEditor
                     return;
                 }
 
+                if (method == "GET" && path == "/api/frame-stats")
+                {
+                    var json = await _service.RunOnMainThread(_service.BuildFrameStatsJson);
+                    await WriteText(context.Response, 200, "application/json; charset=utf-8", json);
+                    return;
+                }
+
                 if (method == "POST" && path == "/api/light/add")
                 {
                     var json = await _service.RunOnMainThread(_service.AddLightJson);
