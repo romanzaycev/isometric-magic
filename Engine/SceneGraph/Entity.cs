@@ -11,11 +11,41 @@ namespace IsometricMagic.Engine.SceneGraph
     [RuntimeEditorInspectable(EditableByDefault = false)]
     public class Entity
     {
+        private string _name;
         [RuntimeEditorEditable]
-        public string Name;
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                var next = value ?? string.Empty;
+                if (_name == next)
+                {
+                    return;
+                }
 
+                _name = next;
+                Scene?.MarkSearchIndicesDirty();
+            }
+        }
+
+        private string _tag = string.Empty;
         [RuntimeEditorEditable]
-        public string Tag = string.Empty;
+        public string Tag
+        {
+            get => _tag;
+            set
+            {
+                var next = value ?? string.Empty;
+                if (_tag == next)
+                {
+                    return;
+                }
+
+                _tag = next;
+                Scene?.MarkSearchIndicesDirty();
+            }
+        }
 
         public Transform2D Transform { get; } = new();
 
@@ -67,7 +97,7 @@ namespace IsometricMagic.Engine.SceneGraph
 
         public Entity(string name)
         {
-            Name = name;
+            _name = name ?? string.Empty;
         }
 
         public T AddComponent<T>() where T : Component, new()
@@ -95,6 +125,7 @@ namespace IsometricMagic.Engine.SceneGraph
                     component.CallOnEnable();
                 }
 
+                Scene.MarkSearchIndicesDirty();
                 RebuildActiveComponentLists();
             }
         }
@@ -204,6 +235,8 @@ namespace IsometricMagic.Engine.SceneGraph
 
             previousScene?.MarkActiveEntitiesDirty();
             Scene?.MarkActiveEntitiesDirty();
+            previousScene?.MarkSearchIndicesDirty();
+            Scene?.MarkSearchIndicesDirty();
         }
 
         private void SetSceneRecursive(Scene? scene)
@@ -408,6 +441,7 @@ namespace IsometricMagic.Engine.SceneGraph
             _activeInHierarchy = false;
 
             previousScene?.MarkActiveEntitiesDirty();
+            previousScene?.MarkSearchIndicesDirty();
         }
 
         public void Destroy()

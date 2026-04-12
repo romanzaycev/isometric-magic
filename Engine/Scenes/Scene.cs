@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -60,6 +61,12 @@ namespace IsometricMagic.Engine.Scenes
         private readonly List<CameraInfluenceComponent> _activeCameraInfluenceComponents = new();
         private readonly List<Entity> _activeEntitiesPreorder = new();
         private bool _activeEntitiesDirty = true;
+
+        private readonly List<Component> _searchComponentsPreorder = new();
+        private readonly Dictionary<string, List<Entity>> _entitiesByName = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, List<Entity>> _entitiesByTag = new(StringComparer.Ordinal);
+        private readonly Dictionary<Type, IReadOnlyList<Component>> _componentsByTypeCache = new();
+        private bool _searchIndicesDirty = true;
 
         public Scene(string name)
         {
@@ -151,45 +158,95 @@ namespace IsometricMagic.Engine.Scenes
 
         public Entity? FindEntityByName(string name)
         {
-            return FindEntityByNameRecursive(Root, name);
+            EnsureSearchIndices();
+            if (!_entitiesByName.TryGetValue(name, out var matches) || matches.Count == 0)
+            {
+                return null;
+            }
+
+            return matches[0];
         }
 
-        private static Entity? FindEntityByNameRecursive(Entity parent, string name)
+        public Entity? FindActiveEntityByName(string name)
         {
-            foreach (var child in parent.Children)
+            EnsureSearchIndices();
+            if (!_entitiesByName.TryGetValue(name, out var matches) || matches.Count == 0)
             {
-                if (child.Name == name) return child;
-                var found = FindEntityByNameRecursive(child, name);
-                if (found != null) return found;
+                return null;
             }
+
+            foreach (var entity in matches)
+            {
+                if (entity.ActiveInHierarchy)
+                {
+                    return entity;
+                }
+            }
+
             return null;
         }
 
         public IEnumerable<Entity> FindEntitiesByTag(string tag)
         {
-            return FindEntitiesByTagRecursive(Root, tag);
+            EnsureSearchIndices();
+            return _entitiesByTag.TryGetValue(tag, out var matches)
+                ? matches
+                : Enumerable.Empty<Entity>();
         }
 
-        private static IEnumerable<Entity> FindEntitiesByTagRecursive(Entity parent, string tag)
+        public IEnumerable<Entity> FindActiveEntitiesByTag(string tag)
         {
-            foreach (var child in parent.Children)
-            {
-                if (child.Tag == tag) yield return child;
-                foreach (var deeper in FindEntitiesByTagRecursive(child, tag))
-                {
-                    yield return deeper;
-                }
-            }
+            EnsureSearchIndices();
+            return _entitiesByTag.TryGetValue(tag, out var matches)
+                ? matches.Where(static entity => entity.ActiveInHierarchy)
+                : Enumerable.Empty<Entity>();
         }
 
         public T? FindComponent<T>() where T : Component
         {
-            return FindComponentRecursive<T>(Root).FirstOrDefault();
+            EnsureSearchIndices();
+            foreach (var component in GetComponentsByTypeCached(typeof(T)))
+            {
+                if (component is T typed)
+                {
+                    return typed;
+                }
+            }
+
+            return null;
+        }
+
+        public T? FindActiveComponent<T>() where T : Component
+        {
+            EnsureSearchIndices();
+            foreach (var component in GetComponentsByTypeCached(typeof(T)))
+            {
+                if (component is T typed && typed.IsActiveAndEnabled)
+                {
+                    return typed;
+                }
+            }
+
+            return null;
         }
 
         public IEnumerable<T> FindComponents<T>() where T : Component
         {
-            return FindComponentRecursive<T>(Root);
+            EnsureSearchIndices();
+            return GetComponentsByTypeCached(typeof(T)).OfType<T>();
+        }
+
+        public IEnumerable<T> FindActiveComponents<T>() where T : Component
+        {
+            EnsureSearchIndices();
+            return GetComponentsByTypeCached(typeof(T))
+                .OfType<T>()
+                .Where(static component => component.IsActiveAndEnabled);
+        }
+
+        public void WarmupSearchIndices()
+        {
+            EnsureSearchIndices();
         }
 
         internal void CollectCameraInfluences(List<CameraInfluence> buffer)
@@ -223,20 +280,73 @@ namespace IsometricMagic.Engine.Scenes
             _activeCameraInfluenceComponents.Remove(component);
         }
 
-        private static IEnumerable<T> FindComponentRecursive<T>(Entity parent) where T : Component
+        private IReadOnlyList<Component> GetComponentsByTypeCached(Type componentType)
+        {
+            if (_componentsByTypeCache.TryGetValue(componentType, out var cached))
+            {
+                return cached;
+            }
+
+            var matches = new List<Component>();
+            foreach (var component in _searchComponentsPreorder)
+            {
+                if (componentType.IsInstanceOfType(component))
+                {
+                    matches.Add(component);
+                }
+            }
+
+            cached = matches;
+            _componentsByTypeCache[componentType] = cached;
+            return cached;
+        }
+
+        private void EnsureSearchIndices()
+        {
+            if (!_searchIndicesDirty)
+            {
+                return;
+            }
+
+            _searchIndicesDirty = false;
+            _searchComponentsPreorder.Clear();
+            _entitiesByName.Clear();
+            _entitiesByTag.Clear();
+            _componentsByTypeCache.Clear();
+
+            CollectSearchIndices(Root);
+        }
+
+        private void CollectSearchIndices(Entity parent)
         {
             foreach (var child in parent.Children)
             {
-                foreach (var c in child.Components)
+                AddEntityToStringIndex(_entitiesByName, child.Name, child);
+                AddEntityToStringIndex(_entitiesByTag, child.Tag, child);
+
+                foreach (var component in child.Components)
                 {
-                    if (c is T result) yield return result;
+                    _searchComponentsPreorder.Add(component);
                 }
 
-                foreach (var deeper in FindComponentRecursive<T>(child))
-                {
-                    yield return deeper;
-                }
+                CollectSearchIndices(child);
             }
+        }
+
+        private static void AddEntityToStringIndex(Dictionary<string, List<Entity>> index, string key, Entity entity)
+        {
+            if (!index.TryGetValue(key, out var list))
+            {
+                list = new List<Entity>();
+                index[key] = list;
+            }
+
+            list.Add(entity);
+        }
+
+        internal void MarkSearchIndicesDirty()
+        {
+            _searchIndicesDirty = true;
         }
 
         internal void AddToDestroyQueue(Entity entity)
@@ -250,11 +360,28 @@ namespace IsometricMagic.Engine.Scenes
         public void Load()
         {
             Initialize();
+            EnsureSearchIndices();
         }
 
         public IEnumerator LoadAsync()
         {
-            return InitializeAsync();
+            return LoadAsyncAndWarmup();
+        }
+
+        private IEnumerator LoadAsyncAndWarmup()
+        {
+            var enumerator = InitializeAsync();
+            while (enumerator.MoveNext())
+            {
+                yield return enumerator.Current;
+            }
+
+            if (enumerator is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+
+            EnsureSearchIndices();
         }
 
         public void Unload()
