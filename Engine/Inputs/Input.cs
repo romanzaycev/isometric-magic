@@ -6,18 +6,18 @@ namespace IsometricMagic.Engine.Inputs
 {
     public static class Input
     {
-        private static readonly Dictionary<Key, bool> KeyState = new();
-        private static readonly HashSet<Key> KeysPressedThisFrame = new();
-        private static readonly HashSet<Key> KeysReleasedThisFrame = new();
+        private static readonly bool[] KeyState = new bool[Enum.GetValues<Key>().Length];
+        private static readonly bool[] KeysPressedThisFrame = new bool[Enum.GetValues<Key>().Length];
+        private static readonly bool[] KeysReleasedThisFrame = new bool[Enum.GetValues<Key>().Length];
 
-        private static readonly Dictionary<MouseButton, bool> MouseButtonState = new();
-        private static readonly HashSet<MouseButton> MouseButtonsPressedThisFrame = new();
-        private static readonly HashSet<MouseButton> MouseButtonsReleasedThisFrame = new();
+        private static readonly bool[] MouseButtonState = new bool[Enum.GetValues<MouseButton>().Length];
+        private static readonly bool[] MouseButtonsPressedThisFrame = new bool[Enum.GetValues<MouseButton>().Length];
+        private static readonly bool[] MouseButtonsReleasedThisFrame = new bool[Enum.GetValues<MouseButton>().Length];
 
-        private static readonly Dictionary<GamepadButton, bool> GamepadButtonState = new();
-        private static readonly HashSet<GamepadButton> GamepadButtonsPressedThisFrame = new();
-        private static readonly HashSet<GamepadButton> GamepadButtonsReleasedThisFrame = new();
-        private static readonly Dictionary<GamepadAxis, float> GamepadAxisState = new();
+        private static readonly bool[] GamepadButtonState = new bool[Enum.GetValues<GamepadButton>().Length];
+        private static readonly bool[] GamepadButtonsPressedThisFrame = new bool[Enum.GetValues<GamepadButton>().Length];
+        private static readonly bool[] GamepadButtonsReleasedThisFrame = new bool[Enum.GetValues<GamepadButton>().Length];
+        private static readonly float[] GamepadAxisState = new float[Enum.GetValues<GamepadAxis>().Length];
 
         private static IntPtr _gameController = IntPtr.Zero;
         private static int _gamepadInstanceId = -1;
@@ -34,12 +34,12 @@ namespace IsometricMagic.Engine.Inputs
 
         internal static void BeginFrame()
         {
-            KeysPressedThisFrame.Clear();
-            KeysReleasedThisFrame.Clear();
-            MouseButtonsPressedThisFrame.Clear();
-            MouseButtonsReleasedThisFrame.Clear();
-            GamepadButtonsPressedThisFrame.Clear();
-            GamepadButtonsReleasedThisFrame.Clear();
+            Array.Clear(KeysPressedThisFrame);
+            Array.Clear(KeysReleasedThisFrame);
+            Array.Clear(MouseButtonsPressedThisFrame);
+            Array.Clear(MouseButtonsReleasedThisFrame);
+            Array.Clear(GamepadButtonsPressedThisFrame);
+            Array.Clear(GamepadButtonsReleasedThisFrame);
 
             EnsureGamepadInitialized();
         }
@@ -88,11 +88,17 @@ namespace IsometricMagic.Engine.Inputs
         {
             if (SdlKeycodeMapper.TryMap(keyCode, out var key))
             {
-                if (!KeyState.TryGetValue(key, out var isDown) || !isDown)
+                if (!TryGetIndex(key, out var keyIndex))
                 {
-                    KeysPressedThisFrame.Add(key);
+                    return;
                 }
-                KeyState[key] = true;
+
+                if (!KeyState[keyIndex])
+                {
+                    KeysPressedThisFrame[keyIndex] = true;
+                }
+
+                KeyState[keyIndex] = true;
             }
         }
 
@@ -100,11 +106,17 @@ namespace IsometricMagic.Engine.Inputs
         {
             if (SdlKeycodeMapper.TryMap(keyCode, out var key))
             {
-                if (KeyState.TryGetValue(key, out var isDown) && isDown)
+                if (!TryGetIndex(key, out var keyIndex))
                 {
-                    KeysReleasedThisFrame.Add(key);
+                    return;
                 }
-                KeyState[key] = false;
+
+                if (KeyState[keyIndex])
+                {
+                    KeysReleasedThisFrame[keyIndex] = true;
+                }
+
+                KeyState[keyIndex] = false;
             }
         }
 
@@ -112,11 +124,17 @@ namespace IsometricMagic.Engine.Inputs
         {
             if (TryMapMouseButton(mouseButton, out var button))
             {
-                if (!MouseButtonState.TryGetValue(button, out var isDown) || !isDown)
+                if (!TryGetIndex(button, out var buttonIndex))
                 {
-                    MouseButtonsPressedThisFrame.Add(button);
+                    return;
                 }
-                MouseButtonState[button] = true;
+
+                if (!MouseButtonState[buttonIndex])
+                {
+                    MouseButtonsPressedThisFrame[buttonIndex] = true;
+                }
+
+                MouseButtonState[buttonIndex] = true;
             }
         }
 
@@ -124,11 +142,17 @@ namespace IsometricMagic.Engine.Inputs
         {
             if (TryMapMouseButton(mouseButton, out var button))
             {
-                if (MouseButtonState.TryGetValue(button, out var isDown) && isDown)
+                if (!TryGetIndex(button, out var buttonIndex))
                 {
-                    MouseButtonsReleasedThisFrame.Add(button);
+                    return;
                 }
-                MouseButtonState[button] = false;
+
+                if (MouseButtonState[buttonIndex])
+                {
+                    MouseButtonsReleasedThisFrame[buttonIndex] = true;
+                }
+
+                MouseButtonState[buttonIndex] = false;
             }
         }
 
@@ -140,64 +164,64 @@ namespace IsometricMagic.Engine.Inputs
 
         public static bool IsDown(Key key)
         {
-            return KeyState.TryGetValue(key, out var isDown) && isDown;
+            return TryGetIndex(key, out var keyIndex) && KeyState[keyIndex];
         }
 
         public static bool IsUp(Key key)
         {
-            return !KeyState.TryGetValue(key, out var isDown) || !isDown;
+            return !TryGetIndex(key, out var keyIndex) || !KeyState[keyIndex];
         }
 
         public static bool WasPressed(Key key)
         {
-            return KeysPressedThisFrame.Contains(key);
+            return TryGetIndex(key, out var keyIndex) && KeysPressedThisFrame[keyIndex];
         }
 
         public static bool WasReleased(Key key)
         {
-            return KeysReleasedThisFrame.Contains(key);
+            return TryGetIndex(key, out var keyIndex) && KeysReleasedThisFrame[keyIndex];
         }
 
         public static bool IsDown(MouseButton button)
         {
-            return MouseButtonState.TryGetValue(button, out var isDown) && isDown;
+            return TryGetIndex(button, out var buttonIndex) && MouseButtonState[buttonIndex];
         }
 
         public static bool IsUp(MouseButton button)
         {
-            return !MouseButtonState.TryGetValue(button, out var isDown) || !isDown;
+            return !TryGetIndex(button, out var buttonIndex) || !MouseButtonState[buttonIndex];
         }
 
         public static bool WasPressed(MouseButton button)
         {
-            return MouseButtonsPressedThisFrame.Contains(button);
+            return TryGetIndex(button, out var buttonIndex) && MouseButtonsPressedThisFrame[buttonIndex];
         }
 
         public static bool WasReleased(MouseButton button)
         {
-            return MouseButtonsReleasedThisFrame.Contains(button);
+            return TryGetIndex(button, out var buttonIndex) && MouseButtonsReleasedThisFrame[buttonIndex];
         }
 
         public static bool IsGamepadConnected => _gameController != IntPtr.Zero;
 
         public static bool IsDown(GamepadButton button)
         {
-            return GamepadButtonState.TryGetValue(button, out var isDown) && isDown;
+            return TryGetIndex(button, out var buttonIndex) && GamepadButtonState[buttonIndex];
         }
 
         public static bool IsUp(GamepadButton button)
         {
-            return !GamepadButtonState.TryGetValue(button, out var isDown) || !isDown;
+            return !TryGetIndex(button, out var buttonIndex) || !GamepadButtonState[buttonIndex];
         }
 
         public static bool WasPressed(GamepadButton button)
         {
-            return GamepadButtonsPressedThisFrame.Contains(button);
+            return TryGetIndex(button, out var buttonIndex) && GamepadButtonsPressedThisFrame[buttonIndex];
         }
 
         public static bool WasReleased(GamepadButton button)
         {
-            return GamepadButtonsReleasedThisFrame.Contains(button);
+            return TryGetIndex(button, out var buttonIndex) && GamepadButtonsReleasedThisFrame[buttonIndex];
         }
 
         public static float GetAxis(GamepadAxis axis)
@@ -207,10 +231,12 @@ namespace IsometricMagic.Engine.Inputs
                 return 0f;
             }
 
-            if (!GamepadAxisState.TryGetValue(axis, out var value))
+            if (!TryGetIndex(axis, out var axisIndex))
             {
                 return 0f;
             }
+
+            var value = GamepadAxisState[axisIndex];
 
             if (axis == GamepadAxis.LeftTrigger || axis == GamepadAxis.RightTrigger)
             {
@@ -333,10 +359,10 @@ namespace IsometricMagic.Engine.Inputs
             SDL_GameControllerClose(_gameController);
             _gameController = IntPtr.Zero;
             _gamepadInstanceId = -1;
-            GamepadButtonState.Clear();
-            GamepadButtonsPressedThisFrame.Clear();
-            GamepadButtonsReleasedThisFrame.Clear();
-            GamepadAxisState.Clear();
+            Array.Clear(GamepadButtonState);
+            Array.Clear(GamepadButtonsPressedThisFrame);
+            Array.Clear(GamepadButtonsReleasedThisFrame);
+            Array.Clear(GamepadAxisState);
         }
 
         private static void HandleGamepadDeviceRemapped(int instanceId)
@@ -367,12 +393,17 @@ namespace IsometricMagic.Engine.Inputs
                 return;
             }
 
-            if (!GamepadButtonState.TryGetValue(button, out var isDown) || !isDown)
+            if (!TryGetIndex(button, out var buttonIndex))
             {
-                GamepadButtonsPressedThisFrame.Add(button);
+                return;
             }
 
-            GamepadButtonState[button] = true;
+            if (!GamepadButtonState[buttonIndex])
+            {
+                GamepadButtonsPressedThisFrame[buttonIndex] = true;
+            }
+
+            GamepadButtonState[buttonIndex] = true;
         }
 
         private static void HandleGamepadButtonUp(int instanceId, byte sdlButton)
@@ -387,12 +418,17 @@ namespace IsometricMagic.Engine.Inputs
                 return;
             }
 
-            if (GamepadButtonState.TryGetValue(button, out var isDown) && isDown)
+            if (!TryGetIndex(button, out var buttonIndex))
             {
-                GamepadButtonsReleasedThisFrame.Add(button);
+                return;
             }
 
-            GamepadButtonState[button] = false;
+            if (GamepadButtonState[buttonIndex])
+            {
+                GamepadButtonsReleasedThisFrame[buttonIndex] = true;
+            }
+
+            GamepadButtonState[buttonIndex] = false;
         }
 
         private static void HandleGamepadAxisMotion(int instanceId, byte sdlAxis, short value)
@@ -407,8 +443,13 @@ namespace IsometricMagic.Engine.Inputs
                 return;
             }
 
+            if (!TryGetIndex(axis, out var axisIndex))
+            {
+                return;
+            }
+
             var normalized = NormalizeAxisValue(axis, value);
-            GamepadAxisState[axis] = normalized;
+            GamepadAxisState[axisIndex] = normalized;
         }
 
         private static bool IsGamepadActiveInstance(int instanceId)
@@ -438,10 +479,36 @@ namespace IsometricMagic.Engine.Inputs
             var joystick = SDL_GameControllerGetJoystick(_gameController);
             _gamepadInstanceId = SDL_JoystickInstanceID(joystick);
 
-            GamepadButtonState.Clear();
-            GamepadAxisState.Clear();
+            Array.Clear(GamepadButtonState);
+            Array.Clear(GamepadButtonsPressedThisFrame);
+            Array.Clear(GamepadButtonsReleasedThisFrame);
+            Array.Clear(GamepadAxisState);
 
             return true;
+        }
+
+        private static bool TryGetIndex(Key key, out int index)
+        {
+            index = (int) key;
+            return (uint) index < (uint) KeyState.Length;
+        }
+
+        private static bool TryGetIndex(MouseButton button, out int index)
+        {
+            index = (int) button;
+            return (uint) index < (uint) MouseButtonState.Length;
+        }
+
+        private static bool TryGetIndex(GamepadButton button, out int index)
+        {
+            index = (int) button;
+            return (uint) index < (uint) GamepadButtonState.Length;
+        }
+
+        private static bool TryGetIndex(GamepadAxis axis, out int index)
+        {
+            index = (int) axis;
+            return (uint) index < (uint) GamepadAxisState.Length;
         }
 
         private static bool TryMapGamepadButton(byte sdlButton, out GamepadButton button)
