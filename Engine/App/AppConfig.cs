@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using IniParser;
 using IniParser.Model;
 using IsometricMagic.Engine.Graphics;
@@ -520,8 +521,19 @@ namespace IsometricMagic.Engine.App
 
         public AppConfig(string iniFile)
         {
+            var resolvedPath = Path.IsPathRooted(iniFile)
+                ? Path.GetFullPath(iniFile)
+                : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, iniFile));
+
+            if (!File.Exists(resolvedPath))
+            {
+                throw new FileNotFoundException(
+                    $"Config file '{iniFile}' was not found at '{resolvedPath}'. Relative config paths are resolved against AppContext.BaseDirectory '{AppContext.BaseDirectory}'.",
+                    resolvedPath);
+            }
+
             var parser = new FileIniDataParser();
-            _data = parser.ReadFile(iniFile);
+            _data = parser.ReadFile(resolvedPath);
         }
 
         private static int GetInt(string value, int defaultValue)

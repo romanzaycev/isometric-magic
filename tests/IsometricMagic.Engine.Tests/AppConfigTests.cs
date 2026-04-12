@@ -214,6 +214,59 @@ Height=768
         }
     }
 
+    [Fact]
+    public void RelativePath_LoadsFromBaseDirectory_NotCurrentDirectory()
+    {
+        var fileName = $"isometric_magic_tests_{Guid.NewGuid():N}.ini";
+        var basePath = Path.Combine(AppContext.BaseDirectory, fileName);
+        var tempDir = Path.Combine(Path.GetTempPath(), $"isometric_magic_tests_cwd_{Guid.NewGuid():N}");
+        var cwdPath = Path.Combine(tempDir, fileName);
+        var originalCurrentDirectory = Directory.GetCurrentDirectory();
+
+        Directory.CreateDirectory(tempDir);
+        File.WriteAllText(basePath, """
+[Window]
+Width=1234
+""");
+        File.WriteAllText(cwdPath, """
+[Window]
+Width=999
+""");
+
+        try
+        {
+            Directory.SetCurrentDirectory(tempDir);
+            var config = new AppConfig(fileName);
+
+            Assert.Equal(1234, config.WindowWidth);
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(originalCurrentDirectory);
+
+            if (File.Exists(basePath))
+            {
+                File.Delete(basePath);
+            }
+
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, true);
+            }
+        }
+    }
+
+    [Fact]
+    public void MissingRelativePath_ThrowsFileNotFoundException()
+    {
+        var missingFileName = $"isometric_magic_missing_{Guid.NewGuid():N}.ini";
+
+        var exception = Assert.Throws<FileNotFoundException>(() => new AppConfig(missingFileName));
+
+        Assert.NotNull(exception.FileName);
+        Assert.StartsWith(Path.GetFullPath(AppContext.BaseDirectory), Path.GetFullPath(exception.FileName));
+    }
+
     private static string CreateIni(string content)
     {
         var path = Path.Combine(Path.GetTempPath(), $"isometric_magic_tests_{Guid.NewGuid():N}.ini");
