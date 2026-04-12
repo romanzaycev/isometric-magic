@@ -1,15 +1,15 @@
 using System.Numerics;
-using IsometricMagic.Game.Components.Actor;
-using IsometricMagic.Game.Components.Camera;
-using IsometricMagic.Game.Components.Character.Humanoid;
-using IsometricMagic.Game.Components.Collision;
-using IsometricMagic.Game.Components.Rendering;
-using IsometricMagic.Game.Components.Spatial;
-using IsometricMagic.Game.Controllers.Character;
-using IsometricMagic.Game.Model;
-using IsometricMagic.Game.Rendering;
+using IonMotion.Game.Components.Actor;
+using IonMotion.Game.Components.Camera;
+using IonMotion.Game.Components.Character.Humanoid;
+using IonMotion.Game.Components.Collision;
+using IonMotion.Game.Components.Rendering;
+using IonMotion.Game.Components.Spatial;
+using IonMotion.Game.Controllers.Character;
+using IonMotion.Game.Model;
+using IonMotion.Game.Rendering;
 
-namespace IsometricMagic.Game.Prefabs
+namespace IonMotion.Game.Prefabs
 {
     public readonly record struct HumanoidPlayerPrefabSpec(
         string EntityName,

@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>IonMotion</RootNamespace>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+      <PlatformTarget>AnyCPU</PlatformTarget>
+      <Optimize>true</Optimize>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="Engine/IonMotion.Engine.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <ProjectReference Include="Editor/IonMotion.RuntimeEditor/IonMotion.RuntimeEditor.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Engine\**\*.cs" />
+      <Compile Remove="sdl2-cs\**\*.cs" />
+      <Compile Remove="tests\**\*.cs" />
+      <Compile Remove="Editor\**\*.cs" />
+      <Compile Remove="Tools\**\*.cs" />
+      <None Remove="tests\**\*" />
+      <None Remove="Editor\**\*" />
+      <None Remove="Tools\**\*" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="config.ini">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="resources\**\*.*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Engine\" />
+    </ItemGroup>
+
+</Project>

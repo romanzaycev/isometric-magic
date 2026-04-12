@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace IsometricMagic.Game.Components.Vfx.Light
+namespace IonMotion.Game.Components.Vfx.Light
 {
     public class Light2DComponent : Component
     {

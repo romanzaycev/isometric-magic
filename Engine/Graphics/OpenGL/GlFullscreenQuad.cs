@@ -1,7 +1,7 @@
 using Silk.NET.OpenGL;
-using IsometricMagic.Engine.Diagnostics;
+using IonMotion.Engine.Diagnostics;
 
-namespace IsometricMagic.Engine.Graphics.OpenGL
+namespace IonMotion.Engine.Graphics.OpenGL
 {
     public sealed class GlFullscreenQuad
     {

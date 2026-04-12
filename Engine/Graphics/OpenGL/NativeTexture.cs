@@ -1,6 +1,6 @@
-using IsometricMagic.Engine.Core.Graphics;
+using IonMotion.Engine.Core.Graphics;
 
-namespace IsometricMagic.Engine.Graphics.OpenGL
+namespace IonMotion.Engine.Graphics.OpenGL
 {
     public abstract class NativeTexture
     {

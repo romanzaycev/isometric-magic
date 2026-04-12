@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
-using IsometricMagic.Engine.Assets;
+using IonMotion.Engine.Assets;
 
-namespace IsometricMagic.Game.Maps
+namespace IonMotion.Game.Maps
 {
     public static class Loader
     {

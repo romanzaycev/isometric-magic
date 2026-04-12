@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace IsometricMagic.Engine.Graphics.Effects
+namespace IonMotion.Engine.Graphics.Effects
 {
     public class PostProcessStack
     {

@@ -1,8 +1,8 @@
 using static SDL2.SDL;
 
-using IsometricMagic.Engine.Core.Platform.Sdl;
+using IonMotion.Engine.Core.Platform.Sdl;
 
-namespace IsometricMagic.Engine.Inputs
+namespace IonMotion.Engine.Inputs
 {
     public static class Input
     {

@@ -5,26 +5,25 @@ using System.Drawing;
 using System.IO;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using IsometricMagic.Engine.App;
-using IsometricMagic.Engine.Assets;
-using IsometricMagic.Engine.Diagnostics;
-using IsometricMagic.Engine.Core.Graphics;
-using IsometricMagic.Engine.Graphics.Effects;
-using IsometricMagic.Engine.Graphics.Materials;
-using IsometricMagic.Engine.Graphics.OpenGL;
-using IsometricMagic.Engine.Graphics.Utilities;
-using IsometricMagic.Engine.Inputs;
-using IsometricMagic.Engine.Rendering;
-using IsometricMagic.Engine.Scenes;
-using IsometricMagic.Engine.Core.Assets;
-using EngineTexture = IsometricMagic.Engine.Assets.Texture;
+using IonMotion.Engine.Assets;
+using IonMotion.Engine.Diagnostics;
+using IonMotion.Engine.Core.Graphics;
+using IonMotion.Engine.Graphics.Effects;
+using IonMotion.Engine.Graphics.Materials;
+using IonMotion.Engine.Graphics.OpenGL;
+using IonMotion.Engine.Graphics.Utilities;
+using IonMotion.Engine.Inputs;
+using IonMotion.Engine.Rendering;
+using IonMotion.Engine.Scenes;
+using IonMotion.Engine.Core.Assets;
+using EngineTexture = IonMotion.Engine.Assets.Texture;
 using SDL2;
 using Silk.NET.OpenGL;
 using static SDL2.SDL;
 using static SDL2.SDL_image;
 using static SDL2.SDL_ttf;
 
-namespace IsometricMagic.Engine.Core.Graphics.SDL
+namespace IonMotion.Engine.Core.Graphics.SDL
 {
     internal sealed class SdlGlGraphics : IGraphics
     {
@@ -330,7 +329,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
 
         public void LoadImageToTexture(out NativeTexture nativeTexture, string imagePath)
         {
-            var imageBytes = IsometricMagic.Engine.Assets.ResourceFileSystem.ReadAllBytes(imagePath);
+            var imageBytes = IonMotion.Engine.Assets.ResourceFileSystem.ReadAllBytes(imagePath);
             unsafe
             {
                 fixed (byte* ptr = imageBytes)
@@ -389,7 +388,7 @@ namespace IsometricMagic.Engine.Core.Graphics.SDL
             SDL_GL_SetAttribute(SDL_GLattr.SDL_GL_STENCIL_SIZE, 8);
 
             _sdlWindow = SDL_CreateWindow(
-                "Isometric Magic",
+                _graphicsParams.WindowTitle,
                 SDL_WINDOWPOS_CENTERED,
                 SDL_WINDOWPOS_CENTERED,
                 _graphicsParams.InitialWindowWidth,

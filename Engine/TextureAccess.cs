@@ -1,4 +1,4 @@
-namespace IsometricMagic.Engine
+namespace IonMotion.Engine
 {
     public enum TextureAccess
     {

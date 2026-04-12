@@ -1,13 +1,13 @@
 using System.Numerics;
-using IsometricMagic.Game.Components.Collision;
-using IsometricMagic.Game.Components.Rendering;
-using IsometricMagic.Game.Components.Spatial;
-using IsometricMagic.Game.Components.Vfx.Light;
-using IsometricMagic.Game.Model;
-using IsometricMagic.Game.Prefabs;
-using IsometricMagic.Game.Rendering;
+using IonMotion.Game.Components.Collision;
+using IonMotion.Game.Components.Rendering;
+using IonMotion.Game.Components.Spatial;
+using IonMotion.Game.Components.Vfx.Light;
+using IonMotion.Game.Model;
+using IonMotion.Game.Prefabs;
+using IonMotion.Game.Rendering;
 
-namespace IsometricMagic.Game.Scenes.IsoTestPrefabs
+namespace IonMotion.Game.Scenes.IsoTestPrefabs
 {
     internal readonly record struct StoneWithMagicPrefabSpec(
         string StoneEntityName,

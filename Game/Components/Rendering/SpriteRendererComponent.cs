@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace IsometricMagic.Game.Components.Rendering
+namespace IonMotion.Game.Components.Rendering
 {
     public class SpriteRendererComponent : Component
     {

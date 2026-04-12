@@ -1,4 +1,4 @@
-namespace IsometricMagic.Game.Maps
+namespace IonMotion.Game.Maps
 {
     [Newtonsoft.Json.JsonObject]
     public class Map

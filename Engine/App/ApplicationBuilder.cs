@@ -1,20 +1,21 @@
-using IsometricMagic.Engine.Diagnostics;
-using IsometricMagic.Engine.Core.Graphics;
-using IsometricMagic.Engine.Core.Graphics.SDL;
-using IsometricMagic.Engine.Core.Platform.Sdl;
-using IsometricMagic.Engine.Core.Logging;
-using IsometricMagic.Engine.Scenes;
-using IsometricMagic.Engine.Inputs;
+using IonMotion.Engine.Diagnostics;
+using IonMotion.Engine.Core.Graphics;
+using IonMotion.Engine.Core.Graphics.SDL;
+using IonMotion.Engine.Core.Platform.Sdl;
+using IonMotion.Engine.Core.Logging;
+using IonMotion.Engine.Scenes;
+using IonMotion.Engine.Inputs;
 using NLog;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using static SDL2.SDL;
 
-namespace IsometricMagic.Engine.App
+namespace IonMotion.Engine.App
 {
     public sealed class ApplicationBuilder
     {
         private string _configPath = "config.ini";
+        private string _appName = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? "IonMotion";
         private Action<SceneManager>? _sceneConfigurator;
         private Action<List<IApplicationRuntimeService>>? _runtimeServicesConfigurator;
 
@@ -26,6 +27,17 @@ namespace IsometricMagic.Engine.App
         public ApplicationBuilder UseConfig(string configPath)
         {
             _configPath = configPath;
+            return this;
+        }
+
+        public ApplicationBuilder UseAppName(string appName)
+        {
+            if (string.IsNullOrWhiteSpace(appName))
+            {
+                throw new ArgumentException("Application name cannot be null or whitespace.", nameof(appName));
+            }
+
+            _appName = appName;
             return this;
         }
 
@@ -43,13 +55,14 @@ namespace IsometricMagic.Engine.App
 
         public ApplicationHost Build()
         {
-            return new ApplicationHost(_configPath, _sceneConfigurator, _runtimeServicesConfigurator);
+            return new ApplicationHost(_configPath, _appName, _sceneConfigurator, _runtimeServicesConfigurator);
         }
     }
 
     public sealed class ApplicationHost
     {
         private readonly string _configPath;
+        private readonly string _appName;
         private readonly Action<SceneManager>? _sceneConfigurator;
         private readonly Action<List<IApplicationRuntimeService>>? _runtimeServicesConfigurator;
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
@@ -57,10 +70,12 @@ namespace IsometricMagic.Engine.App
 
         public ApplicationHost(
             string configPath,
+            string appName,
             Action<SceneManager>? sceneConfigurator,
             Action<List<IApplicationRuntimeService>>? runtimeServicesConfigurator)
         {
             _configPath = configPath;
+            _appName = appName;
             _sceneConfigurator = sceneConfigurator;
             _runtimeServicesConfigurator = runtimeServicesConfigurator;
         }
@@ -91,7 +106,7 @@ namespace IsometricMagic.Engine.App
                 _runtimeServicesConfigurator?.Invoke(runtimeServices);
                 app.SetRuntimeServices(runtimeServices);
 
-                app.Init(appConfig, graphics);
+                app.Init(appConfig, graphics, _appName);
 
                 var sceneManager = SceneManager.GetInstance();
                 _sceneConfigurator?.Invoke(sceneManager);

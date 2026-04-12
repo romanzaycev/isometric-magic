@@ -1,4 +1,4 @@
-namespace IsometricMagic.Game.Tiles
+namespace IonMotion.Game.Tiles
 {
     [Newtonsoft.Json.JsonObject]
     public class TileSet

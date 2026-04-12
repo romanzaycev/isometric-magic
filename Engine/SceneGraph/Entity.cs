@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using IsometricMagic.Engine.Diagnostics;
-using IsometricMagic.Engine.Scenes;
-using IsometricMagic.Engine.Spatial;
+using IonMotion.Engine.Diagnostics;
+using IonMotion.Engine.Scenes;
+using IonMotion.Engine.Spatial;
 
-namespace IsometricMagic.Engine.SceneGraph
+namespace IonMotion.Engine.SceneGraph
 {
     [RuntimeEditorInspectable(EditableByDefault = false)]
     public class Entity

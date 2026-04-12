@@ -1,7 +1,7 @@
 using System;
 using System.Numerics;
 
-namespace IsometricMagic.Engine.Particles
+namespace IonMotion.Engine.Particles
 {
     public sealed class ColorGradient
     {

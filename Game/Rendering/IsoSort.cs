@@ -1,6 +1,6 @@
-using IsometricMagic.Game.Model;
+using IonMotion.Game.Model;
 
-namespace IsometricMagic.Game.Rendering
+namespace IonMotion.Game.Rendering
 {
     public static class IsoSort
     {

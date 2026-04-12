@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Silk.NET.OpenGL;
 
-namespace IsometricMagic.Engine.Graphics.OpenGL
+namespace IonMotion.Engine.Graphics.OpenGL
 {
     public sealed class GlShaderProgram
     {

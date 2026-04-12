@@ -1,11 +1,11 @@
 using System;
 using System.IO;
-using IsometricMagic.Engine.App;
+using IonMotion.Engine.App;
 using NLog;
 using NLog.Config;
 using NLog.Targets;
 
-namespace IsometricMagic.Engine.Core.Logging
+namespace IonMotion.Engine.Core.Logging
 {
     internal static class LogBootstrap
     {

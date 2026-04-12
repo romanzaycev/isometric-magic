@@ -1,7 +1,7 @@
-using IsometricMagic.Game.Components.Actor;
-using IsometricMagic.Game.Model;
+using IonMotion.Game.Components.Actor;
+using IonMotion.Game.Model;
 
-namespace IsometricMagic.Game.Controllers.Character
+namespace IonMotion.Game.Controllers.Character
 {
     public class Mouse : Component
     {

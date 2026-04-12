@@ -1,7 +1,7 @@
 using System.Text;
-using IsometricMagic.Engine.Core.Assets;
+using IonMotion.Engine.Core.Assets;
 
-namespace IsometricMagic.Engine.Assets
+namespace IonMotion.Engine.Assets
 {
     public static class ResourceFileSystem
     {

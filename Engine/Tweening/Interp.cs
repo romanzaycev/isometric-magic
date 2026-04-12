@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace IsometricMagic.Engine.Tweening
+namespace IonMotion.Engine.Tweening
 {
     public static class Interp
     {

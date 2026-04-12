@@ -1,3 +1,3 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("IsometricMagic.Engine.Tests")]
+[assembly: InternalsVisibleTo("IonMotion.Engine.Tests")]

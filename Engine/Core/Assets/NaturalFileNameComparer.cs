@@ -1,4 +1,4 @@
-namespace IsometricMagic.Engine.Core.Assets
+namespace IonMotion.Engine.Core.Assets
 {
     internal sealed class NaturalFileNameComparer : IComparer<string>
     {

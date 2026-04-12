@@ -1,7 +1,7 @@
 using System.Numerics;
-using IsometricMagic.Game.Model;
+using IonMotion.Game.Model;
 
-namespace IsometricMagic.Game.Components.Movement
+namespace IonMotion.Game.Components.Movement
 {
     public class OrbitMotionComponent : Component
     {

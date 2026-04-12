@@ -1,9 +1,9 @@
 using System.Numerics;
-using IsometricMagic.Game.Animation;
-using IsometricMagic.Game.Model;
-using IsometricMagic.Game.Rendering;
+using IonMotion.Game.Animation;
+using IonMotion.Game.Model;
+using IonMotion.Game.Rendering;
 
-namespace IsometricMagic.Game.Components.Vfx.Light;
+namespace IonMotion.Game.Components.Vfx.Light;
 
 public class FireCircleComponent : Component
 {

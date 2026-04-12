@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using IsometricMagic.Engine.App;
-using IsometricMagic.Engine.Inputs;
+using IonMotion.Engine.App;
+using IonMotion.Engine.Inputs;
 
-namespace IsometricMagic.Engine.Diagnostics
+namespace IonMotion.Engine.Diagnostics
 {
     public sealed class DebugOverlayService
     {

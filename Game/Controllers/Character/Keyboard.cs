@@ -1,6 +1,6 @@
-using IsometricMagic.Game.Components.Actor;
+using IonMotion.Game.Components.Actor;
 
-namespace IsometricMagic.Game.Controllers.Character
+namespace IonMotion.Game.Controllers.Character
 {
     public class Keyboard : Component
     {

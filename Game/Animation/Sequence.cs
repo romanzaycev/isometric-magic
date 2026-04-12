@@ -1,4 +1,4 @@
-namespace IsometricMagic.Game.Animation
+namespace IonMotion.Game.Animation
 {
     public class Sequence
     {

@@ -1,4 +1,4 @@
-namespace IsometricMagic.Engine.Particles
+namespace IonMotion.Engine.Particles
 {
     public enum ParticleSpawnShape
     {

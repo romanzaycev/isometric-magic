@@ -1,12 +1,12 @@
 using System.Collections;
-using IsometricMagic.Game.Components.Tilemap;
-using IsometricMagic.Game.Maps;
-using IsometricMagic.Game.Model;
-using IsometricMagic.Game.Tiles;
-using MapLoader = IsometricMagic.Game.Maps.Loader;
-using TileSetLoader = IsometricMagic.Game.Tiles.Loader;
+using IonMotion.Game.Components.Tilemap;
+using IonMotion.Game.Maps;
+using IonMotion.Game.Model;
+using IonMotion.Game.Tiles;
+using MapLoader = IonMotion.Game.Maps.Loader;
+using TileSetLoader = IonMotion.Game.Tiles.Loader;
 
-namespace IsometricMagic.Game.Prefabs
+namespace IonMotion.Game.Prefabs
 {
     public readonly record struct IsoMapPrefabSpec(
         string MapName,

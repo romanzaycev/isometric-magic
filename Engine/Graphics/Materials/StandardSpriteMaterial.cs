@@ -1,10 +1,10 @@
 using System.Numerics;
-using EngineTexture = IsometricMagic.Engine.Assets.Texture;
-using IsometricMagic.Engine.Diagnostics;
-using IsometricMagic.Engine.Graphics.OpenGL;
+using EngineTexture = IonMotion.Engine.Assets.Texture;
+using IonMotion.Engine.Diagnostics;
+using IonMotion.Engine.Graphics.OpenGL;
 using Silk.NET.OpenGL;
 
-namespace IsometricMagic.Engine.Graphics.Materials
+namespace IonMotion.Engine.Graphics.Materials
 {
     [RuntimeEditorInspectable(EditableByDefault = false)]
     public sealed class StandardSpriteMaterial : IGlMaterial, ISpriteMaterialCapabilities

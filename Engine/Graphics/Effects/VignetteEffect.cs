@@ -1,8 +1,8 @@
-using IsometricMagic.Engine.Graphics.OpenGL;
-using IsometricMagic.Engine.Diagnostics;
+using IonMotion.Engine.Graphics.OpenGL;
+using IonMotion.Engine.Diagnostics;
 using Silk.NET.OpenGL;
 
-namespace IsometricMagic.Engine.Graphics.Effects
+namespace IonMotion.Engine.Graphics.Effects
 {
     public sealed class VignetteEffect : IGlPostProcessEffect
     {

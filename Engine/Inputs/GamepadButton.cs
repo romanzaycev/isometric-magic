@@ -1,4 +1,4 @@
-namespace IsometricMagic.Engine.Inputs
+namespace IonMotion.Engine.Inputs
 {
     public enum GamepadButton
     {

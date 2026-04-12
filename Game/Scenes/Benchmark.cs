@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Numerics;
 
-namespace IsometricMagic.Game.Scenes
+namespace IonMotion.Game.Scenes
 {
     public sealed class Benchmark : Scene
     {

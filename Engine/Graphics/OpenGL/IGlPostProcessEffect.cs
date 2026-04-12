@@ -1,6 +1,6 @@
-using IsometricMagic.Engine.Graphics.Effects;
+using IonMotion.Engine.Graphics.Effects;
 
-namespace IsometricMagic.Engine.Graphics.OpenGL
+namespace IonMotion.Engine.Graphics.OpenGL
 {
     public interface IGlPostProcessEffect : IPostProcessEffect
     {

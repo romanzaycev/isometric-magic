@@ -1,4 +1,4 @@
-namespace IsometricMagic.Engine.SceneGraph
+namespace IonMotion.Engine.SceneGraph
 {
     public enum ComponentUpdateGroup
     {

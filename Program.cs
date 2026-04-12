@@ -1,10 +1,9 @@
-using IsometricMagic.Engine.App;
-using IsometricMagic.Game.Scenes;
+using IonMotion.Game.Scenes;
 #if DEBUG
-using IsometricMagic.RuntimeEditor;
+using IonMotion.RuntimeEditor;
 #endif
 
-namespace IsometricMagic
+namespace IonMotion
 {
     internal static class Program
     {
@@ -12,6 +11,7 @@ namespace IsometricMagic
         {
             var host = ApplicationBuilder
                 .CreateDefault()
+                .UseAppName("IonMotion")
                 .UseConfig("config.ini")
                 .ConfigureScenes(sceneManager =>
                 {

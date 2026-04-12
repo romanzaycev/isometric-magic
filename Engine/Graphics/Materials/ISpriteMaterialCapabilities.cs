@@ -1,7 +1,7 @@
 using System.Numerics;
-using IsometricMagic.Engine.Assets;
+using IonMotion.Engine.Assets;
 
-namespace IsometricMagic.Engine.Graphics.Materials
+namespace IonMotion.Engine.Graphics.Materials
 {
     public enum SpriteShadingModel
     {

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace IsometricMagic.Engine.Tweening
+namespace IonMotion.Engine.Tweening
 {
     public class TweenManager
     {

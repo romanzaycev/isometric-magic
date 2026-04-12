@@ -2,7 +2,7 @@ using System.IO.Compression;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
 
-namespace IsometricMagic.Engine.Core.Assets
+namespace IonMotion.Engine.Core.Assets
 {
     /*
      * PAK v1 file layout (little-endian):

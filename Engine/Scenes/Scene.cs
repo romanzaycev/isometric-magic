@@ -2,16 +2,16 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using IsometricMagic.Engine.App;
-using IsometricMagic.Engine.Diagnostics;
-using IsometricMagic.Engine.Graphics.Effects;
-using IsometricMagic.Engine.Graphics.Lighting;
-using IsometricMagic.Engine.Rendering;
-using IsometricMagic.Engine.SceneGraph;
-using IsometricMagic.Engine.Tweening;
-using IsometricMagic.Engine.Core.Assets;
+using IonMotion.Engine.App;
+using IonMotion.Engine.Diagnostics;
+using IonMotion.Engine.Graphics.Effects;
+using IonMotion.Engine.Graphics.Lighting;
+using IonMotion.Engine.Rendering;
+using IonMotion.Engine.SceneGraph;
+using IonMotion.Engine.Tweening;
+using IonMotion.Engine.Core.Assets;
 
-namespace IsometricMagic.Engine.Scenes
+namespace IonMotion.Engine.Scenes
 {
     public class Scene
     {

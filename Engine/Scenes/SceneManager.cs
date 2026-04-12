@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using IsometricMagic.Engine.App;
+using IonMotion.Engine.App;
 
-namespace IsometricMagic.Engine.Scenes
+namespace IonMotion.Engine.Scenes
 {
     public class SceneManager
     {

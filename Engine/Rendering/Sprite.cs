@@ -1,10 +1,10 @@
 using System.Numerics;
-using IsometricMagic.Engine.Core.Rendering;
-using IsometricMagic.Engine.Assets;
-using IsometricMagic.Engine.Diagnostics;
-using IsometricMagic.Engine.Graphics.Materials;
+using IonMotion.Engine.Core.Rendering;
+using IonMotion.Engine.Assets;
+using IonMotion.Engine.Diagnostics;
+using IonMotion.Engine.Graphics.Materials;
 
-namespace IsometricMagic.Engine.Rendering
+namespace IonMotion.Engine.Rendering
 {
     public enum PivotMode
     {

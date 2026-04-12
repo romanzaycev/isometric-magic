@@ -1,9 +1,10 @@
-namespace IsometricMagic.Engine.Core.Graphics
+namespace IonMotion.Engine.Core.Graphics
 {
     internal class GraphicsParams
     {
         public int InitialWindowWidth { get; }
         public int InitialWindowHeight { get; }
+        public string WindowTitle { get; private set; } = "IonMotion";
         public bool IsFullscreen { get; private set; } = false;
         public bool VSync { get; private set; } = false;
 
@@ -23,6 +24,13 @@ namespace IsometricMagic.Engine.Core.Graphics
         public GraphicsParams SetVSync(bool isVSyncEnabled)
         {
             VSync = isVSyncEnabled;
+
+            return this;
+        }
+
+        public GraphicsParams SetWindowTitle(string windowTitle)
+        {
+            WindowTitle = string.IsNullOrWhiteSpace(windowTitle) ? WindowTitle : windowTitle;
 
             return this;
         }

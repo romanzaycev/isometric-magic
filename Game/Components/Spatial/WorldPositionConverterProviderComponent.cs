@@ -1,6 +1,6 @@
-using IsometricMagic.Game.Model;
+using IonMotion.Game.Model;
 
-namespace IsometricMagic.Game.Components.Spatial
+namespace IonMotion.Game.Components.Spatial
 {
     public class WorldPositionConverterProviderComponent : Component
     {

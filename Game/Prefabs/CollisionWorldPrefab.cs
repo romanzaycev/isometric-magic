@@ -1,6 +1,6 @@
-using IsometricMagic.Game.Components.Collision;
+using IonMotion.Game.Components.Collision;
 
-namespace IsometricMagic.Game.Prefabs
+namespace IonMotion.Game.Prefabs
 {
     public readonly record struct CollisionWorldPrefabSpec(
         string EntityName = "CollisionWorld",

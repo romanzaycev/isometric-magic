@@ -1,16 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
-using IsometricMagic.Engine.Core.Graphics;
-using IsometricMagic.Engine.Diagnostics;
-using IsometricMagic.Engine.Inputs;
-using IsometricMagic.Engine.Scenes;
-using IsometricMagic.Engine.Rendering;
-using IsometricMagic.Engine.Core.Assets;
-using IsometricMagic.Engine.Assets;
+using IonMotion.Engine.Core.Graphics;
+using IonMotion.Engine.Diagnostics;
+using IonMotion.Engine.Inputs;
+using IonMotion.Engine.Scenes;
+using IonMotion.Engine.Rendering;
+using IonMotion.Engine.Core.Assets;
+using IonMotion.Engine.Assets;
 using NLog;
 using static SDL2.SDL;
 
-namespace IsometricMagic.Engine.App
+namespace IonMotion.Engine.App
 {
     public class Application
     {
@@ -44,7 +44,7 @@ namespace IsometricMagic.Engine.App
             return Instance;
         }
 
-        internal void Init(AppConfig config, IGraphics graphics)
+        internal void Init(AppConfig config, IGraphics graphics, string appName)
         {
             if (_isInitialized)
             {
@@ -65,7 +65,8 @@ namespace IsometricMagic.Engine.App
             
             var graphicsParams = new GraphicsParams(_config.WindowWidth, _config.WindowHeight)
                 .SetFullscreen(_config.IsFullscreen)
-                .SetVSync(_config.VSync);
+                .SetVSync(_config.VSync)
+                .SetWindowTitle(appName);
             _graphics.Initialize(graphicsParams);
             
             _renderer = new Renderer(graphics);

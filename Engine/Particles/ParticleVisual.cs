@@ -1,8 +1,8 @@
 using System;
-using IsometricMagic.Engine;
-using IsometricMagic.Engine.Graphics.Materials;
+using IonMotion.Engine;
+using IonMotion.Engine.Graphics.Materials;
 
-namespace IsometricMagic.Engine.Particles
+namespace IonMotion.Engine.Particles
 {
     public sealed class ParticleVisual
     {

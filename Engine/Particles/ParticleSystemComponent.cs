@@ -1,8 +1,8 @@
 using System;
 using System.Numerics;
-using IsometricMagic.Engine;
+using IonMotion.Engine;
 
-namespace IsometricMagic.Engine.Particles
+namespace IonMotion.Engine.Particles
 {
     /// <summary>
     /// Sprite-based particle system that lives on a scene layer and updates a fixed pool of sprites.

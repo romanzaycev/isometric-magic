@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
-using IsometricMagic.Engine.SceneGraph;
-using IsometricMagic.Engine.Scenes;
+using IonMotion.Engine.SceneGraph;
+using IonMotion.Engine.Scenes;
 
-namespace IsometricMagic.Engine.Rendering
+namespace IonMotion.Engine.Rendering
 {
     public abstract class CameraInfluenceComponent : Component
     {

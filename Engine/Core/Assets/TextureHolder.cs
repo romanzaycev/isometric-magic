@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using IsometricMagic.Engine.App;
-using IsometricMagic.Engine.Assets;
-using IsometricMagic.Engine.Core.Graphics;
-using IsometricMagic.Engine.Graphics.OpenGL;
+using IonMotion.Engine.App;
+using IonMotion.Engine.Assets;
+using IonMotion.Engine.Core.Graphics;
+using IonMotion.Engine.Graphics.OpenGL;
 
-namespace IsometricMagic.Engine.Core.Assets
+namespace IonMotion.Engine.Core.Assets
 {
     internal class TextureHolder
     {

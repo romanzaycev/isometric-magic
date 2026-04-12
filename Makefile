@@ -13,11 +13,11 @@
 .DEFAULT_GOAL := help
 
 # Project paths.
-GAME_PROJECT := isometric-magic.csproj
-ENGINE_TEST_PROJECT := tests/IsometricMagic.Engine.Tests/IsometricMagic.Engine.Tests.csproj
-EDITOR_TEST_PROJECT := tests/IsometricMagic.RuntimeEditor.Tests/IsometricMagic.RuntimeEditor.Tests.csproj
-SPA_DIR := Editor/IsometricMagic.RuntimeEditor/Web/spa
-PAK_TOOL_PROJECT := Tools/IsometricMagic.PakTool/IsometricMagic.PakTool.csproj
+GAME_PROJECT := ion-motion.csproj
+ENGINE_TEST_PROJECT := tests/IonMotion.Engine.Tests/IonMotion.Engine.Tests.csproj
+EDITOR_TEST_PROJECT := tests/IonMotion.RuntimeEditor.Tests/IonMotion.RuntimeEditor.Tests.csproj
+SPA_DIR := Editor/IonMotion.RuntimeEditor/Web/spa
+PAK_TOOL_PROJECT := Tools/IonMotion.PakTool/IonMotion.PakTool.csproj
 RESOURCES_DIR := resources
 PAKS_DIR := resources/paks
 PAK_OUT ?= $(PAKS_DIR)/base.pak
@@ -77,10 +77,10 @@ test: test-engine test-editor ## Run all tests
 verify: build test ## Build and run all tests
 
 normals: ## Generate normal maps from normalmap project
-	dotnet run --project Tools/IsometricMagic.NormalMapGenerator -- --project resources/pipeline/normalmaps/normalmap.project.json
+	dotnet run --project Tools/IonMotion.NormalMapGenerator -- --project resources/pipeline/normalmaps/normalmap.project.json
 
 atlases: ## Pack atlases from atlas project
-	dotnet run --project Tools/IsometricMagic.AtlasPacker -- --project resources/pipeline/atlases/pack.project.json
+	dotnet run --project Tools/IonMotion.AtlasPacker -- --project resources/pipeline/atlases/pack.project.json
 
 assets: normals atlases ## Generate normals then atlases
 

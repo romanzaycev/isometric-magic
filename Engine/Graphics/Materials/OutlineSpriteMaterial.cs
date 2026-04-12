@@ -1,10 +1,10 @@
 using System;
-using IsometricMagic.Engine.Assets;
-using IsometricMagic.Engine.Diagnostics;
-using IsometricMagic.Engine.Graphics.OpenGL;
+using IonMotion.Engine.Assets;
+using IonMotion.Engine.Diagnostics;
+using IonMotion.Engine.Graphics.OpenGL;
 using Silk.NET.OpenGL;
 
-namespace IsometricMagic.Engine.Graphics.Materials
+namespace IonMotion.Engine.Graphics.Materials
 {
     public sealed class OutlineSpriteMaterial : IGlMaterial
     {

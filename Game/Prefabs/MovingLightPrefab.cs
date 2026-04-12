@@ -1,10 +1,10 @@
 using System.Numerics;
-using IsometricMagic.Game.Components.Movement;
-using IsometricMagic.Game.Components.Vfx.Light;
-using IsometricMagic.Game.Model;
-using IsometricMagic.Game.Rendering;
+using IonMotion.Game.Components.Movement;
+using IonMotion.Game.Components.Vfx.Light;
+using IonMotion.Game.Model;
+using IonMotion.Game.Rendering;
 
-namespace IsometricMagic.Game.Prefabs
+namespace IonMotion.Game.Prefabs
 {
     public readonly record struct MovingLightPrefabSpec(
         string EntityName,

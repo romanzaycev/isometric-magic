@@ -1,18 +1,18 @@
-# Isometric Magic Game Project Guidelines
+# IonMotion Project Guidelines
 
 ## Architectural Scheme (Current)
 
 The repository is split into two runtime layers with a hard assembly boundary:
 
-- `Engine/IsometricMagic.Engine.csproj` - engine library with public API + internal implementation details.
-- `isometric-magic.csproj` - game executable that references only the engine library.
+- `Engine/IonMotion.Engine.csproj` - engine library with public API + internal implementation details.
+- `ion-motion.csproj` - game executable that references only the engine library.
 
 This split is not cosmetic. It is the primary encapsulation mechanism: engine internals are hidden from game code via `internal` and must stay hidden.
 
 ### Layering Rules
 
 - Public engine API lives in non-`Core` namespaces and is intended for game-side usage and extension.
-- Engine implementation details live under `IsometricMagic.Engine.Core.*` and are strictly non-exported (`internal`).
+- Engine implementation details live under `IonMotion.Engine.Core.*` and are strictly non-exported (`internal`).
 - Game code must depend on public API only and must not reference engine internals.
 - Directory structure mirrors namespaces. Moving code between layers requires explicit architectural intent.
 
@@ -112,8 +112,8 @@ using SDL2;
 using Newtonsoft.Json;
 using IniParser;
 
-using IsometricMagic.Engine;
-using IsometricMagic.Game.Scenes;
+using IonMotion.Engine;
+using IonMotion.Game.Scenes;
 ```
 
 ## Formatting

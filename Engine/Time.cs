@@ -1,4 +1,4 @@
-namespace IsometricMagic.Engine
+namespace IonMotion.Engine
 {
     public static class Time
     {

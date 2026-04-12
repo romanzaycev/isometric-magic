@@ -1,4 +1,4 @@
-namespace IsometricMagic.Engine.Tweening
+namespace IonMotion.Engine.Tweening
 {
     public readonly struct TweenHandle
     {

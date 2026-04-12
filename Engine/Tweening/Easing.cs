@@ -1,6 +1,6 @@
 using System;
 
-namespace IsometricMagic.Engine.Tweening
+namespace IonMotion.Engine.Tweening
 {
     public delegate float EaseFunc(float t);
 

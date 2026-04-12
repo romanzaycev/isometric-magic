@@ -1,9 +1,9 @@
 using System;
 
-using IsometricMagic.Engine.Diagnostics;
-using IsometricMagic.Engine.Scenes;
+using IonMotion.Engine.Diagnostics;
+using IonMotion.Engine.Scenes;
 
-namespace IsometricMagic.Engine.SceneGraph
+namespace IonMotion.Engine.SceneGraph
 {
     public abstract class Component
     {

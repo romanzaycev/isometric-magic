@@ -1,4 +1,4 @@
-namespace IsometricMagic.Engine.App
+namespace IonMotion.Engine.App
 {
     public interface IApplicationRuntimeService
     {

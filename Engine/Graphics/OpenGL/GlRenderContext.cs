@@ -1,8 +1,8 @@
 using Silk.NET.OpenGL;
-using IsometricMagic.Engine.Rendering;
-using IsometricMagic.Engine.Scenes;
+using IonMotion.Engine.Rendering;
+using IonMotion.Engine.Scenes;
 
-namespace IsometricMagic.Engine.Graphics.OpenGL
+namespace IonMotion.Engine.Graphics.OpenGL
 {
     public sealed class GlRenderContext
     {

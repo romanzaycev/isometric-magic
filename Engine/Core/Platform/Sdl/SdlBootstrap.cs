@@ -2,7 +2,7 @@ using static SDL2.SDL;
 using static SDL2.SDL_image;
 using static SDL2.SDL_ttf;
 
-namespace IsometricMagic.Engine.Core.Platform.Sdl
+namespace IonMotion.Engine.Core.Platform.Sdl
 {
     internal sealed class SdlBootstrapOptions
     {

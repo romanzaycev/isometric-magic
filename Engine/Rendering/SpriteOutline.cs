@@ -1,7 +1,7 @@
 using System.Numerics;
-using IsometricMagic.Engine.Diagnostics;
+using IonMotion.Engine.Diagnostics;
 
-namespace IsometricMagic.Engine.Rendering
+namespace IonMotion.Engine.Rendering
 {
     public enum OutlineLayering
     {

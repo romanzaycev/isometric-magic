@@ -1,9 +1,9 @@
 using System.Numerics;
-using IsometricMagic.Game.Components.Particles;
-using IsometricMagic.Game.Components.Spatial;
-using IsometricMagic.Game.Model;
+using IonMotion.Game.Components.Particles;
+using IonMotion.Game.Components.Spatial;
+using IonMotion.Game.Model;
 
-namespace IsometricMagic.Game.Prefabs
+namespace IonMotion.Game.Prefabs
 {
     public readonly record struct ParticleVisualSpec(
         string TexturePath,

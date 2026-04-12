@@ -1,9 +1,9 @@
 using System.Numerics;
-using IsometricMagic.Game.Components.Collision;
-using IsometricMagic.Game.Components.Spatial;
-using IsometricMagic.Game.Model;
+using IonMotion.Game.Components.Collision;
+using IonMotion.Game.Components.Spatial;
+using IonMotion.Game.Model;
 
-namespace IsometricMagic.Game.Components.Actor
+namespace IonMotion.Game.Components.Actor
 {
     public class MotorComponent : Component
     {

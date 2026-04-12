@@ -1,4 +1,4 @@
-namespace IsometricMagic.Game.Model
+namespace IonMotion.Game.Model
 {
     public static class IsoWorldPicking
     {

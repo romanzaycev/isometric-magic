@@ -1,7 +1,7 @@
 using System.Drawing;
 using System.Numerics;
 
-namespace IsometricMagic.Engine.Rendering
+namespace IonMotion.Engine.Rendering
 {
     public class Camera
     {

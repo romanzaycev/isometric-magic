@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
-using IsometricMagic.Engine.Inputs;
+using IonMotion.Engine.Inputs;
 using SDL2;
 
-namespace IsometricMagic.Engine.Core.Platform.Sdl
+namespace IonMotion.Engine.Core.Platform.Sdl
 {
     internal static class SdlKeycodeMapper
     {

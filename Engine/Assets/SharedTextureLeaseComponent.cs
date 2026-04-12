@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using IsometricMagic.Engine.SceneGraph;
+using IonMotion.Engine.SceneGraph;
 
-namespace IsometricMagic.Engine.Assets
+namespace IonMotion.Engine.Assets
 {
     public sealed class SharedTextureLeaseComponent : Component
     {

@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace IsometricMagic.Game.Components.Collision
+namespace IonMotion.Game.Components.Collision
 {
     public class CollisionWorldComponent : Component
     {

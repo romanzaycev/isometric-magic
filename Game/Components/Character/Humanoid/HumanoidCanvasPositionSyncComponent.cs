@@ -1,7 +1,7 @@
-using IsometricMagic.Game.Rendering;
-using IsometricMagic.Game.Model;
+using IonMotion.Game.Rendering;
+using IonMotion.Game.Model;
 
-namespace IsometricMagic.Game.Components.Character.Humanoid
+namespace IonMotion.Game.Components.Character.Humanoid
 {
     public class HumanoidCanvasPositionSyncComponent : Component
     {

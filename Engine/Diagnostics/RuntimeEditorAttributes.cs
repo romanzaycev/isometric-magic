@@ -1,6 +1,6 @@
 using System;
 
-namespace IsometricMagic.Engine.Diagnostics
+namespace IonMotion.Engine.Diagnostics
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
     public sealed class RuntimeEditorInspectableAttribute : Attribute

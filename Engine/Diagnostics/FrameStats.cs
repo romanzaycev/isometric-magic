@@ -1,7 +1,7 @@
-using IsometricMagic.Engine.Graphics;
+using IonMotion.Engine.Graphics;
 using System.Diagnostics;
 
-namespace IsometricMagic.Engine.Diagnostics
+namespace IonMotion.Engine.Diagnostics
 {
     public sealed class FrameStats
     {

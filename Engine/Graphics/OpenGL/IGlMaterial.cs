@@ -1,6 +1,6 @@
-using IsometricMagic.Engine.Graphics.Materials;
+using IonMotion.Engine.Graphics.Materials;
 
-namespace IsometricMagic.Engine.Graphics.OpenGL
+namespace IonMotion.Engine.Graphics.OpenGL
 {
     public interface IGlMaterial : IMaterial
     {

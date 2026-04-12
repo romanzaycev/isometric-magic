@@ -1,6 +1,6 @@
 using NLog;
 
-namespace IsometricMagic.Engine.Diagnostics
+namespace IonMotion.Engine.Diagnostics
 {
     public interface IEngineLogger
     {

@@ -1,9 +1,9 @@
 using System.Drawing;
-using IsometricMagic.Engine.App;
-using IsometricMagic.Engine.Core.Graphics;
-using IsometricMagic.Engine.Scenes;
+using IonMotion.Engine.App;
+using IonMotion.Engine.Core.Graphics;
+using IonMotion.Engine.Scenes;
 
-namespace IsometricMagic.Engine.Rendering
+namespace IonMotion.Engine.Rendering
 {
     public class Renderer
     {

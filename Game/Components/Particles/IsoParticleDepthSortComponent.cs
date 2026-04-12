@@ -1,7 +1,7 @@
-using IsometricMagic.Game.Model;
-using IsometricMagic.Game.Rendering;
+using IonMotion.Game.Model;
+using IonMotion.Game.Rendering;
 
-namespace IsometricMagic.Game.Components.Particles
+namespace IonMotion.Game.Components.Particles
 {
     public class IsoParticleDepthSortComponent : Component
     {

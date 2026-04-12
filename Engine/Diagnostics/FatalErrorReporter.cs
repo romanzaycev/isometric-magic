@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 
-namespace IsometricMagic.Engine.Diagnostics
+namespace IonMotion.Engine.Diagnostics
 {
     public static class FatalErrorReporter
     {
@@ -22,7 +22,7 @@ namespace IsometricMagic.Engine.Diagnostics
 
             if (Interlocked.CompareExchange(ref _shown, 1, 0) == 0)
             {
-                var shown = TryShowDialog("Isometric Magic - Fatal Error", message);
+                var shown = TryShowDialog("IonMotion - Fatal Error", message);
                 if (!shown)
                 {
                     Console.Error.WriteLine(message);

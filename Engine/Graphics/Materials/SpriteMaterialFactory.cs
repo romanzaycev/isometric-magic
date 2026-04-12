@@ -1,7 +1,7 @@
 using System.Numerics;
-using EngineTexture = IsometricMagic.Engine.Assets.Texture;
+using EngineTexture = IonMotion.Engine.Assets.Texture;
 
-namespace IsometricMagic.Engine.Graphics.Materials
+namespace IonMotion.Engine.Graphics.Materials
 {
     public static class SpriteMaterialFactory
     {

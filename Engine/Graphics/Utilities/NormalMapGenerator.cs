@@ -1,10 +1,10 @@
 using System;
 using System.Runtime.InteropServices;
-using IsometricMagic.Engine.Assets;
+using IonMotion.Engine.Assets;
 using static SDL2.SDL;
 using static SDL2.SDL_image;
 
-namespace IsometricMagic.Engine.Graphics.Utilities
+namespace IonMotion.Engine.Graphics.Utilities
 {
     public static class NormalMapGenerator
     {

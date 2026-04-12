@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace IsometricMagic.Game.Model
+namespace IonMotion.Game.Model
 {
     public readonly record struct IsoWorldPosition(float X, float Y)
     {

@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace IsometricMagic.Game.Scenes
+namespace IonMotion.Game.Scenes
 {
     public class Loading : Scene
     {

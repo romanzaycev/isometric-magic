@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace IsometricMagic.Game.Components.Camera
+namespace IonMotion.Game.Components.Camera
 {
     public class CameraShakeComponent : CameraInfluenceComponent
     {

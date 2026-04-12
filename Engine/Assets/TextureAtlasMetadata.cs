@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace IsometricMagic.Engine.Assets
+namespace IonMotion.Engine.Assets
 {
     [JsonObject]
     public sealed class TextureAtlasMetadata

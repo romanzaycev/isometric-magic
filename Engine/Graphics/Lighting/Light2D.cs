@@ -1,7 +1,7 @@
 using System.Numerics;
-using IsometricMagic.Engine.Diagnostics;
+using IonMotion.Engine.Diagnostics;
 
-namespace IsometricMagic.Engine.Graphics.Lighting
+namespace IonMotion.Engine.Graphics.Lighting
 {
     [RuntimeEditorInspectable(EditableByDefault = false)]
     public class Light2D

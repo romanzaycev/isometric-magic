@@ -1,9 +1,9 @@
 using System.Numerics;
-using IsometricMagic.Game.Animation;
-using IsometricMagic.Game.Components.Actor;
-using IsometricMagic.Game.Model;
+using IonMotion.Game.Animation;
+using IonMotion.Game.Components.Actor;
+using IonMotion.Game.Model;
 
-namespace IsometricMagic.Game.Components.Character.Humanoid
+namespace IonMotion.Game.Components.Character.Humanoid
 {
     public class HumanoidAnimationComponent : Component
     {

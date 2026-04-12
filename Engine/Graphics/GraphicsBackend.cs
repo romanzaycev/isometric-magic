@@ -1,4 +1,4 @@
-namespace IsometricMagic.Engine.Graphics
+namespace IonMotion.Engine.Graphics
 {
     public enum GraphicsBackend
     {

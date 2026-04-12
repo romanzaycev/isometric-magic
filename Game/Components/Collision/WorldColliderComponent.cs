@@ -1,8 +1,8 @@
 using System.Numerics;
-using IsometricMagic.Game.Components.Spatial;
-using IsometricMagic.Game.Model;
+using IonMotion.Game.Components.Spatial;
+using IonMotion.Game.Model;
 
-namespace IsometricMagic.Game.Components.Collision
+namespace IonMotion.Game.Components.Collision
 {
     public class WorldColliderComponent : Component
     {

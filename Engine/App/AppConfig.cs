@@ -2,10 +2,10 @@ using System;
 using System.IO;
 using IniParser;
 using IniParser.Model;
-using IsometricMagic.Engine.Graphics;
-using IsometricMagic.Engine.Inputs;
+using IonMotion.Engine.Graphics;
+using IonMotion.Engine.Inputs;
 
-namespace IsometricMagic.Engine.App
+namespace IonMotion.Engine.App
 {
     public class AppConfig
     {

@@ -1,4 +1,4 @@
-namespace IsometricMagic.Engine.Assets
+namespace IonMotion.Engine.Assets
 {
     public readonly struct TextureUvBounds
     {

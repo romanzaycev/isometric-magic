@@ -1,9 +1,9 @@
-using IsometricMagic.Engine.Assets;
-using IsometricMagic.Engine.Graphics.OpenGL;
-using IsometricMagic.Engine.Rendering;
-using IsometricMagic.Engine.Scenes;
+using IonMotion.Engine.Assets;
+using IonMotion.Engine.Graphics.OpenGL;
+using IonMotion.Engine.Rendering;
+using IonMotion.Engine.Scenes;
 
-namespace IsometricMagic.Engine.Core.Graphics
+namespace IonMotion.Engine.Core.Graphics
 {
     internal interface IGraphics
     {

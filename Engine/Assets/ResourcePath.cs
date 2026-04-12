@@ -1,4 +1,4 @@
-namespace IsometricMagic.Engine.Assets
+namespace IonMotion.Engine.Assets
 {
     internal static class ResourcePath
     {

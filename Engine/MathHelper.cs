@@ -1,6 +1,6 @@
 using System;
 
-namespace IsometricMagic.Engine
+namespace IonMotion.Engine
 {
     public static class MathHelper
     {

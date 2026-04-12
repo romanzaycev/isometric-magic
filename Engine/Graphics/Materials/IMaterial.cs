@@ -1,4 +1,4 @@
-namespace IsometricMagic.Engine.Graphics.Materials
+namespace IonMotion.Engine.Graphics.Materials
 {
     public interface IMaterial
     {

@@ -1,9 +1,9 @@
 using System;
-using IsometricMagic.Engine.Diagnostics;
-using IsometricMagic.Engine.Graphics.OpenGL;
+using IonMotion.Engine.Diagnostics;
+using IonMotion.Engine.Graphics.OpenGL;
 using Silk.NET.OpenGL;
 
-namespace IsometricMagic.Engine.Graphics.Effects
+namespace IonMotion.Engine.Graphics.Effects
 {
     public sealed class BloomEffect : IGlPostProcessEffect
     {

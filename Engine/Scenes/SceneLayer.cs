@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 
-using IsometricMagic.Engine.Core.Rendering;
-using IsometricMagic.Engine.Rendering;
+using IonMotion.Engine.Core.Rendering;
+using IonMotion.Engine.Rendering;
 
-namespace IsometricMagic.Engine.Scenes
+namespace IonMotion.Engine.Scenes
 {
     public class SceneLayer
     {

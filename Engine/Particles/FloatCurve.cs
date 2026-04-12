@@ -1,6 +1,6 @@
 using System;
 
-namespace IsometricMagic.Engine.Particles
+namespace IonMotion.Engine.Particles
 {
     public sealed class FloatCurve
     {

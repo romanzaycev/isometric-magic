@@ -1,10 +1,10 @@
 using System;
 using System.Numerics;
 
-using IsometricMagic.Engine.Diagnostics;
-using IsometricMagic.Engine.SceneGraph;
+using IonMotion.Engine.Diagnostics;
+using IonMotion.Engine.SceneGraph;
 
-namespace IsometricMagic.Engine.Spatial
+namespace IonMotion.Engine.Spatial
 {
     [RuntimeEditorInspectable(EditableByDefault = false)]
     public class Transform2D

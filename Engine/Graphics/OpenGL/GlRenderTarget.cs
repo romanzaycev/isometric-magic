@@ -1,4 +1,4 @@
-namespace IsometricMagic.Engine.Graphics.OpenGL
+namespace IonMotion.Engine.Graphics.OpenGL
 {
     public readonly struct GlRenderTarget
     {

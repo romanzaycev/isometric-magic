@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using IsometricMagic.Engine.Rendering;
+using IonMotion.Engine.Rendering;
 
-namespace IsometricMagic.Engine.Core.Rendering
+namespace IonMotion.Engine.Core.Rendering
 {
     internal class SpriteHolder
     {

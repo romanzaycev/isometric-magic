@@ -1,4 +1,4 @@
-namespace IsometricMagic.Engine.Graphics.Effects
+namespace IonMotion.Engine.Graphics.Effects
 {
     public interface IPostProcessEffect
     {

@@ -1,10 +1,10 @@
-using IsometricMagic.Game.Maps;
-using IsometricMagic.Game.Model;
-using IsometricMagic.Game.Components.Spatial;
-using IsometricMagic.Game.Tiles;
-using IsometricMagic.Game.Rendering;
+using IonMotion.Game.Maps;
+using IonMotion.Game.Model;
+using IonMotion.Game.Components.Spatial;
+using IonMotion.Game.Tiles;
+using IonMotion.Game.Rendering;
 
-namespace IsometricMagic.Game.Components.Tilemap
+namespace IonMotion.Game.Components.Tilemap
 {
     public class IsoTilemapRendererComponent : WorldPositionConverterProviderComponent
     {

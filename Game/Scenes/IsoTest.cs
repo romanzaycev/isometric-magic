@@ -1,10 +1,10 @@
 using System.Collections;
 using System.Numerics;
-using IsometricMagic.Game.Model;
-using IsometricMagic.Game.Prefabs;
-using IsometricMagic.Game.Scenes.IsoTestPrefabs;
+using IonMotion.Game.Model;
+using IonMotion.Game.Prefabs;
+using IonMotion.Game.Scenes.IsoTestPrefabs;
 
-namespace IsometricMagic.Game.Scenes
+namespace IonMotion.Game.Scenes
 {
     public class IsoTest : Scene
     {
